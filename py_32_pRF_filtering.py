@@ -1,23 +1,32 @@
 # -*- coding: utf-8 -*-
+"""Script for pRF filtering."""
+
+# Part of py_pRF_mapping library
+# Copyright (C) 2016  Ingo Marquardt
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-def funcPrfPrePrc(aryFunc,
-                  aryMask,
-                  aryPrfTc,
-                  varSdSmthTmp,
-                  varSdSmthSpt,
-                  varIntCtf,
-                  varPar):
-
+def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
+                  varIntCtf, varPar):
     """
-    The purpose of this function is to preprocess fMRI data and pRF time course
-    models for a pRF analysis. Spatial smoothing can be applied to the fMRI
-    data, and temporal smoothing can be applied to both the fMRI data and the
-    pRF model time courses. Moreover, linear trend removal is performed on the
-    fMRI data.
-    (C) Ingo Marquardt, 21.07.2016
-    """
+    Preprocess fMRI data and pRF time course models for a pRF analysis.
 
+    Spatial smoothing can be applied to the fMRI data, and temporal smoothing
+    can be applied to both the fMRI data and the pRF model time courses. Linear
+    trend removal is also performed on the fMRI data.
+    """
     print('------pRF preprocessing')
 
     # *************************************************************************
@@ -38,18 +47,12 @@ def funcPrfPrePrc(aryFunc,
     # *************************************************************************
     # *** Generic function for parallelisation over voxel time courses
 
-    def funcParVox(funcIn,
-                   aryData,
-                   aryMask,
-                   varSdSmthTmp,
-                   varIntCtf,
-                   varPar):
-
+    def funcParVox(funcIn, aryData, aryMask, varSdSmthTmp, varIntCtf, varPar):
         """
-        Function for parallelising over another function. Data is chunked into
-        arrays of one-dimensional voxel time courses.
-        """
+        Parallelize over another function.
 
+        Data is chunked into arrays of one-dimensional voxel time courses.
+        """
         # Shape of input data:
         vecInShp = aryData.shape
 
@@ -204,16 +207,12 @@ def funcPrfPrePrc(aryFunc,
     # *************************************************************************
     # *** Generic function for parallelisation over volumes
 
-    def funcParVol(funcIn,
-                   aryData,
-                   varSdSmthSpt,
-                   varPar):
-
+    def funcParVol(funcIn, aryData, varSdSmthSpt, varPar):
         """
-        Function for parallelising over another function. Data is chunked into
-        separate volumes.
-        """
+        Parallelize over another function.
 
+        Data is chunked into separate volumes.
+        """
         # Shape of input data:
         vecInShp = aryData.shape
 
@@ -312,18 +311,13 @@ def funcPrfPrePrc(aryFunc,
     # *************************************************************************
     # *** Linear trend removal from fMRI data
 
-    # Function for linear trend removal (varSdSmthSpt not needed, only included
-    # for consistency with other functions using the same parallelisation):
-    def funcLnTrRm(idxPrc,
-                   aryFuncChnk,
-                   varSdSmthSpt,
-                   queOut):
-
+    def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
         """
-        The purpose of this function is to perform linear trend removal on the
-        input fMRI data.
-        """
+        Perform linear trend removal on the input fMRI data.
 
+        The variable varSdSmthSpt is not needed, only included for consistency
+        with other functions using the same parallelisation.
+        """
         # Number of voxels in this chunk:
         # varNumVoxChnk = aryFuncChnk.shape[0]
 
@@ -374,17 +368,12 @@ def funcPrfPrePrc(aryFunc,
     # *************************************************************************
     # ***  Spatial smoothing of fMRI data
 
-    # Function for spatial smoothing:
-    def funcSmthSpt(idxPrc,
-                    aryFuncChnk,
-                    varSdSmthSpt,
-                    queOut):
-
+    def funcSmthSpt(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
         """
-        This function applies spatial smoothing to the input data. The extent
-        of smoothing needs to be specified as an input parameter.
-        """
+        Apply spatial smoothing to the input data.
 
+        The extent of smoothing needs to be specified as an input parameter.
+        """
         # Number of time points in this chunk:
         varNumVol = aryFuncChnk.shape[3]
 
@@ -408,17 +397,12 @@ def funcPrfPrePrc(aryFunc,
     # *************************************************************************
     # *** Temporal smoothing of fMRI data & pRF time course models
 
-    # Function for temporal smoothing:
-    def funcSmthTmp(idxPrc,
-                    aryFuncChnk,
-                    varSdSmthTmp,
-                    queOut):
-
+    def funcSmthTmp(idxPrc, aryFuncChnk, varSdSmthTmp, queOut):
         """
-        This function applies temporal smoothing to the input data. The extend
-        of smoothing needs to be specified as an input parameter.
-        """
+        Apply temporal smoothing to the input data.
 
+        The extend of smoothing needs to be specified as an input parameter.
+        """
         # For the filtering to perform well at the ends of the time series, we
         # set the method to 'nearest' and place a volume with mean intensity
         # (over time) at the beginning and at the end.

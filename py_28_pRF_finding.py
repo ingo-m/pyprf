@@ -1,10 +1,21 @@
 # -*- coding: utf-8 -*-
+"""Find best fitting model time courses for population receptive fields."""
 
-"""
-The purpose of this script is to find best fitting model time courses for
-population receptive fields.
-(C) Ingo Marquardt, 24.08.2016
-"""
+# Part of py_pRF_mapping library
+# Copyright (C) 2016  Ingo Marquardt
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 print('---pRF analysis')
 
@@ -147,9 +158,7 @@ varSdSmthSpt = np.divide(varSdSmthSpt, varVoxRes)
 # ***  Define functions
 
 def funcGauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
-
-    """ Create 2D Gaussian kernel. """
-
+    """Create 2D Gaussian kernel."""
     varSizeX = int(varSizeX)
     varSizeY = int(varSizeY)
 
@@ -171,11 +180,11 @@ def funcGauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
 
 
 def funcHrf(varNumVol, varTr):
+    """Create double gamma function.
 
-    """ Create double gamma function. Source:
+    Source:
     http://www.jarrodmillman.com/rcsds/lectures/convolution_background.html
     """
-
     vecX = np.arange(0, varNumVol, 1)
 
     # Expected time of peak of HRF [s]:
@@ -198,17 +207,8 @@ def funcHrf(varNumVol, varTr):
     return vecHrf
 
 
-def funcConvPar(vecDm,
-                vecHrf,
-                varNumVol,
-                idxX,
-                idxY,
-                queOut):
-
-    """
-    Function for convolution of pixel-wise 'design matrix' with HRF model.
-    """
-
+def funcConvPar(vecDm, vecHrf, varNumVol, idxX, idxY, queOut):
+    """Convolution of pixel-wise 'design matrix' with HRF model."""
     # In order to avoid an artefact at the end of the time series, we have to
     # concatenate an empty array to both the design matrix and the HRF model
     # before convolution.
@@ -227,16 +227,9 @@ def funcConvPar(vecDm,
     queOut.put(lstOut)
 
 
-def funcPrfTc(aryMdlParamsChnk,
-              tplVslSpcHighSze,
-              varNumVol,
-              aryPngDataHigh,
+def funcPrfTc(aryMdlParamsChnk, tplVslSpcHighSze, varNumVol, aryPngDataHigh,
               queOut):
-
-    """
-    Function for creating pRF time course models.
-    """
-
+    """Create pRF time course models."""
     # Number of combinations of model parameters in the current chunk:
     varChnkSze = np.size(aryMdlParamsChnk, axis=0)
 
@@ -287,21 +280,9 @@ def funcPrfTc(aryMdlParamsChnk,
     queOut.put(aryOut)
 
 
-def funcFindPrf(idxPrc,
-                varNumX,
-                varNumY,
-                varNumPrfSizes,
-                vecMdlXpos,
-                vecMdlYpos,
-                vecMdlSd,
-                aryFuncChnk,
-                aryPrfTc,
-                queOut):
-
-    """
-    Function for finding best pRF model for voxel time course.
-    """
-
+def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
+                vecMdlYpos, vecMdlSd, aryFuncChnk, aryPrfTc, queOut):
+    """Find the best pRF model for voxel time course."""
     # Number of voxels to be fitted in this chunk:
     varNumVoxChnk = aryFuncChnk.shape[0]
 
