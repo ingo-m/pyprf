@@ -117,9 +117,9 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
         # Put data into chunks:
         for idxChnk in range(0, varPar):
             # Index of first element to be included in current chunk:
-            varTmpChnkSrt = vecIdxChnks[idxChnk]
+            varTmpChnkSrt = int(vecIdxChnks[idxChnk])
             # Index of last element to be included in current chunk:
-            varTmpChnkEnd = vecIdxChnks[(idxChnk+1)]
+            varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
             # Put array chunk into list:
             lstFunc[idxChnk] = aryData[varTmpChnkSrt:varTmpChnkEnd, :]
 
@@ -243,9 +243,9 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
         # Put data into chunks:
         for idxChnk in range(0, varPar):
             # Index of first element to be included in current chunk:
-            varTmpChnkSrt = vecIdxChnks[idxChnk]
+            varTmpChnkSrt = int(vecIdxChnks[idxChnk])
             # Index of last element to be included in current chunk:
-            varTmpChnkEnd = vecIdxChnks[(idxChnk+1)]
+            varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
             # Put array chunk into list:
             lstFunc[idxChnk] = aryData[:, :, :, varTmpChnkSrt:varTmpChnkEnd]
 

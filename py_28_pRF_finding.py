@@ -65,7 +65,7 @@ varNumVol = 400
 varIntCtf = 50.0
 
 # Number of processes to run in parallel:
-varPar = 10
+varPar = 5
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
@@ -77,16 +77,16 @@ tplVslSpcHighSze = (200, 200)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-strPathNiiFunc = '/home/john/Desktop/20151130_02_distcor_02092016/func_regAcrssRuns_cube/func_07.nii.gz'
+strPathNiiFunc = '/home/john/Desktop/cython_test_data/func_07.nii.gz'
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Desktop/20151130_02_distcor_02092016/retinotopy/crudebrainmask.nii.gz'
+strPathNiiMask = '/home/john/Desktop/cython_test_data/cube.nii.gz'
 
 # Output basename:
-strPathOut = '/home/john/Desktop/20151130_02_distcor_02092016/retinotopy/pRF_results/pRF_results'
+strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20150930/nii_distcor/retinotopy/pRF_results/pRF_results'
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
@@ -98,15 +98,15 @@ if lgcCrteMdl:
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/home/john/Desktop/20151130_02_distcor_02092016/retinotopy/pRF_stimuli/Renamed_'
+    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20150930/nii_distcor/retinotopy/pRF_stimuli/Renamed_'
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/home/john/Desktop/20151130_02_distcor_02092016/retinotopy/pRF_results/pRF_model_tc'
+    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20150930/nii_distcor/retinotopy/pRF_results/pRF_model_tc'
 
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '.npy'
+    strPathMdl = '/home/john/Desktop/cython_test_data/pRF_model_tc.npy'
 # *****************************************************************************
 
 
@@ -794,10 +794,10 @@ if lgcCrteMdl:
     for idxChnk in range(0, varPar):
         # Index of first combination of model parameters to be included in
         # current chunk:
-        varTmpChnkSrt = vecIdxChnks[idxChnk]
+        varTmpChnkSrt = int(vecIdxChnks[idxChnk])
         # Index of last combination of model parameters to be included in
         # current chunk:
-        varTmpChnkEnd = vecIdxChnks[(idxChnk+1)]
+        varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
         # Put voxel array into list:
         lstMdlParams[idxChnk] = aryMdlParams[varTmpChnkSrt:varTmpChnkEnd, :]
 
@@ -1048,9 +1048,9 @@ if lgcDim:
     # Put functional data into chunks:
     for idxChnk in range(0, varPar):
         # Index of first voxel to be included in current chunk:
-        varTmpChnkSrt = vecIdxChnks[idxChnk]
+        varTmpChnkSrt = int(vecIdxChnks[idxChnk])
         # Index of last voxel to be included in current chunk:
-        varTmpChnkEnd = vecIdxChnks[(idxChnk+1)]
+        varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
         # Put voxel array into list:
         lstFunc[idxChnk] = aryFunc[varTmpChnkSrt:varTmpChnkEnd, :]
 
