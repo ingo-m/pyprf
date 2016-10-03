@@ -88,6 +88,10 @@ strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20151118/nii_distcor/reti
 # Create pRF time course models?
 lgcCrteMdl = True
 
+# Use cython (i.e. compiled code) for faster performance? (Requires cython to
+# be installed.)
+lgcCython = True
+
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
     # be provided:
@@ -123,7 +127,6 @@ import multiprocessing as mp
 from scipy.stats import gamma
 from scipy.interpolate import griddata
 from py_32_pRF_filtering import funcPrfPrePrc
-
 if lgcCython:
 	from py_42_cython_lstsqr import funcCyLsq
 # *****************************************************************************
@@ -310,31 +313,22 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
     # i.e. from top to bottom.
     aryFuncChnk = aryFuncChnk.T
 
-
-
-
-if lgcCython:
-
-    # Instead of fitting a constant term, we subtract the mean from the data
-    # and from the model ("FSL style") First, we subtract the mean over time
-    # from the data:
-    aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
-    aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[0, None])
-    # Secondly, we subtract the mean over time form the pRF model time courses.
-    # the array has four dimensions, the 4th is time (one to three are
-    # x-position, y-position, and pRF size (SD)).
-    aryPrfTcTmean = np.mean(aryPrfTc, axis=3)
-    aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, None])
-
-else:
-
-    # Constant term for the model:
-    vecConst = np.ones((varNumVol), dtype=np.float32)
-
-
-
-
-
+    # Prepare data for cython (i.e. accelerated) least squares finding:
+    if lgcCython:
+        # Instead of fitting a constant term, we subtract the mean from the
+        # data and from the model ("FSL style") First, we subtract the mean
+        # over time from the data:
+        aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
+        aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[0, None])
+        # Secondly, we subtract the mean over time form the pRF model time
+        # courses. The array has four dimensions, the 4th is time (one to three
+        # are x-position, y-position, and pRF size (SD)).
+        aryPrfTcTmean = np.mean(aryPrfTc, axis=3)
+        aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, None])
+    # Otherwise, create constant term for numpy least squares finding:
+    else:
+        # Constant term for the model:
+        vecConst = np.ones((varNumVol), dtype=np.float32)
 
     # Change type to float 32:
     aryFuncChnk = aryFuncChnk.astype(np.float32)
@@ -403,47 +397,30 @@ else:
                 # Calculation of the ratio of the explained variance (R square)
                 # for the current model for all voxel time courses.
 
-#                print('------------np.linalg.lstsq on pRF: ' +
-#                      str(idxX) +
-#                      'x ' +
-#                      str(idxY) +
-#                      'y ' +
-#                      str(idxSd) +
-#                      'z --- START')
-#                varTmeTmp01 = time.time()
+                # Cython version:
+                if lgcCython:
 
-                # Change type to float32:
-                # aryDsgn = aryDsgn.astype(np.float32)
+                    # A cython function is used to calculate the residuals
+                    # of the current model:
+                    vecTmpRes = funcCyLsq(
+                        aryPrfTc[idxX, idxY, idxSd, :].flatten(), aryFuncChnk)
 
+                # Numpy version:
+                else:
 
+                    # Current pRF time course model:
+                    vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :].flatten()
 
-if lgcCython:
+                    # We create a design matrix including the current pRF time
+                    # course model, and a constant term:
+                    aryDsgn = np.vstack([vecMdlTc,
+                                         vecConst]).T
 
-                # A cython function is used to calculate the residuals after
-                # fitting the current model, separately for each voxel.
-                vecTmpRes = funcCyLsq(aryPrfTc[idxX, idxY, idxSd, :].flatten(),
-                                      aryFuncChnk)
+                    # Change type to float32:
+                    aryDsgn = aryDsgn.astype(np.float32)
 
-else:
-
-                # Calculate the least-squares solution for all voxels:
-                vecTmpRes = np.linalg.lstsq(aryDsgn, aryFuncChnk)[1]
-
-
-
-
-#                varTmeTmp02 = time.time()
-#                varTmeTmp03 = np.around((varTmeTmp02 - varTmeTmp01),
-#                                        decimals=2)
-#                print('------------np.linalg.lstsq on pRF: ' +
-#                      str(idxX) +
-#                      'x ' +
-#                      str(idxY) +
-#                      'y ' +
-#                      str(idxSd) +
-#                      'z --- DONE elapsed time: ' +
-#                      str(varTmeTmp03) +
-#                      's')
+                    # Calculate the least-squares solution for all voxels:
+                    vecTmpRes = np.linalg.lstsq(aryDsgn, aryFuncChnk)[1]
 
                 # Check whether current residuals are lower than previously
                 # calculated ones:
@@ -456,19 +433,6 @@ else:
 
                 # Replace best residual values:
                 vecBstRes[vecLgcTmpRes] = vecTmpRes[vecLgcTmpRes]
-
-#                varTmeTmp04 = time.time()
-#                varTmeTmp05 = np.around((varTmeTmp04 - varTmeTmp02),
-#                                        decimals=2)
-#                print('------------selection of best-fitting pRF model: ' +
-#                      str(idxX) +
-#                      'x ' +
-#                      str(idxY) +
-#                      'y ' +
-#                      str(idxSd) +
-#                      'z --- elapsed time: ' +
-#                      str(varTmeTmp05) +
-#                      's')
 
                 # Status indicator (only used in the first of the parallel
                 # processes):
