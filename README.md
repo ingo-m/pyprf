@@ -7,6 +7,7 @@ A free & open python tool for population receptive field analysis.
 - [NumPy](http://www.numpy.org/)
 - [SciPy](http://www.scipy.org/)
 - [NiBabel](http://nipy.org/nibabel/)
+- Optional: [Cython](http://cython.org/) for considerably faster performance
 
 ## How to use
 
