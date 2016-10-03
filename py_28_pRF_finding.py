@@ -65,7 +65,7 @@ varNumVol = 400
 varIntCtf = 50.0
 
 # Number of processes to run in parallel:
-varPar = 5
+varPar = 10
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
@@ -77,16 +77,16 @@ tplVslSpcHighSze = (200, 200)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-strPathNiiFunc = '/home/john/Desktop/cython_test_data/func_07.nii.gz'
+strPathNiiFunc = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20151118/nii_distcor/func_regAcrssRuns_cube/func_07.nii.gz'
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Desktop/cython_test_data/cube.nii.gz'
+strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20151118/nii_distcor/retinotopy_cython2/mask/crudebrainmask.nii.gz'
 
 # Output basename:
-strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20150930/nii_distcor/retinotopy/pRF_results/pRF_results'
+strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20151118/nii_distcor/retinotopy_cython2/pRF_results/pRF_results'
 
 # Create pRF time course models?
-lgcCrteMdl = False
+lgcCrteMdl = True
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
@@ -98,15 +98,15 @@ if lgcCrteMdl:
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20150930/nii_distcor/retinotopy/pRF_stimuli/Renamed_'
+    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20151118/nii_distcor/retinotopy_cython2/pRF_stimuli/Renamed_'
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20150930/nii_distcor/retinotopy/pRF_results/pRF_model_tc'
+    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20151118/nii_distcor/retinotopy_cython2/pRF_results/pRF_model_tc'
 
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '/home/john/Desktop/cython_test_data/pRF_model_tc.npy'
+    strPathMdl = '.npy'
 # *****************************************************************************
 
 
@@ -123,6 +123,9 @@ import multiprocessing as mp
 from scipy.stats import gamma
 from scipy.interpolate import griddata
 from py_32_pRF_filtering import funcPrfPrePrc
+
+if lgcCython:
+	from py_42_cython_lstsqr import funcCyLsq
 # *****************************************************************************
 
 
@@ -287,7 +290,7 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
     varNumVoxChnk = aryFuncChnk.shape[0]
 
     # Number of volumes:
-    varNumVol = aryFuncChnk.shape[1]
+    # varNumVol = aryFuncChnk.shape[1]
 
     # Vectors for pRF finding results [number-of-voxels times one]:
     vecBstXpos = np.zeros(varNumVoxChnk)
@@ -298,15 +301,40 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
     # Vector for best R-square value. For each model fit, the R-square value is
     # compared to this, and updated if it is lower than the best-fitting
     # solution so far. We initialise with an arbitrary, high value
-    vecBstRes = np.add(np.zeros(varNumVoxChnk),
-                       100000.0)
+    vecBstRes = np.add(np.zeros(varNumVoxChnk), 100000000.0).astype(np.float32)
+
+    # Vector that will hold the temporary residuals from the model fitting:
+    # vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
 
     # We reshape the voxel time courses, so that time goes down the column,
     # i.e. from top to bottom.
     aryFuncChnk = aryFuncChnk.T
 
+
+
+
+if lgcCython:
+
+    # Instead of fitting a constant term, we subtract the mean from the data
+    # and from the model ("FSL style") First, we subtract the mean over time
+    # from the data:
+    aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
+    aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[0, None])
+    # Secondly, we subtract the mean over time form the pRF model time courses.
+    # the array has four dimensions, the 4th is time (one to three are
+    # x-position, y-position, and pRF size (SD)).
+    aryPrfTcTmean = np.mean(aryPrfTc, axis=3)
+    aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, None])
+
+else:
+
     # Constant term for the model:
     vecConst = np.ones((varNumVol), dtype=np.float32)
+
+
+
+
+
 
     # Change type to float 32:
     aryFuncChnk = aryFuncChnk.astype(np.float32)
@@ -372,14 +400,6 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
                         if varCntSts01 < varStsStpSze:
                             varCntSts01 = varCntSts01 + int(1)
 
-                # Current pRF time course model:
-                vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :].flatten()
-
-                # We create a design matrix including the current pRF time
-                # course model, and a constant term:
-                aryDsgn = np.vstack([vecMdlTc,
-                                     vecConst]).T
-
                 # Calculation of the ratio of the explained variance (R square)
                 # for the current model for all voxel time courses.
 
@@ -395,8 +415,22 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
                 # Change type to float32:
                 # aryDsgn = aryDsgn.astype(np.float32)
 
+
+
+if lgcCython:
+
+                # A cython function is used to calculate the residuals after
+                # fitting the current model, separately for each voxel.
+                vecTmpRes = funcCyLsq(aryPrfTc[idxX, idxY, idxSd, :].flatten(),
+                                      aryFuncChnk)
+
+else:
+
                 # Calculate the least-squares solution for all voxels:
                 vecTmpRes = np.linalg.lstsq(aryDsgn, aryFuncChnk)[1]
+
+
+
 
 #                varTmeTmp02 = time.time()
 #                varTmeTmp03 = np.around((varTmeTmp02 - varTmeTmp01),
