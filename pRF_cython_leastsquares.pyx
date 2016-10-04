@@ -35,7 +35,7 @@ from libc.math cimport pow, sqrt
 
 
 # *****************************************************************************
-# Main function for least squares solution
+# *** Main function for least squares solution
 
 cpdef np.ndarray[np.float32_t, ndim=1] funcCyLsq(
     np.ndarray[np.float32_t, ndim=1] vecPrfTc,
@@ -87,7 +87,7 @@ cpdef np.ndarray[np.float32_t, ndim=1] funcCyLsq(
 
 
 # *****************************************************************************
-# Function for fast calculation of residuals
+# *** Function for fast calculation of residuals
 
 cdef float[:] funcCyRes(float[:] vecPrfTc_view,
                         float[:, :] aryFuncChnk_view,

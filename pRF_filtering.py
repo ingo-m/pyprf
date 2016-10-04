@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Script for pRF filtering."""
+"""Main function for preprocessing of data & models"""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -17,6 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import numpy as np
+import time
+import multiprocessing as mp
+from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage.filters import gaussian_filter1d
+
 
 def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
                   varIntCtf, varPar):
@@ -28,16 +34,6 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
     trend removal is also performed on the fMRI data.
     """
     print('------pRF preprocessing')
-
-    # *************************************************************************
-    # *** Import modules
-
-    import numpy as np
-    import time
-    import multiprocessing as mp
-    from scipy.ndimage.filters import gaussian_filter
-    from scipy.ndimage.filters import gaussian_filter1d
-    # *************************************************************************
 
     # *************************************************************************
     # ***  Check time
@@ -486,4 +482,4 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
     # *************************************************************************
     # Return preprocessed data:
     return aryFunc, aryPrfTc
-# *****************************************************************************
+   # **************************************************************************
