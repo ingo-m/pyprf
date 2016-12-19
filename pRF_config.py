@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Define pRF finding parameters here"""
+"""Define pRF finding parameters here."""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -69,41 +68,41 @@ varPar = 10
 # specified above. In other words, if the the resolution in x-direction of the
 # visual space model is ten times that of varNumX, the resolution in
 # y-direction also has to be ten times varNumY. The order is: first x, then y.
-tplVslSpcHighSze = (200, 200)
+tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-strPathNiiFunc = '/home/john/Desktop/cython_test_data/func_07.nii.gz'
+strPathNiiFunc = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161205/nii_distcor/func_regAcrssRuns_cube/func_07.nii.gz'  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Desktop/cython_test_data/sphere.nii.gz'
+strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161205/nii_distcor/retinotopy/mask/crudebrainmask.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/home/john/Desktop/cython_test_data/pRF_results/pRF_results'
+strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161205/nii_distcor/retinotopy/pRF_results/pRF_results'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
 lgcCython = True
 
 # Create pRF time course models?
-lgcCrteMdl = False
+lgcCrteMdl = True
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
     # be provided:
 
     # Size of png files (pixel*pixel):
-    tplPngSize = (150, 150)
+    tplPngSize = (300, 300)
 
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/home/john/Desktop/cython_test_data/pRF_stimuli/Renamed_'
+    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161205/nii_distcor/retinotopy/pRF_stimuli/frame'  #noqa
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/home/john/Desktop/cython_test_data/pRF_results/pRF_model_tc'
+    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161205/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa
 
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '/home/john/Desktop/cython_test_data/pRF_results/pRF_model_tc.npy'
+    strPathMdl = '.npy'

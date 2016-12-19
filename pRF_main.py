@@ -86,19 +86,29 @@ if cfg.lgcCrteMdl:
     # Create list of png files to load:
     lstPngPaths = [None] * cfg.varNumVol
     for idx01 in range(0, cfg.varNumVol):
-        lstPngPaths[idx01] = (cfg.strPathPng + str(idx01) + '.png')
+        if idx01 < 9:
+            lstPngPaths[idx01] = (cfg.strPathPng + '00' + str(idx01 + 1) +
+                                  '.png')
+        elif idx01 < 99:
+            lstPngPaths[idx01] = (cfg.strPathPng + '0' + str(idx01 + 1) +
+                                  '.png')
+        elif idx01 < 999:
+            lstPngPaths[idx01] = (cfg.strPathPng + str(idx01 + 1) + '.png')
 
     # Load png files. The png data will be saved in a numpy array of the
     # following order: aryPngData[x-pixel, y-pixel, PngNumber]. The
     # sp.misc.imread function actually contains three values per pixel (RGB),
     # but since the stimuli are black-and-white, any one of these is sufficient
     # and we discard the others.
-    aryPngData = np.zeros((cfg.tplPngSize[0], cfg.tplPngSize[1], cfg.varNumVol))
+    aryPngData = np.zeros((cfg.tplPngSize[0],
+                           cfg.tplPngSize[1],
+                           cfg.varNumVol))
     for idx01 in range(0, cfg.varNumVol):
-        aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :, 0]
+        # aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :, 0]
+        aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :]
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
-    aryPngData = (aryPngData > 0).astype(int)
+    aryPngData = (aryPngData > 200).astype(int)
     # *************************************************************************
 
     # *************************************************************************

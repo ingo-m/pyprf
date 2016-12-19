@@ -1,9 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 20 16:47:28 2015
+Stimulus presentation for pRF mapping.
 
-@author: Marian.Schneider
+The purpose of this script is to present retinotopic mapping stimuli using
+psychopy.
 """
+
+# Part of py_pRF_mapping library
+# Copyright (C) 2016  Marian Schneider
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import division  # so that 1/3=0.333 instead of 1/3=0
 from psychopy import visual, event, core,  monitors, logging, gui, data, misc
 from itertools import cycle  # import cycle if you want to flicker stimuli
@@ -11,6 +29,21 @@ from psychopy.misc import pol2cart
 import numpy as np
 import pickle
 import os
+
+# %% Settings for stimulus logging
+# If in normal mode, this scrip presents stimuli for population receptive field
+# mapping. If in logging mode, this script creates a stimulus log of the
+# stimuli used for the pRF mapping that can be used for the pRF finding
+# analysis of the py_pRF_mapping library. The stimuli are saved as png files,
+# where each png represents the status of visual stimulation for one TR (the
+# png files contain modified screenshots of the visual stimulus, and can be
+# directly be loaded into the py_pRF_mapping pipepline.
+
+# Logging mode?
+lgcLogMde = True
+
+# Output basename for screenshots:
+strPthPngLog = '/home/john/Desktop/pRF_stimuli/'
 
 # %% set checkerbar sptial and temporl frequency
 # define reversal frequency
@@ -75,8 +108,11 @@ logging.console.setLevel(logging.WARNING)  # set console to receive warnings
 # set monitor information:
 distanceMon = 99  # [99] in scanner
 widthMon = 30  # [30] in scanner
-PixW = 1920.0  # [1920.0] in scanner
-PixH = 1200.0  # [1200.0] in scanner
+#PixW = 1920.0  # [1920.0] in scanner
+#PixH = 1200.0  # [1200.0] in scanner
+
+PixW = 1000.0  # [1920.0] in scanner
+PixH = 800.0  # [1200.0] in scanner
 
 moni = monitors.Monitor('testMonitor', width=widthMon, distance=distanceMon)
 moni.setSizePix([PixW, PixH])  # [1920.0, 1080.0] in psychoph lab
@@ -95,7 +131,7 @@ myWin = visual.Window(
     winType='pyglet',  # winType : None, ‘pyglet’, ‘pygame’
     allowGUI=False,
     allowStencil=True,
-    fullscr=True,  # for psychoph lab: fullscr = True
+    fullscr=False, # ------------------------ True,  # for psychoph lab: fullscr = True
     monitor=moni,
     color=[0, 0, 0],
     colorSpace='rgb',
@@ -113,7 +149,14 @@ Conditions = arrays["Conditions"]
 Conditions = Conditions.astype(int)
 TargetOnsetinSec = arrays["TargetOnsetinSec"]
 TargetDur = arrays["TargetDuration"]
-ExpectedTR = arrays["TR"]
+
+# If in logging mode, only present stimuli very briefly:
+if lgcLogMde:
+    ExpectedTR = 0.05
+# Otherwise, use actual volume TR:
+else:
+    ExpectedTR = arrays["TR"]
+
 NrOfSteps = arrays["NrOfSteps"]
 NrOfVols = arrays["NrOfVols"]
 print('TARGETS: ')
@@ -149,7 +192,7 @@ grating = visual.GratingStim(
     opacity=1.0,
     size=(2*PixW, PixH/NrOfSteps),
     sf=(spatCyc/(PixH/NrOfSteps), spatCyc/(PixH/NrOfSteps)),
-    ori = 0,
+    ori=0,
     autoLog=False,
     interpolate=False,
     )
@@ -174,6 +217,7 @@ dotFixSurround = visual.Circle(
 # fixation grid
 Circle = visual.Polygon(
     win=myWin,
+    autoLog=False,
     name='Circle',
     edges=90,
     ori=0,
@@ -185,14 +229,13 @@ Circle = visual.Polygon(
     fillColor=None,
     fillColorSpace='rgb',
     opacity=1,
-    interpolate=True,
-    autoLog=False,)
+    interpolate=True)
 Line = visual.Line(
     win=myWin,
-    name='Line',
     autoLog=False,
+    name='Line',
     start=(-PixH, 0),
-    end = (PixH, 0),
+    end=(PixH, 0),
     pos=[0, 0],
     lineWidth=2,
     lineColor=[1.0, 1.0, 1.0],
@@ -204,25 +247,28 @@ Line = visual.Line(
 # initialisation method
 message = visual.TextStim(
     myWin,
+    autoLog=False,
     text='Condition',
     height=30,
     pos=(400, 400)
     )
 triggerText = visual.TextStim(
     win=myWin,
+    autoLog=False,
     color='white',
     height=30,
     text='Experiment will start soon. \n Waiting for scanner',)
 targetText = visual.TextStim(
     win=myWin,
-    color='white',
-    height=30,
     autoLog=False,
-    )
+    color='white',
+    height=30)
 
 vertices = [(PixH/2, PixH/2), (-PixH/2, PixH/2),
             (-PixH/2, -PixH/2), (PixH/2, -PixH/2)]
-aperture = visual.Aperture(myWin, shape=vertices)  # try shape='square'
+aperture = visual.Aperture(myWin,
+                           autoLog=False,
+                           shape=vertices)  # try shape='square'
 aperture.enabled = False
 
 # %%
@@ -258,9 +304,11 @@ SquareArray = np.hstack((
     ))
 SquareCycle = cycle(SquareArray)
 
+
 def squFlicker():
     mContrast = SquareCycle.next()
     return mContrast
+
 
 # %%
 """RENDER_LOOP"""
@@ -294,24 +342,25 @@ while clock.getTime() < totalTime:
     while clock.getTime() < durations[i]:
         aperture.enabled = True
         # draw fixation grid (circles and lines)
-        Circle.setSize((1, 1))
-        Circle.draw()
-        Circle.setSize((2, 2))
-        Circle.draw()
-        Circle.setSize((3, 3))
-        Circle.draw()
-        Circle.setSize((4, 4))
-        Circle.draw()
-        Circle.setSize((5, 5))
-        Circle.draw()
-        Line.setOri(0)
-        Line.draw()
-        Line.setOri(45)
-        Line.draw()
-        Line.setOri(90)
-        Line.draw()
-        Line.setOri(135)
-        Line.draw()
+        if not lgcLogMde:
+            Circle.setSize((1, 1))
+            Circle.draw()
+            Circle.setSize((2, 2))
+            Circle.draw()
+            Circle.setSize((3, 3))
+            Circle.draw()
+            Circle.setSize((4, 4))
+            Circle.draw()
+            Circle.setSize((5, 5))
+            Circle.draw()
+            Line.setOri(0)
+            Line.draw()
+            Line.setOri(45)
+            Line.draw()
+            Line.setOri(90)
+            Line.draw()
+            Line.setOri(135)
+            Line.draw()
 
         # update contrast flicker with square wave
         y = squFlicker()
@@ -322,7 +371,10 @@ while clock.getTime() < totalTime:
 
         # decide whether to draw target
         # first time in target interval? reset target counter to 0!
-        if sum(clock.getTime() >= TargetOnsetinSec) + sum(clock.getTime() < TargetOnsetinSec + 0.3) == len(TargetOnsetinSec)+1:
+        if (
+            (sum(clock.getTime() >= TargetOnsetinSec)
+             + sum(clock.getTime() < TargetOnsetinSec + 0.3)
+             ) == len(TargetOnsetinSec) + 1):
             # display target!
             # change color fix dot surround to red
             dotFixSurround.fillColor = [0.5, 0.0, 0.0]
@@ -337,13 +389,6 @@ while clock.getTime() < totalTime:
         dotFixSurround.draw()
         # draw fixation point
         dotFix.draw()
-
-#        if 0 <= clock.getTime() % 3 < 1.5/60:
-#            print "simulated keypress"
-#            trigCount += 1
-#
-#        message.setText(clock.getTime())
-#        message.draw()
 
         # draw frame
         myWin.flip()
@@ -364,6 +409,26 @@ while clock.getTime() < totalTime:
                                                clock.getTime())
 
     i = i+1
+
+    # *************************************************************************
+    # *** Save screenshot to array
+
+    # WORK IN PROGRESS
+    # Change output format of screenshots (0 = no stimulus, 1 = stimulus)
+
+    if lgcLogMde:
+
+        # Create string for screenshot filename:
+        if i < 10:
+                strTmp = (strPthPngLog + '00' + str(i) + '.png')
+        elif i < 100:
+                strTmp = (strPthPngLog + '0' + str(i) + '.png')
+        else:
+            strTmp = (strPthPngLog + '' + str(i) + '.png')
+
+        myWin.getMovieFrame(buffer='front')
+        myWin.saveMovieFrames(strTmp)
+    # *************************************************************************
 
 logging.data('EndOfRun' + unicode(expInfo['run']) + '\n')
 
@@ -396,8 +461,12 @@ DetectRatio = targetsDet/len(targetDetected)
 logging.data('RatioOfDetectedTargets' + unicode(DetectRatio))
 
 # display target detection results to participant
-resultText = 'You have detected %i out of %i targets.' % (targetsDet,
-                                                          len(TargetOnsetinSec))
+resultText = ('You have detected '
+              + str(targetsDet)
+              + ' out of '
+              + str(TargetOnsetinSec)
+              + ' targets.')
+
 print resultText
 logging.data(resultText)
 # also display a motivational slogan
