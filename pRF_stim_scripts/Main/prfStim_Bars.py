@@ -29,6 +29,7 @@ from psychopy.misc import pol2cart
 import numpy as np
 import pickle
 import os
+import scipy.misc
 
 # %% Settings for stimulus logging
 # If in normal mode, this scrip presents stimuli for population receptive field
@@ -42,10 +43,7 @@ import os
 # Logging mode?
 lgcLogMde = True
 
-# Output basename for screenshots:
-strPthPngLog = '/home/john/Desktop/pRF_stimuli/'
-
-# %% set checkerbar sptial and temporl frequency
+# %% set checkerbar sptial and temporal frequency
 # define reversal frequency
 tempCyc = 4  # how many bw cycles per s?
 # define sptial frequency
@@ -54,7 +52,7 @@ spatCyc = 1.5
 # %%
 """ SAVING and LOGGING """
 # Store info about experiment and experimental run
-expName = 'prfStim_Bars'  # set experiment name here
+expName = 'pRF_mapping_log'  # set experiment name here
 expInfo = {
     u'participant': u'pilot',
     u'run': u'01',
@@ -76,25 +74,28 @@ os.chdir(str_path_parent_up)
 
 # Name and create specific subject folder
 subjFolderName = str_path_parent_up + os.path.sep + \
-    '%s_SubjData' % (expInfo['participant'])
+    'SubjData_%s' % (expInfo['participant'])
 if not os.path.isdir(subjFolderName):
     os.makedirs(subjFolderName)
+
 # Name and create data folder for the experiment
 dataFolderName = subjFolderName + os.path.sep + '%s' % (expInfo['expName'])
 if not os.path.isdir(dataFolderName):
     os.makedirs(dataFolderName)
+
 # Name and create specific folder for logging results
 logFolderName = dataFolderName + os.path.sep + 'Logging'
 if not os.path.isdir(logFolderName):
     os.makedirs(logFolderName)
-logFileName = logFolderName + os.path.sep + '%s_%s_Run%s_%s' % (
+logFileName = logFolderName + os.path.sep + '%s_%s_Run_%s_%s' % (
     expInfo['participant'], expInfo['expName'],
     expInfo['run'], expInfo['date'])
+
 # Name and create specific folder for pickle output
 outFolderName = dataFolderName + os.path.sep + 'Output'
 if not os.path.isdir(outFolderName):
     os.makedirs(outFolderName)
-outFileName = outFolderName + os.path.sep + '%s_%s_Run%s_%s' % (
+outFileName = outFolderName + os.path.sep + '%s_%s_Run_%s_%s' % (
     expInfo['participant'], expInfo['expName'],
     expInfo['run'], expInfo['date'])
 
@@ -152,7 +153,7 @@ TargetDur = arrays["TargetDuration"]
 
 # If in logging mode, only present stimuli very briefly:
 if lgcLogMde:
-    ExpectedTR = 0.05
+    ExpectedTR = 0.1
 # Otherwise, use actual volume TR:
 else:
     ExpectedTR = arrays["TR"]
@@ -306,9 +307,17 @@ SquareCycle = cycle(SquareArray)
 
 
 def squFlicker():
+    """What does this function do? Why is it defined here?."""
     mContrast = SquareCycle.next()
     return mContrast
 
+
+# %% Logging mode preparations
+if lgcLogMde:
+    # Prepare array for screenshots:
+    aryFrames = np.zeros((PixH, PixW, 3, NrOfVols), dtype=np.int16)
+    # Counter for screenshots:
+    idxFrame = 0
 
 # %%
 """RENDER_LOOP"""
@@ -385,10 +394,11 @@ while clock.getTime() < totalTime:
             dotFixSurround.fillColor = [0.5, 0.5, 0.0]
             dotFixSurround.lineColor = [0.5, 0.5, 0.0]
 
-        # draw fixation point surround
-        dotFixSurround.draw()
-        # draw fixation point
-        dotFix.draw()
+        if not lgcLogMde:
+            # draw fixation point surround
+            dotFixSurround.draw()
+            # draw fixation point
+            dotFix.draw()
 
         # draw frame
         myWin.flip()
@@ -408,27 +418,13 @@ while clock.getTime() < totalTime:
                 TargetPressedArray = np.append(TargetPressedArray,
                                                clock.getTime())
 
-    i = i+1
+    i = i + 1
 
-    # *************************************************************************
-    # *** Save screenshot to array
-
-    # WORK IN PROGRESS
-    # Change output format of screenshots (0 = no stimulus, 1 = stimulus)
-
+    # %% Save screenshot to array
     if lgcLogMde:
-
-        # Create string for screenshot filename:
-        if i < 10:
-                strTmp = (strPthPngLog + '00' + str(i) + '.png')
-        elif i < 100:
-                strTmp = (strPthPngLog + '0' + str(i) + '.png')
-        else:
-            strTmp = (strPthPngLog + '' + str(i) + '.png')
-
-        myWin.getMovieFrame(buffer='front')
-        myWin.saveMovieFrames(strTmp)
-    # *************************************************************************
+        print(('+++++Frame: ' + str(idxFrame)))
+        aryFrames[:, :, :, idxFrame] = myWin.getMovieFrame(buffer='front')
+        idxFrame = idxFrame + 1
 
 logging.data('EndOfRun' + unicode(expInfo['run']) + '\n')
 
@@ -462,10 +458,14 @@ logging.data('RatioOfDetectedTargets' + unicode(DetectRatio))
 
 # display target detection results to participant
 resultText = ('You have detected '
-              + str(targetsDet)
+              + str(int(np.around(targetsDet, decimals=0)))
               + ' out of '
-              + str(TargetOnsetinSec)
+              + str(len(TargetOnsetinSec))
               + ' targets.')
+
+print('resultText')
+print(resultText)
+print('resultText')
 
 print resultText
 logging.data(resultText)
@@ -490,6 +490,9 @@ core.wait(5)
 """CLOSE DISPLAY"""
 myWin.close()
 
+# %% Save stimulus log:
+
+
 # %%
 """SAVE DATA"""
 try:
@@ -506,6 +509,40 @@ try:
     misc.toFile(outFileName + '.pickle', output)
     print 'Output Data saved as: ' + outFileName + '.pickle'
     print "***"
+
+    # Save screenshots (logging mode)
+    if lgcLogMde:
+
+        print('Saving screenshots')
+
+        # Target directory for frames (screenshots):
+        strPthFrm = (dataFolderName + '/Frames/')
+
+        # Check whether directory for frames exists, if not create it:
+        lgcDir = os.path.isdir(strPthFrm)
+        # If directory does exist, delete it:
+        if not(lgcDir):
+            # Create direcotry for segments:
+            os.mkdir(strPthFrm)
+
+        # Save stimulus frame array to npy file:
+        aryFrames = aryFrames.astype(np.int16)
+        np.save((strPthFrm + 'ary_stimulus_frames'), aryFrames)
+
+        # Save frames as png:
+        for idxFrame in range(0, NrOfVols):
+            # Create string for screenshot filename:
+            if i < 10:
+                    strTmp = (strPthFrm + 'frame_00' + str(idxFrame) + '.png')
+            elif i < 100:
+                    strTmp = (strPthFrm + 'frame_0' + str(idxFrame) + '.png')
+            else:
+                strTmp = (strPthFrm + 'frame_' + str(idxFrame) + '.png')
+            # Save stimulus frames as png files:
+            scipy.misc.toimage(aryFrames[:, :, :, idxFrame],
+                               cmin=0.0,
+                               cmax=255.0).save(strTmp)
+
 except:
     print '(OUTPUT folder could not be created.)'
 
