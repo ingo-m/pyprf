@@ -38,15 +38,14 @@ def funcCrtPrfTcMdl(tplVslSpcHighSze,  #noqa
     """
     Create pRF time courses models.
 
-    ...
+    This function creates the pRF time course models from which the best-
+    fitting model for each voxel will be selected.
     """
-    print('------Create pRF time course models')
-
     # Upsampling factor:
     if (tplVslSpcHighSze[0] / varNumX) == (tplVslSpcHighSze[1] / varNumY):
         varFctUp = tplVslSpcHighSze[0] / varNumX  #noqa
     else:
-        print('------ERROR. Dimensions of upsampled visual space do not ' +
+        print('---------ERROR. Dimensions of upsampled visual space do not ' +
               'agree with specified number of pRFs to model.')
 
     # Vector with the x-indicies of the positions in the super-sampled visual
@@ -75,7 +74,7 @@ def funcCrtPrfTcMdl(tplVslSpcHighSze,  #noqa
     # visual angle should be roughly the same (allowing for some rounding error
     # if the visual stimulus was not square):
     if 0.5 < np.absolute((varDgr2PixUpX - varDgr2PixUpY)):
-        print('------ERROR. The ratio of X and Y dimensions in stimulus ' +
+        print('---------ERROR. The ratio of X and Y dimensions in stimulus ' +
               'space (in degrees of visual angle) and the ratio of X and Y ' +
               'dimensions in the upsampled visual space do not agree')
 
@@ -186,6 +185,8 @@ def funcCrtPrfTcMdl(tplVslSpcHighSze,  #noqa
     # Join processes:
     for idxPrc in range(0, varPar):
         lstPrcs[idxPrc].join()
+
+    print('---------Collecting results from parallel processes')
 
     # Put output arrays from parallel process into one big array (where each
     # row corresponds to one model time course, the first column corresponds to

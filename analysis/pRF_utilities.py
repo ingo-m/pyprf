@@ -84,7 +84,7 @@ def funcConvPar(idxPrc, aryPngData, vecHrf, varNumVol, queOut):
     # Each pixel time course is convolved with the HRF separately, because the
     # numpy convolution function can only be used on one-dimensional data.
     # Thus, we have to loop through pixels:
-    for idxPix in range(0, aryPngData[0]):
+    for idxPix in range(0, aryPngData.shape[0]):
 
         # Extract the current pixel time course:
         vecDm = aryPngData[idxPix, :]

@@ -36,8 +36,6 @@ def funcCrtPixMdl(aryPngData,
     was present. In this function, we convolve this boxcar design matrix with
     an HRF model.
     """
-    print('------Create pixel-wise HRF model time courses')
-
     # Create 'canonical' HRF time course model:
     vecHrf = funcHrf(varNumVol, varTr)
 
@@ -50,9 +48,8 @@ def funcCrtPixMdl(aryPngData,
 
     # Reshape png data:
     aryPngData = np.reshape(aryPngData,
-                            [aryPngData.shape[0] * aryPngData.shape[1],
-                             aryPngData[2]]
-                            )
+                            ((aryPngData.shape[0] * aryPngData.shape[1]),
+                             aryPngData.shape[2]))
 
     # Vector with the indicies at which the input data will be separated in
     # order to be chunked up for the parallel processes:
@@ -83,7 +80,7 @@ def funcCrtPixMdl(aryPngData,
     # Empty list for results of parallel processes:
     lstRes = [None] * varPar
 
-    print('------Creating parallel processes')
+    print('---------Creating parallel processes')
 
     # Create processes:
     for idxPrc in range(0, varPar):
@@ -109,7 +106,7 @@ def funcCrtPixMdl(aryPngData,
     for idxPrc in range(0, varPar):
         lstPrcs[idxPrc].join()
 
-    print('------Collecting results from parallel processes')
+    print('---------Collecting results from parallel processes')
 
     # Create list for vectors with results from parallel processes, in order to
     # put the results into the correct order:

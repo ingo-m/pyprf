@@ -117,7 +117,7 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
                     if varCntSts02 == vecStatPrf[varCntSts01]:
 
                         # Prepare status message:
-                        strStsMsg = ('---------Progress: ' +
+                        strStsMsg = ('------------Progress: ' +
                                      str(vecStatPrc[varCntSts01]) +
                                      ' % --- ' +
                                      str(vecStatPrf[varCntSts01]) +

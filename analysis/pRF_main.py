@@ -32,7 +32,7 @@ import multiprocessing as mp
 from scipy.interpolate import griddata
 
 import pRF_config as cfg
-from funcCrtPixMdl import funcCrtPixMdl
+from pRF_crtPixMdl import funcCrtPixMdl
 from pRF_funcFindPrf import funcFindPrf
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
@@ -114,6 +114,8 @@ if cfg.lgcCrteMdl:  #noqa
 
     # *************************************************************************
     # *** Create pixel-wise HRF model time courses
+
+    print('------Create pixel-wise HRF model time courses')
 
     aryPixConv = funcCrtPixMdl(aryPngData,
                                cfg.varNumVol,
@@ -202,6 +204,8 @@ if cfg.lgcCrteMdl:  #noqa
 
     # *************************************************************************
     # *** Create pRF time courses models
+
+    print('------Create pRF time course models')
 
     # The pRF time course models are created using the super-sampled model of
     # the pixel time courses.
