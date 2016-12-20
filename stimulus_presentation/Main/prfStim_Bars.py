@@ -150,7 +150,9 @@ TargetDur = arrays["TargetDuration"]
 
 # If in logging mode, only present stimuli very briefly:
 if lgcLogMde:
-    ExpectedTR = 0.2
+    # Note: If the 'ExpectedTR' is set too low in logging mode, frames are
+    # dropped and the stimuli do not get logged properly.
+    ExpectedTR = 0.5
 # Otherwise, use actual volume TR:
 else:
     ExpectedTR = arrays["TR"]
@@ -311,8 +313,11 @@ def squFlicker():
 
 # %% Logging mode preparations
 if lgcLogMde:
-    # Prepare array for screenshots:
-    aryFrames = np.zeros((PixH, PixW, 3, NrOfVols), dtype=np.int16)
+    # Prepare array for screenshots (one value per pixel per volume; since the
+    # stimuli are greyscale we discard 2nd and 3rd RGB dimension):
+    aryFrames = np.zeros((PixH, PixW, NrOfVols), dtype=np.int16)
+    # Temporary array for single frames (3 values per pixel - RGB):
+    aryRgb = np.zeros((PixH, PixW, 3), dtype=np.int16)
     # Counter for screenshots:
     idxFrame = 0
 
@@ -419,8 +424,14 @@ while clock.getTime() < totalTime:
 
     # %% Save screenshot to array
     if lgcLogMde:
-        print(('+++++Frame: ' + str(idxFrame)))
-        aryFrames[:, :, :, idxFrame] = myWin.getMovieFrame(buffer='front')
+        print(('---Frame '
+              + str(idxFrame)
+              + ' out of '
+              + str(int(NrOfVols))))
+        # We only save one value per pixel per volume (because the stimuli are
+        # greyscale we discard 2nd and 3rd RGB dimension):
+        aryRgb[:, :, :] = myWin.getMovieFrame(buffer='front')
+        aryFrames[:, :, idxFrame] = np.copy(aryRgb[:, :, 0])
         idxFrame = idxFrame + 1
 
 logging.data('EndOfRun' + unicode(expInfo['run']) + '\n')
@@ -460,10 +471,6 @@ resultText = ('You have detected '
               + str(len(TargetOnsetinSec))
               + ' targets.')
 
-print('resultText')
-print(resultText)
-print('resultText')
-
 print resultText
 logging.data(resultText)
 # also display a motivational slogan
@@ -486,9 +493,6 @@ core.wait(5)
 # %%
 """CLOSE DISPLAY"""
 myWin.close()
-
-# %% Save stimulus log:
-
 
 # %%
 """SAVE DATA"""
@@ -527,10 +531,28 @@ try:
 
         # Save frames as png:
         for idxFrame in range(0, NrOfVols):
+
             # Create string for screenshot filename:
             strTmp = (strPthFrm + 'frame_' + str(idxFrame) + '.png')
+
+            # In order to save frames as png, we have to recreate the third
+            # dimension of the array (RGB). (We only saved one value per pixel
+            # beforehands because the array gets excessively large with three
+            # values per pixel).
+            aryRgb = np.array((aryFrames[:, :, idxFrame],
+                               aryFrames[:, :, idxFrame],
+                               aryFrames[:, :, idxFrame]),
+                              dtype=np.int16)
+            aryRgb = np.swapaxes(aryRgb, 0, 1)
+            aryRgb = np.swapaxes(aryRgb, 1, 2)
+
+            print(('---Frame '
+                  + str(idxFrame)
+                  + ' out of '
+                  + str(int(NrOfVols))))
+
             # Save stimulus frames as png files:
-            scipy.misc.toimage(aryFrames[:, :, :, idxFrame],
+            scipy.misc.toimage(aryRgb,
                                cmin=0.0,
                                cmax=255.0).save(strTmp)
 
