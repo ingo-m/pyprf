@@ -72,21 +72,38 @@ def funcHrf(varNumVol, varTr):
     return vecHrf
 
 
-def funcConvPar(vecDm, vecHrf, varNumVol, idxX, idxY, queOut):
-    """Convolution of pixel-wise 'design matrix' with HRF model."""
-    # In order to avoid an artefact at the end of the time series, we have to
-    # concatenate an empty array to both the design matrix and the HRF model
-    # before convolution.
-    vecZeros = np.zeros([100, 1]).flatten()
-    vecDm = np.concatenate((vecDm, vecZeros))
-    vecHrf = np.concatenate((vecHrf, vecZeros))
+def funcConvPar(idxPrc, aryPngData, vecHrf, varNumVol, queOut):
+    """
+    Parallelised convolution of pixel-wise 'design matrix'.
 
-    # Convolve design matrix with HRF model:
-    vecConv = np.convolve(vecDm, vecHrf, mode='full')[0:varNumVol]
+    The pixel-wise 'design matrices' are convolved with an HRF model.
+    """
+    # Array for function output (convolved pixel-wise time courses):
+    aryPixConv = np.zeros(np.shape(aryPngData))
 
-    # Create list containing the convolved design matrix, and the X and Y pixel
-    # values to which this design matrix corresponds to:
-    lstOut = [idxX, idxY, vecConv]
+    # Each pixel time course is convolved with the HRF separately, because the
+    # numpy convolution function can only be used on one-dimensional data.
+    # Thus, we have to loop through pixels:
+    for idxPix in range(0, aryPngData[0]):
+
+        # Extract the current pixel time course:
+        vecDm = aryPngData[idxPix, :]
+
+        # In order to avoid an artefact at the end of the time series, we have
+        # to concatenate an empty array to both the design matrix and the HRF
+        # model before convolution.
+        vecZeros = np.zeros([100, 1]).flatten()
+        vecDm = np.concatenate((vecDm, vecZeros))
+        vecHrf = np.concatenate((vecHrf, vecZeros))
+
+        # Convolve design matrix with HRF model:
+        aryPixConv[idxPix, :] = np.convolve(vecDm,
+                                            vecHrf,
+                                            mode='full')[0:varNumVol]
+
+    # Create list containing the convolved pixel-wise timecourses, and the
+    # process ID:
+    lstOut = [idxPrc, aryPixConv]
 
     # Put output to queue:
     queOut.put(lstOut)
