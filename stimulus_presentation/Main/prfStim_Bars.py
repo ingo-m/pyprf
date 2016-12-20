@@ -109,11 +109,8 @@ logging.console.setLevel(logging.WARNING)  # set console to receive warnings
 # set monitor information:
 distanceMon = 99  # [99] in scanner
 widthMon = 30  # [30] in scanner
-#PixW = 1920.0  # [1920.0] in scanner
-#PixH = 1200.0  # [1200.0] in scanner
-
-PixW = 1000.0  # [1920.0] in scanner
-PixH = 800.0  # [1200.0] in scanner
+PixW = 1920.0  # [1920.0] in scanner
+PixH = 1200.0  # [1200.0] in scanner
 
 moni = monitors.Monitor('testMonitor', width=widthMon, distance=distanceMon)
 moni.setSizePix([PixW, PixH])  # [1920.0, 1080.0] in psychoph lab
@@ -132,7 +129,7 @@ myWin = visual.Window(
     winType='pyglet',  # winType : None, ‘pyglet’, ‘pygame’
     allowGUI=False,
     allowStencil=True,
-    fullscr=False, # ------------------------ True,  # for psychoph lab: fullscr = True
+    fullscr=True,  # for psychoph lab: fullscr = True
     monitor=moni,
     color=[0, 0, 0],
     colorSpace='rgb',
@@ -153,7 +150,7 @@ TargetDur = arrays["TargetDuration"]
 
 # If in logging mode, only present stimuli very briefly:
 if lgcLogMde:
-    ExpectedTR = 0.1
+    ExpectedTR = 0.2
 # Otherwise, use actual volume TR:
 else:
     ExpectedTR = arrays["TR"]
@@ -508,7 +505,6 @@ try:
     # save dictionary as a pickle in outpu folder
     misc.toFile(outFileName + '.pickle', output)
     print 'Output Data saved as: ' + outFileName + '.pickle'
-    print "***"
 
     # Save screenshots (logging mode)
     if lgcLogMde:
@@ -532,12 +528,7 @@ try:
         # Save frames as png:
         for idxFrame in range(0, NrOfVols):
             # Create string for screenshot filename:
-            if i < 10:
-                    strTmp = (strPthFrm + 'frame_00' + str(idxFrame) + '.png')
-            elif i < 100:
-                    strTmp = (strPthFrm + 'frame_0' + str(idxFrame) + '.png')
-            else:
-                strTmp = (strPthFrm + 'frame_' + str(idxFrame) + '.png')
+            strTmp = (strPthFrm + 'frame_' + str(idxFrame) + '.png')
             # Save stimulus frames as png files:
             scipy.misc.toimage(aryFrames[:, :, :, idxFrame],
                                cmin=0.0,
