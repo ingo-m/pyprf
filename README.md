@@ -1,5 +1,5 @@
 # py_pRF_mapping (work in progress)
-A free & open python tool for population receptive field analysis.
+A free & open source python tool for population receptive field analysis.
 
 ## Dependencies
 [**Python 2.7**](https://www.python.org/download/releases/2.7/)
