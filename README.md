@@ -2,12 +2,14 @@
 A free & open python tool for population receptive field analysis.
 
 ## Dependencies
+[**Python 2.7**](https://www.python.org/download/releases/2.7/)
 
-- [Python 2.7](https://www.python.org/download/releases/2.7/)
-- [NumPy](http://www.numpy.org/)
-- [SciPy](http://www.scipy.org/)
-- [NiBabel](http://nipy.org/nibabel/)
-- Optional: [Cython](http://cython.org/) for considerably faster performance
+| Package                                                       | Tested version |
+|---------------------------------------------------------------|----------------|
+| [NumPy](http://www.numpy.org/)                                | ?              |
+| [SciPy](http://www.scipy.org/)                                | ?              |
+| [NiBabel](http://nipy.org/nibabel/)                           | ?              |
+| [Cython](http://cython.org/) (*optional*, faster computations)| ?              |
 
 ## How to use
 
