@@ -72,13 +72,13 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-strPathNiiFunc = '/home/john/Desktop/pRF_test/func_07.nii.gz'  #noqa
+strPathNiiFunc = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/func_regAcrssRuns_cube/func_07.nii.gz'  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Desktop/pRF_test/crudebrainmask.nii.gz'  #noqa
+strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/retinotopy/mask/brainmask.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/home/john/Desktop/pRF_test/pRF_results/pRF_results'  #noqa
+strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/retinotopy/pRF_results/pRF_results'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
@@ -97,10 +97,10 @@ if lgcCrteMdl:
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/home/john/Desktop/pRF_test/pRF_stimuli/frame'  #noqa
+    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/retinotopy/pRF_stimuli/frame'  #noqa
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/home/john/Desktop/pRF_test/pRF_results/pRF_results/pRF_model_tc'  #noqa
+    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa
 
 else:
     # If we use existing pRF time course models, the path to the respective

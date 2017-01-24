@@ -41,7 +41,7 @@ import scipy.misc
 # directly be loaded into the py_pRF_mapping pipepline.
 
 # Logging mode?
-lgcLogMde = True
+lgcLogMde = False
 
 # %% set checkerbar sptial and temporal frequency
 # define reversal frequency
@@ -74,7 +74,7 @@ os.chdir(str_path_parent_up)
 
 # Name and create specific subject folder
 subjFolderName = str_path_parent_up + os.path.sep + \
-    'SubjData_%s' % (expInfo['participant'])
+    'Log_%s' % (expInfo['participant'])
 if not os.path.isdir(subjFolderName):
     os.makedirs(subjFolderName)
 
@@ -328,15 +328,17 @@ i = 0
 # give the system time to settle
 core.wait(1)
 
-# wait for scanner trigger
-triggerText.draw()
-myWin.flip()
-event.waitKeys(keyList=['5'], timeStamped=False)
+if not(lgcLogMde):
+    # wait for scanner trigger
+    triggerText.draw()
+    myWin.flip()
+    event.waitKeys(keyList=['5'], timeStamped=False)
+
 # reset clocks
 clock.reset()
 logging.data('StartOfRun' + unicode(expInfo['run']))
 
-while clock.getTime() < totalTime:
+while clock.getTime() < totalTime:  #noqa
 
     # get key for motion direction
     keyPos = Conditions[i, 0]
@@ -527,10 +529,11 @@ try:
 
         # Save stimulus frame array to npy file:
         aryFrames = aryFrames.astype(np.int16)
-        np.save((strPthFrm + 'ary_stimulus_frames'), aryFrames)
+        np.save((strPthFrm + 'stimFramesRun' + expInfo['run']), aryFrames)
 
         # Save frames as png:
-        for idxFrame in range(0, NrOfVols):
+        # for idxFrame in range(0, NrOfVols):
+        if False:
 
             # Create string for screenshot filename:
             strTmp = (strPthFrm + 'frame_' + str(idxFrame) + '.png')
