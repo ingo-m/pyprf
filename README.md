@@ -1,4 +1,4 @@
-# py_pRF_mapping (work in progress)
+## py_pRF_mapping (work in progress)
 A free & open source python tool for population receptive field analysis.
 
 This library consist of two parts:
@@ -33,9 +33,9 @@ Credits: Marian Schneider.
 
 ## How to use
 
-# Clone or download the repository.
+(1) Clone or download the repository.
 
-# Stimulus presentation:
+(2) Stimulus presentation:
 
 You can call the presentation script from command line:
 
@@ -48,7 +48,7 @@ After starting the script, it will wait for a trigger signal from the fMRI scann
 
 You can interrupt the presentation by pressing ```ESC```.
 
-# Analysis:
+(3) Analysis:
 
 In order to prepare the analysis, you need to run the stimulus presentation script with in 'logging mode' in order to create a log of the stimulus presentation. Open ```~/py_pRF_mapping/stimulus_presentation/Main/prfStim_Bars.py``` and set ```lgcLogMde = True```.
 
