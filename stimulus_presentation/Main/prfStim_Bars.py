@@ -3,7 +3,7 @@
 Stimulus presentation for pRF mapping.
 
 The purpose of this script is to present retinotopic mapping stimuli using
-psychopy.
+Psychopy.
 """
 
 # Part of py_pRF_mapping library

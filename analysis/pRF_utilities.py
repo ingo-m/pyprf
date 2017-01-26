@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""pRF finding function definitions"""
+"""pRF finding function definitions."""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Compile cython function for pRF finding.
-   Call this file with the following bash command:
-   python pRF_setup.py build_ext --inplace
+
+Call this file with the following bash command:
+    python pRF_setup.py build_ext --inplace
+
 """
 
 # Part of py_pRF_mapping library

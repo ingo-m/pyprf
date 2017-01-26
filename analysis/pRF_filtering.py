@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Main function for preprocessing of data & models"""
+"""Main function for preprocessing of data & models."""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -482,4 +482,4 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
     # *************************************************************************
     # Return preprocessed data:
     return aryFunc, aryPrfTc
-   # **************************************************************************
+    # **************************************************************************

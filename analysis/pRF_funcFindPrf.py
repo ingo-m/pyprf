@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Main function for pRF finding"""
+"""Main function for pRF finding."""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -24,7 +24,8 @@ if cfg.lgcCython:
 
 
 def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
-                vecMdlYpos, vecMdlSd, aryFuncChnk, aryPrfTc, lgcCython, queOut):
+                vecMdlYpos, vecMdlSd, aryFuncChnk, aryPrfTc, lgcCython,
+                queOut):
     """Find the best pRF model for voxel time course."""
     # Number of voxels to be fitted in this chunk:
     varNumVoxChnk = aryFuncChnk.shape[0]
