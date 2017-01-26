@@ -1,9 +1,11 @@
-## py_pRF_mapping (work in progress)
+# py_pRF_mapping (work in progress)
 A free & open source *python tool for population receptive field analysis* consisting of two main parts:
 
-**1. Stimulus presentation:** A tool for presentation of visual stimuli during a retinotopic mapping fMRI experiment. The stimuli consist of bars at different locations and orientation, filled with flickering black and white chequerboards. There is a central fixation dot. It is important that the participant maintain fixation throughout the experiment. Therefore, we included a central fixation task. The fixation dot sometimes changes its colour, and the participant's task is to press a button (number '1') in response. At the end of the presentation, feedback is provided as to how many targets the participant detected.
+### 1. Stimulus presentation  
+A tool for presentation of visual stimuli during a retinotopic mapping fMRI experiment. The stimuli consist of bars at different locations and orientation, filled with flickering black and white chequerboards. There is a central fixation dot. It is important that the participant maintain fixation throughout the experiment. Therefore, we included a central fixation task. The fixation dot sometimes changes its colour, and the participant's task is to press a button (number '1') in response. At the end of the presentation, feedback is provided as to how many targets the participant detected.
 
-**2. Data analysis:** Analysis tools for fMRI data from retinotopic mapping experiment. A population receptive field (pRF) is estimated for each voxel (see [1]). The pRF model used here is a 2D Gaussian; the free parameters are the Gaussian's x- and y-position, and its width. This rather simple pRF model is best suited for early visual cortex (higher cortical areas may require more complex models).
+### 2. Data analysis  
+Analysis tools for fMRI data from retinotopic mapping experiment. A population receptive field (pRF) is estimated for each voxel (see [1]). The pRF model used here is a 2D Gaussian; the free parameters are the Gaussian's x- and y-position, and its width. This rather simple pRF model is best suited for early visual cortex (higher cortical areas may require more complex models).
 
 ## Dependencies
 [**Python 2.7**](https://www.python.org/download/releases/2.7/)
