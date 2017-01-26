@@ -28,6 +28,9 @@ Analysis tools for fMRI data from retinotopic mapping experiment. A population r
 ### Hardware specifications
 ...TODO...
 
+## Support
+Please use the [github issues](https://github.com/ingo-m/py_pRF_mapping/issues) for questions or bug reports.
+
 ## How to use
 
 1. Clone or download the repository.
