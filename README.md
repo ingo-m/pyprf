@@ -1,4 +1,4 @@
-# py_pRF_mapping (work in progress)
+# py_pRF_mapping (...work in progress...)
 A free & open source *python tool for population receptive field analysis* consisting of two main parts:
 
 ### 1. Stimulus presentation  
@@ -43,16 +43,16 @@ You can call the presentation script from command line:
 python ~/py_pRF_mapping/stimulus_presentation/Main/prfStim_Bars.py
 ```
 
-Alternatively, you could start the Psychopy GUI and run the script form there (see [[Psychopy documentation](http://www.Psychopy.org/documentation.html) for futher details).  
-When starting the script, a GUI will appear, you can enter the *Participant ID* and *run number*. By default, the folder ```~/py_pRF_mapping/stimulus_presentation/Conditions/``` contains pseudo-randomised design matrices for 3 runs. In order to use these, enter '01', '02', or '03' in the respective field in the GUI. If you would like to simply run the presentation one time, you can leave this setting at its default value ('01').
+Alternatively, you could start the Psychopy GUI and run the script form there (see [Psychopy documentation](http://www.Psychopy.org/documentation.html) for futher details).  
+After starting the script you can enter *Participant ID* and *run number* in the general user interface (GUI). By default, the folder ```~/py_pRF_mapping/stimulus_presentation/Conditions/``` contains pseudo-randomised design matrices for 3 runs. In order to use these, enter '01', '02', or '03' in the respective field in the GUI. *If you would like to simply run the presentation one time, you can leave this setting at its default value ('01').*
 
-After starting the script, it will wait for a trigger signal from the fMRI scanner (default: number ```5```).
+After starting the script, it will wait for a trigger signal from the fMRI scanner (default: keyboard button number ```5```).
 
 You can interrupt the presentation by pressing ```ESC```.
 
 3. Data analysis:
 
-In order to prepare the analysis, you need to run the stimulus presentation script with in 'logging mode' in order to create a log of the stimulus presentation. Open ```~/py_pRF_mapping/stimulus_presentation/Main/prfStim_Bars.py``` and set ```lgcLogMde = True```.
+In order to prepare the analysis, you need to run the stimulus presentation script with in *logging mode* in order to create a log of the stimulus presentation. Open ```~/py_pRF_mapping/stimulus_presentation/Main/prfStim_Bars.py``` in a text editor and set ```lgcLogMde = True```.
 
 Now run the script either from command line or through the Psychoy GUI.
 
