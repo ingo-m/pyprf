@@ -81,4 +81,4 @@ This application is based on the following work:
 Please use the [github issues](https://github.com/ingo-m/py_pRF_mapping/issues) for questions or bug reports.
 
 ## License
-The project is licensed under [GNU Geneal Public License Version 3](http://www.gnu.org/licenses/gpl.html).
+The project is licensed under [GNU General Public License Version 3](http://www.gnu.org/licenses/gpl.html).
