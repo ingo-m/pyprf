@@ -48,6 +48,9 @@ lgcLogMde = False
 tempCyc = 4  # how many bw cycles per s?
 # define sptial frequency
 spatCyc = 1.5
+# set the size of the entire area that the bars should cover [in pixels]
+pixCover = 1200  # 1200 is full screen in these settings
+
 
 # %%
 """ SAVING and LOGGING """
@@ -114,6 +117,7 @@ PixH = 1200.0  # [1200.0] in scanner
 
 moni = monitors.Monitor('testMonitor', width=widthMon, distance=distanceMon)
 moni.setSizePix([PixW, PixH])  # [1920.0, 1080.0] in psychoph lab
+degCover = misc.pix2deg(pixCover, moni)
 
 # log monitor info
 logFile.write('MonitorDistance=' + unicode(distanceMon) + 'cm' + '\n')
@@ -163,9 +167,9 @@ print('TARGETS: ')
 print TargetOnsetinSec
 
 # calculate
-Offset = PixH/NrOfSteps/2
+Offset = pixCover/NrOfSteps/2
 aryOri = [0, 45, 90, 135, 180, 225, 270, 315]
-distances = np.linspace(-PixH/2+Offset, PixH/2-Offset, NrOfSteps)
+distances = np.linspace(-pixCover/2+Offset, pixCover/2-Offset, NrOfSteps)
 
 aryPosPix = []
 for ori in [90, 45, 180, 135, 270, 225, 0, 315]:
@@ -190,8 +194,8 @@ grating = visual.GratingStim(
     color=[1.0, 1.0, 1.0],
     colorSpace='rgb',
     opacity=1.0,
-    size=(2*PixW, PixH/NrOfSteps),
-    sf=(spatCyc/(PixH/NrOfSteps), spatCyc/(PixH/NrOfSteps)),
+    size=(2*PixW, pixCover/NrOfSteps),
+    sf=(spatCyc/(pixCover/NrOfSteps), spatCyc/(pixCover/NrOfSteps)),
     ori=0,
     autoLog=False,
     interpolate=False,
@@ -264,8 +268,8 @@ targetText = visual.TextStim(
     color='white',
     height=30)
 
-vertices = [(PixH/2, PixH/2), (-PixH/2, PixH/2),
-            (-PixH/2, -PixH/2), (PixH/2, -PixH/2)]
+vertices = [(pixCover/2, pixCover/2), (-pixCover/2, pixCover/2),
+            (-pixCover/2, -pixCover/2), (pixCover/2, -pixCover/2)]
 aperture = visual.Aperture(myWin,
                            autoLog=False,
                            shape=vertices)  # try shape='square'
@@ -338,7 +342,7 @@ if not(lgcLogMde):
 clock.reset()
 logging.data('StartOfRun' + unicode(expInfo['run']))
 
-while clock.getTime() < totalTime:  #noqa
+while clock.getTime() < totalTime:  # noqa
 
     # get key for motion direction
     keyPos = Conditions[i, 0]
@@ -356,15 +360,16 @@ while clock.getTime() < totalTime:  #noqa
         aperture.enabled = True
         # draw fixation grid (circles and lines)
         if not lgcLogMde:
-            Circle.setSize((1, 1))
+            Circle.setSize((degCover*0.2, degCover*0.2))
             Circle.draw()
-            Circle.setSize((2, 2))
+            Circle.setSize((degCover*0.4, degCover*0.4))
             Circle.draw()
-            Circle.setSize((3, 3))
+            Circle.setSize((degCover*0.6, degCover*0.6))
             Circle.draw()
-            Circle.setSize((4, 4))
+            Circle.setSize((degCover*0.8, degCover*0.8))
             Circle.draw()
-            Circle.setSize((5, 5))
+            # subtract 0.1 here so that ring is not exactly at outer border
+            Circle.setSize((degCover-0.1, degCover-0.1))
             Circle.draw()
             Line.setOri(0)
             Line.draw()
