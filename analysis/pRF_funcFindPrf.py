@@ -23,7 +23,7 @@ if cfg.lgcCython:
     from pRF_cython_leastsquares import funcCyLsq
 
 
-def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
+def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                 vecMdlYpos, vecMdlSd, aryFuncChnk, aryPrfTc, lgcCython,
                 queOut):
     """Find the best pRF model for voxel time course."""
@@ -54,7 +54,7 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,
     # Prepare data for cython (i.e. accelerated) least squares finding:
     if lgcCython:
         # Instead of fitting a constant term, we subtract the mean from the
-        # data and from the model ("FSL style") First, we subtract the mean
+        # data and from the model ("FSL style"). First, we subtract the mean
         # over time from the data:
         aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
         aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[0, None])
