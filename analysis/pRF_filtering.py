@@ -24,7 +24,7 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.filters import gaussian_filter1d
 
 
-def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
+def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,  #noqa
                   varIntCtf, varPar):
     """
     Preprocess fMRI data and pRF time course models for a pRF analysis.
@@ -444,10 +444,42 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,
     # volumes because this function is very memory intense):
     if 0.0 < varSdSmthSpt:
         print('---------Spatial smoothing on fMRI data')
-        aryFunc = funcParVol(funcSmthSpt,
-                             aryFunc,
-                             varSdSmthSpt,
-                             int(varPar * 0.5))
+
+        # Reduced parallelisation:
+        #varParRed = int(varPar * 0.2)
+        # Minimum is one:
+        #if varParRed < 1:
+        #    varParRed = 1
+        #print('------------Reduced parallelisation, number of threads: '
+        #      + str(varParRed))
+
+        #aryFunc = funcParVol(funcSmthSpt,
+        #                     aryFunc,
+        #                     varSdSmthSpt,
+        #                     varParRed)
+
+
+
+
+        # Number of time points in this chunk:
+        varNumVol = aryFunc.shape[3]
+
+        # Loop through volumes:
+        for idxVol in range(0, varNumVol):
+
+            print('------------Volume: ' + str(idxVol))
+
+            aryFunc[:, :, :, idxVol] = gaussian_filter(
+                aryFunc[:, :, :, idxVol],
+                varSdSmthSpt,
+                order=0,
+                mode='nearest',
+                truncate=4.0)
+
+
+
+
+
 
     # Perform temporal smoothing on fMRI data:
     if 0.0 < varSdSmthTmp:

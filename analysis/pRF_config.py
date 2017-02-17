@@ -37,18 +37,22 @@ varPrfStdMin = 0.20
 varPrfStdMax = 7.0
 
 # Volume TR of input data [s]:
-varTr = 2.940
+# varTr = 2.940
+varTr = 2.0
 
 # Voxel resolution of the fMRI data [mm]:
-varVoxRes = 0.7
+# varVoxRes = 0.7
+varVoxRes = 0.9
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 2.940
+# varSdSmthTmp = 2.940
+varSdSmthTmp = 2.0
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.7
+# varSdSmthSpt = 0.7
+varSdSmthSpt = 0.9
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 400
@@ -72,20 +76,20 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-strPathNiiFunc = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/func_regAcrssRuns_cube/func_07.nii.gz'  #noqa
+strPathNiiFunc = '/home/john/Desktop/20160215/nii/func_reg/func_pRF.nii.gz'  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/retinotopy/mask/brainmask.nii.gz'  #noqa
+strPathNiiMask = '/home/john/Desktop/20160215/nii/retinotopy/mask/brainmask.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/retinotopy/pRF_results/pRF_results'  #noqa
+strPathOut = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_results'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
 lgcCython = True
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
@@ -97,12 +101,12 @@ if lgcCrteMdl:
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/retinotopy/pRF_stimuli/frame'  #noqa
+    strPathPng = '/home/john/Desktop/20160215/nii/retinotopy/pRF_stimuli/frame'  #noqa
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/04_ParCon/20161212_01/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa
+    strPathMdl = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_model_tc'  #noqa
 
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '.npy'
+    strPathMdl = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_model_tc.npy'  #noqa

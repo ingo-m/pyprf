@@ -153,8 +153,8 @@ if cfg.lgcCrteMdl:  #noqa
 
         # The following array describes the coordinates of the pixels in the
         # flattened array (i.e. "vecOrigPixVal"). In other words, these are the
-        # row and column coordinates of the original pizel values.
-        aryOrixPixCoo = np.zeros([int(cfg.tplPngSize[0] * cfg.tplPngSize[1]),
+        # row and column coordinates of the original pixel values.
+        aryOrigPixCoo = np.zeros([int(cfg.tplPngSize[0] * cfg.tplPngSize[1]),
                                   2])
 
         # Range for the coordinates:
@@ -167,8 +167,8 @@ if cfg.lgcCrteMdl:  #noqa
         vecCooY = np.tile(vecRange, cfg.tplPngSize[1])
 
         # Put the pixel coordinates into the respective array:
-        aryOrixPixCoo[:, 0] = vecCooX
-        aryOrixPixCoo[:, 1] = vecCooY
+        aryOrigPixCoo[:, 0] = vecCooX
+        aryOrigPixCoo[:, 1] = vecCooY
 
         # The following vector will contain the actual original pixel values:
         # vecOrigPixVal = np.zeros([1,
@@ -193,7 +193,7 @@ if cfg.lgcCrteMdl:  #noqa
                                             0:cfg.tplPngSize[1]:varStpSzeY]
 
         # The actual resampling:
-        aryResampled = griddata(aryOrixPixCoo,
+        aryResampled = griddata(aryOrigPixCoo,
                                 vecOrigPixVal,
                                 (aryPixGridX, aryPixGridY),
                                 method='nearest')
