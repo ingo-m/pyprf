@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 # Number of x-positions to model:
 varNumX = 40
 # Number of y-positions to model:
@@ -37,22 +36,18 @@ varPrfStdMin = 0.20
 varPrfStdMax = 7.0
 
 # Volume TR of input data [s]:
-# varTr = 2.940
-varTr = 2.0
+varTr = 2.940
 
 # Voxel resolution of the fMRI data [mm]:
-# varVoxRes = 0.7
-varVoxRes = 0.9
+varVoxRes = 0.7
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-# varSdSmthTmp = 2.940
-varSdSmthTmp = 2.0
+varSdSmthTmp = 2.940
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-# varSdSmthSpt = 0.7
-varSdSmthSpt = 0.9
+varSdSmthSpt = 0.7
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 400
@@ -82,14 +77,14 @@ strPathNiiFunc = '/home/john/Desktop/20160215/nii/func_reg/func_pRF.nii.gz'  #no
 strPathNiiMask = '/home/john/Desktop/20160215/nii/retinotopy/mask/brainmask.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_results'  #noqa
+strPathOut = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results_highdef/pRF_results'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
 lgcCython = True
 
 # Create pRF time course models?
-lgcCrteMdl = False
+lgcCrteMdl = True
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
@@ -104,9 +99,9 @@ if lgcCrteMdl:
     strPathPng = '/home/john/Desktop/20160215/nii/retinotopy/pRF_stimuli/frame'  #noqa
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_model_tc'  #noqa
+    strPathMdl = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results_highdef/pRF_model_tc'  #noqa
 
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_model_tc.npy'  #noqa
+    strPathMdl = '.npy'  #noqa

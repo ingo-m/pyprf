@@ -445,21 +445,20 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,  #noqa
     if 0.0 < varSdSmthSpt:
         print('---------Spatial smoothing on fMRI data')
 
-        # Reduced parallelisation:
-        #varParRed = int(varPar * 0.2)
+        # (A) Reduced parallelisation:
+        # varParRed = int(varPar * 0.2)
         # Minimum is one:
-        #if varParRed < 1:
-        #    varParRed = 1
-        #print('------------Reduced parallelisation, number of threads: '
+        # if varParRed < 1:
+        #     varParRed = 1
+        # print('------------Reduced parallelisation, number of threads: '
         #      + str(varParRed))
 
-        #aryFunc = funcParVol(funcSmthSpt,
-        #                     aryFunc,
-        #                     varSdSmthSpt,
-        #                     varParRed)
+        # aryFunc = funcParVol(funcSmthSpt,
+        #                      aryFunc,
+        #                      varSdSmthSpt,
+        #                      varParRed)
 
-
-
+        # (B) No parallelisation:
 
         # Number of time points in this chunk:
         varNumVol = aryFunc.shape[3]
@@ -475,11 +474,6 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,  #noqa
                 order=0,
                 mode='nearest',
                 truncate=4.0)
-
-
-
-
-
 
     # Perform temporal smoothing on fMRI data:
     if 0.0 < varSdSmthTmp:
