@@ -1,4 +1,4 @@
-"""Static pRF mapping experiment parameter definition."""
+"""Motion pRF mapping experiment parameter definitions."""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -21,7 +21,7 @@ varNumX = 40
 # Number of y-positions to model:
 varNumY = 40
 # Number of pRF sizes to model:
-varNumPrfSizes = 40
+varNumPrfSizes = 60
 
 # Extend of visual space from centre of the screen (i.e. from the fixation
 # point) [degrees of visual angle]:
@@ -33,24 +33,24 @@ varExtYmax = 5.19
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
 varPrfStdMin = 0.20
-varPrfStdMax = 7.0
+varPrfStdMax = 16.0
 
 # Volume TR of input data [s]:
-varTr = 2.940
+varTr = 2.832
 
 # Voxel resolution of the fMRI data [mm]:
-varVoxRes = 0.7
+varVoxRes = 0.8
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 2.940
+varSdSmthTmp = 2.832
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.7
+varSdSmthSpt = 0.4
 
 # Number of fMRI volumes and png files to load:
-varNumVol = 400
+varNumVol = 4 * 172
 
 # Intensity cutoff value for fMRI time series. Voxels with a mean intensity
 # lower than the value specified here are not included in the pRF model finding
@@ -79,6 +79,17 @@ strPathNiiMask = '/home/john/Desktop/20160215/nii/retinotopy/mask/brainmask.nii.
 # Output basename:
 strPathOut = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results_highdef/pRF_results'  #noqa
 
+# List with paths of pickles with information about experimental design (order
+# of stimuli):
+lstDsgn = ['/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run01.pickle',
+           '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run02.pickle',
+           '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run03.pickle',
+           '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run04.pickle']
+
+# Path to npz file containing numpy array that defines stimulus shape, created
+# with ~/py_pRF_motion/stimuli/Code/CreateMasks.py
+strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskCircleBar.npz'
+
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
 lgcCython = True
@@ -96,10 +107,10 @@ if lgcCrteMdl:
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/home/john/Desktop/20160215/nii/retinotopy/pRF_stimuli/frame'  #noqa
+    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_stimuli/frame'  #noqa
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results_highdef/pRF_model_tc'  #noqa
+    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa
 
 else:
     # If we use existing pRF time course models, the path to the respective

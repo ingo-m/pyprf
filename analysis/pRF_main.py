@@ -279,7 +279,7 @@ if lgcDim:
     aryFunc = niiFunc.get_data()
     aryFunc = np.array(aryFunc)
 
-    # Load mask (to restrict model fining):
+    # Load mask (to restrict model fitting):
     niiMask = nb.load(cfg.strPathNiiMask)
     # Get nii header of mask:
     hdrMsk = niiMask.header
