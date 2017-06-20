@@ -72,6 +72,18 @@ Run the analysis:
 python ~/py_pRF_mapping/analysis/pRF_main.py
 ```
 
+## Contributions
+
+For contributors, we suggest the following procedure:
+
+* Create your own branch (in the web interface, or by `git checkout -b new_branch`)
+    * If you create the branch in the web interface, pull changes to your local repository (`git pull`)
+* Change to new branch: `git checkout new_branch`
+* Make changes
+* Commit changes to new branch (`git add .` and `git commit -m`)
+* Push changes to new branch (`git push origin new_branch`)
+* Create a pull request using the web interface
+
 ## References
 This application is based on the following work:
 
