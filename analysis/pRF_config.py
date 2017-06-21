@@ -71,7 +71,7 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-strPathNiiFunc = '/home/john/Desktop/20160215/nii/func_reg/func_pRF.nii.gz'  #noqa
+lstPathNiiFunc = ['/home/john/Desktop/20160215/nii/func_reg/func_pRF.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
 strPathNiiMask = '/home/john/Desktop/20160215/nii/retinotopy/mask/brainmask.nii.gz'  #noqa
@@ -89,9 +89,6 @@ lgcCrteMdl = True
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
     # be provided:
-
-    # Size of png files (pixel*pixel):
-    tplPngSize = (300, 300)
 
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the

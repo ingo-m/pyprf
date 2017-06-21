@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Find best fitting model time courses for population receptive fields."""
+"""Find best fitting model time courses for population receptive fields.
+
+Use `import pRF_config as cfg` for static pRF analysis.
+
+Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
+"""
 
 
 # Part of py_pRF_mapping library
@@ -30,8 +35,9 @@ import nibabel as nb
 import time
 import multiprocessing as mp
 from scipy.interpolate import griddata
+from PIL import Image
 
-import pRF_config as cfg
+import pRF_config_motion as cfg
 from pRF_crtPixMdl import funcCrtPixMdl
 from pRF_funcFindPrf import funcFindPrf
 from pRF_filtering import funcPrfPrePrc
@@ -63,7 +69,7 @@ varTme01 = time.time()
 # *** Preparations
 
 # Convert preprocessing parameters (for temporal and spatial smoothing) from
-# SI units (i.e. [s] and [mm]) into units of data array:
+# SI units (i.e. [s] and [mm]) into units of data array (volumes and voxels):
 cfg.varSdSmthTmp = np.divide(cfg.varSdSmthTmp, cfg.varTr)
 cfg.varSdSmthSpt = np.divide(cfg.varSdSmthSpt, cfg.varVoxRes)
 
@@ -87,22 +93,21 @@ if cfg.lgcCrteMdl:  #noqa
     # Create list of png files to load:
     lstPngPaths = [None] * cfg.varNumVol
     for idx01 in range(0, cfg.varNumVol):
-        if idx01 < 9:
-            lstPngPaths[idx01] = (cfg.strPathPng + '00' + str(idx01 + 1) +
-                                  '.png')
-        elif idx01 < 99:
-            lstPngPaths[idx01] = (cfg.strPathPng + '0' + str(idx01 + 1) +
-                                  '.png')
-        elif idx01 < 999:
-            lstPngPaths[idx01] = (cfg.strPathPng + str(idx01 + 1) + '.png')
+        lstPngPaths[idx01] = (cfg.strPathPng
+                              + str(idx01 + 1).zfill(3)
+                              + '.png')
+
+    # Open first image to check PNG size:
+    objIm = Image.open(lstPngPaths[0])
+    tplPngSize = objIm.size
 
     # Load png files. The png data will be saved in a numpy array of the
     # following order: aryPngData[x-pixel, y-pixel, PngNumber]. The
     # sp.misc.imread function actually contains three values per pixel (RGB),
     # but since the stimuli are black-and-white, any one of these is sufficient
     # and we discard the others.
-    aryPngData = np.zeros((cfg.tplPngSize[0],
-                           cfg.tplPngSize[1],
+    aryPngData = np.zeros((tplPngSize[0],
+                           tplPngSize[1],
                            cfg.varNumVol))
     for idx01 in range(0, cfg.varNumVol):
         # aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :, 0]
@@ -120,7 +125,7 @@ if cfg.lgcCrteMdl:  #noqa
     aryPixConv = funcCrtPixMdl(aryPngData,
                                cfg.varNumVol,
                                cfg.varTr,
-                               cfg.tplPngSize,
+                               tplPngSize,
                                cfg.varPar)
 
     # # Debugging feature:
@@ -154,17 +159,17 @@ if cfg.lgcCrteMdl:  #noqa
         # The following array describes the coordinates of the pixels in the
         # flattened array (i.e. "vecOrigPixVal"). In other words, these are the
         # row and column coordinates of the original pixel values.
-        aryOrigPixCoo = np.zeros([int(cfg.tplPngSize[0] * cfg.tplPngSize[1]),
+        aryOrigPixCoo = np.zeros([int(tplPngSize[0] * tplPngSize[1]),
                                   2])
 
         # Range for the coordinates:
-        vecRange = np.arange(0, cfg.tplPngSize[0])
+        vecRange = np.arange(0, tplPngSize[0])
 
         # X coordinates:
-        vecCooX = np.repeat(vecRange, cfg.tplPngSize[0])
+        vecCooX = np.repeat(vecRange, tplPngSize[0])
 
         # Y coordinates:
-        vecCooY = np.tile(vecRange, cfg.tplPngSize[1])
+        vecCooY = np.tile(vecRange, tplPngSize[1])
 
         # Put the pixel coordinates into the respective array:
         aryOrigPixCoo[:, 0] = vecCooX
@@ -172,25 +177,25 @@ if cfg.lgcCrteMdl:  #noqa
 
         # The following vector will contain the actual original pixel values:
         # vecOrigPixVal = np.zeros([1,
-        #                           int(cfg.tplPngSize[0]
-        #                               * cfg.tplPngSize[1])])
+        #                           int(tplPngSize[0]
+        #                               * tplPngSize[1])])
         vecOrigPixVal = aryPixConv[:, :, idxVol]
         vecOrigPixVal = vecOrigPixVal.flatten()
 
         # The sampling interval for the creation of the super-sampled pixel
         # data (complex numbers are used as a convention for inclusive
         # intervals in "np.mgrid()").:
-        # varStpSzeX = (float(cfg.tplPngSize[0])
+        # varStpSzeX = (float(tplPngSize[0])
         #               / float(cfg.tplVslSpcHighSze[0]))
-        # varStpSzeY = (float(cfg.tplPngSize[1])
+        # varStpSzeY = (float(tplPngSize[1])
         #               / float(cfg.tplVslSpcHighSze[1]))
         varStpSzeX = np.complex(cfg.tplVslSpcHighSze[0])
         varStpSzeY = np.complex(cfg.tplVslSpcHighSze[1])
 
         # The following grid has the coordinates of the points at which we
         # would like to re-sample the pixel data:
-        aryPixGridX, aryPixGridY = np.mgrid[0:cfg.tplPngSize[0]:varStpSzeX,
-                                            0:cfg.tplPngSize[1]:varStpSzeY]
+        aryPixGridX, aryPixGridY = np.mgrid[0:tplPngSize[0]:varStpSzeX,
+                                            0:tplPngSize[1]:varStpSzeY]
 
         # The actual resampling:
         aryResampled = griddata(aryOrigPixCoo,
@@ -271,13 +276,7 @@ if lgcDim:
 
     print('------Find pRF models for voxel time courses')
 
-    print('---------Loading nii data')
-
-    # Load 4D nii data:
-    niiFunc = nb.load(cfg.strPathNiiFunc)
-    # Load the data into memory:
-    aryFunc = niiFunc.get_data()
-    aryFunc = np.array(aryFunc)
+    print('---------Load & preprocess nii data')
 
     # Load mask (to restrict model fitting):
     niiMask = nb.load(cfg.strPathNiiMask)
@@ -289,14 +288,56 @@ if lgcDim:
     aryMask = niiMask.get_data()
     aryMask = np.array(aryMask)
 
-    # Preprocessing of fMRI data and pRF time course models:
-    aryFunc, aryPrfTc = funcPrfPrePrc(aryFunc,
-                                      aryMask,
-                                      aryPrfTc,
-                                      cfg.varSdSmthTmp,
-                                      cfg.varSdSmthSpt,
-                                      cfg.varIntCtf,
-                                      cfg.varPar)
+    # List for arrays with functional datas for runs:
+    lstFunc = []
+
+    # Number of runs:
+    varNumRun = len(cfg.lstPathNiiFunc)
+
+    # Loop through runs and load data:
+    for idxRun in range(varNumRun):
+
+        # Load 4D nii data:
+        niiTmpFunc = nb.load(cfg.strPathNiiFunc)
+        # Load the data into memory:
+        aryTmpFunc = niiTmpFunc.get_data()
+        aryTmpFunc = np.array(aryTmpFunc)
+
+        # Preprocessing of nii data:
+        aryTmpFunc = funcPrfPrePrc(aryTmpFunc,
+                                   aryMask=aryMask,
+                                   lgcLinTrnd=True,
+                                   varSdSmthTmp=cfg.varSdSmthTmp,
+                                   varSdSmthSpt=cfg.varSdSmthSpt,
+                                   varIntCtf=cfg.varIntCtf,
+                                   varPar=cfg.varPar)
+
+        # Demeaning (runs are concatenated, therefore we demean) - POSSIBLE
+        # ENHANCEMENT: don't demean runs, but model across-runs variance
+        # explicitly in GLM.
+        aryTmpMne = np.mean(aryTmpFunc, axis=3)
+        aryTmpFunc = np.subtract(aryTmpFunc,
+                                 aryTmpMne[:, :, :, None])
+
+        # Put preprocessed functional data of current run into list:
+        lstFunc.append(np.copy(aryTmpFunc))
+
+    # Put functional data from separate runs into one array:
+    aryFunc = np.concatenate(lstFunc, axis=3)
+    del(lstFunc)
+    del(aryTmpFunc)
+
+    print('---------Preprocess pRF time course models')
+
+    # Preprocessing of pRF time course models:
+    aryPrfTc = funcPrfPrePrc(aryPrfTc,
+                             aryMask=np.array([]),
+                             lgcLinTrnd=False,
+                             varSdSmthTmp=cfg.varSdSmthTmp,
+                             varSdSmthSpt=0.0,
+                             varIntCtf=0.0,
+                             varPar=cfg.varPar)
+
 
     # Number of non-zero voxels in mask (i.e. number of voxels for which pRF
     # finding will be performed):

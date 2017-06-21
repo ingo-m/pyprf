@@ -24,14 +24,44 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.filters import gaussian_filter1d
 
 
-def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,  #noqa
-                  varIntCtf, varPar):
+def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
+                  varSdSmthTmp=0.0, varSdSmthSpt=0.0, varIntCtf=0.0, varPar=1):
     """
-    Preprocess fMRI data and pRF time course models for a pRF analysis.
+    Preprocess fMRI data or pRF time course models for a pRF analysis.
+    
+    Parameters
+    ----------
+    aryFunc : np.array
+        Array with fMRI data or pRF time course models (trhee-dimensional).
 
-    Spatial smoothing can be applied to the fMRI data, and temporal smoothing
-    can be applied to both the fMRI data and the pRF model time courses. Linear
-    trend removal is also performed on the fMRI data.
+    aryMask : np.array
+        If temporal smoothing is supposed to be restricted to a subset of
+        voxels, a mask can be provided (e.g. brain mask). Same dimension as
+        functional dara (aryFunc).
+    lgcLinTrnd : bool
+        Whether to perform linear trend removal.
+    varSdSmthTmp : float
+        Extent of temporal smoothing (FWHM) in units of input data (number of
+        volumes). No temporal smoothing is applied if varSdSmthTmp = 0.0.
+    varSdSmthSpt : float
+        Extent of spatial smoothing (FWHM) in units of input data (number of
+        voxels). No spatial smoothing is applied if varSdSmthSpt = 0.0.
+    varIntCtf : float
+        Intensity cutoff value for fMRI time series. Voxels with a mean
+        intensity lower than the value specified here are ignored.
+    varPar : int
+        Number of processes to run in parallel.
+
+    Returns
+    -------
+    aryFunc : np.array
+        Preprocessed data, same dimensions as input array.
+
+    Notes
+    -----
+    Spatial smoothing can be applied to fMRI data, and temporal smoothing can
+    be applied to both fMRI data or pRF model time courses. Linear trend
+    removal can be performed on fMRI data.
     """
     print('------pRF preprocessing')
 
@@ -431,21 +461,23 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,  #noqa
     # *************************************************************************
     # *** Apply functions:
 
-    # Perform linear trend removal (parallelised over voxels):
-    print('---------Linear trend removal')
-    aryFunc = funcParVox(funcLnTrRm,
-                         aryFunc,
-                         aryMask,
-                         0,
-                         varIntCtf,
-                         varPar)
+    if lgcLinTrnd:
+        # Perform linear trend removal (parallelised over voxels):
+        print('---------Linear trend removal')
+        aryFunc = funcParVox(funcLnTrRm,
+                             aryFunc,
+                             aryMask,
+                             0,
+                             varIntCtf,
+                             varPar)
 
     # Perform spatial smoothing on fMRI data (reduced parallelisation over
     # volumes because this function is very memory intense):
     if 0.0 < varSdSmthSpt:
-        print('---------Spatial smoothing on fMRI data')
+        print('---------Spatial smoothing')
 
         # (A) Reduced parallelisation:
+
         # varParRed = int(varPar * 0.2)
         # Minimum is one:
         # if varParRed < 1:
@@ -475,25 +507,15 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,  #noqa
                 mode='nearest',
                 truncate=4.0)
 
-    # Perform temporal smoothing on fMRI data:
+    # Perform temporal smoothing:
     if 0.0 < varSdSmthTmp:
-        print('---------Temporal smoothing on fMRI data')
+        print('---------Temporal smoothing')
         aryFunc = funcParVox(funcSmthTmp,
                              aryFunc,
                              aryMask,
                              varSdSmthTmp,
                              varIntCtf,
                              varPar)
-
-    # Perform temporal smoothing on pRF time course models:
-    if 0.0 < varSdSmthTmp:
-        print('---------Temporal smoothing on pRF time course models')
-        aryPrfTc = funcParVox(funcSmthTmp,
-                              aryPrfTc,
-                              np.array([]),
-                              varSdSmthTmp,
-                              varIntCtf,
-                              varPar)
     # *************************************************************************
 
     # *************************************************************************
@@ -507,5 +529,5 @@ def funcPrfPrePrc(aryFunc, aryMask, aryPrfTc, varSdSmthTmp, varSdSmthSpt,  #noqa
 
     # *************************************************************************
     # Return preprocessed data:
-    return aryFunc, aryPrfTc
+    return aryFunc
     # **************************************************************************

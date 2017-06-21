@@ -21,7 +21,7 @@ varNumX = 40
 # Number of y-positions to model:
 varNumY = 40
 # Number of pRF sizes to model:
-varNumPrfSizes = 60
+varNumPrfSizes = 80
 
 # Extend of visual space from centre of the screen (i.e. from the fixation
 # point) [degrees of visual angle]:
@@ -47,7 +47,7 @@ varSdSmthTmp = 2.832
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.4
+varSdSmthSpt = 0.0
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 4 * 172
@@ -56,7 +56,7 @@ varNumVol = 4 * 172
 # lower than the value specified here are not included in the pRF model finding
 # (this speeds up the calculation, and, more importatnly, avoids division by
 # zero):
-varIntCtf = 50.0
+varIntCtf = 100.0
 
 # Number of processes to run in parallel:
 varPar = 10
@@ -71,23 +71,29 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-strPathNiiFunc = '/home/john/Desktop/20160215/nii/func_reg/func_pRF.nii.gz'  #noqa
+lstPathNiiFunc = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_07.nii.gz',
+                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_08.nii.gz',
+                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_09.nii.gz',
+                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_10.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Desktop/20160215/nii/retinotopy/mask/brainmask.nii.gz'  #noqa
+strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/brainmask.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results_highdef/pRF_results'  #noqa
+strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_results'  #noqa
 
 # List with paths of pickles with information about experimental design (order
-# of stimuli):
+# of stimuli). Only needed for pRF_motionLog.py (in order to create PNGs for
+# static component of motion pRF mapping).
 lstDsgn = ['/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run01.pickle',
            '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run02.pickle',
            '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run03.pickle',
            '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run04.pickle']
 
 # Path to npz file containing numpy array that defines stimulus shape, created
-# with ~/py_pRF_motion/stimuli/Code/CreateMasks.py
+# with ~/py_pRF_motion/stimuli/Code/CreateMasks.py. Only needed for
+# pRF_motionLog.py (in order to create PNGs for static component of motion pRF
+# mapping).
 strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskCircleBar.npz'
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
@@ -101,13 +107,10 @@ if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
     # be provided:
 
-    # Size of png files (pixel*pixel):
-    tplPngSize = (300, 300)
-
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_stimuli/frame'  #noqa
+    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_stimuli/frame_'  #noqa
 
     # Output path for pRF time course models file (without file extension):
     strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa
@@ -115,4 +118,4 @@ if lgcCrteMdl:
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '.npy'  #noqa
+    strPathMdl = '~.npy'  #noqa

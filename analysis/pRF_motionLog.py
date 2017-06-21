@@ -164,7 +164,6 @@ if __name__ == "__main__":
 
         # File name (with leading zeros, e.g. '*_004' or '*_042'):
         strTmpPth = (config.strPathPng
-                     + '_'
                      + str(idxVol).zfill(3) 
                      + '.png')
 
