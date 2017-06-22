@@ -37,9 +37,9 @@ import multiprocessing as mp
 #from scipy.interpolate import griddata
 from PIL import Image
 
-import pRF_config_motion as cfg
+import pRF_config as cfg
 from pRF_crtPixMdl import funcCrtPixMdl
-from pRF_funcFindPrf import funcFindPrf
+from pRF_funcFindPrfGpu import funcFindPrfGpu
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
 # *****************************************************************************
@@ -250,14 +250,14 @@ if lgcDim:
         aryTmpFunc = niiTmpFunc.get_data()
         aryTmpFunc = np.array(aryTmpFunc)
 
-        # Preprocessing of nii data:
-        aryTmpFunc = funcPrfPrePrc(aryTmpFunc,
-                                   aryMask=aryMask,
-                                   lgcLinTrnd=True,
-                                   varSdSmthTmp=cfg.varSdSmthTmp,
-                                   varSdSmthSpt=cfg.varSdSmthSpt,
-                                   varIntCtf=cfg.varIntCtf,
-                                   varPar=cfg.varPar)
+#        # Preprocessing of nii data:
+#        aryTmpFunc = funcPrfPrePrc(aryTmpFunc,
+#                                   aryMask=aryMask,
+#                                   lgcLinTrnd=True,
+#                                   varSdSmthTmp=cfg.varSdSmthTmp,
+#                                   varSdSmthSpt=cfg.varSdSmthSpt,
+#                                   varIntCtf=cfg.varIntCtf,
+#                                   varPar=cfg.varPar)
 
         # Demeaning (runs are concatenated, therefore we demean) - POSSIBLE
         # ENHANCEMENT: don't demean runs, but model across-runs variance
@@ -358,153 +358,89 @@ if lgcDim:
     print('---------Number of voxels on which pRF finding will be ' +
           'performed: ' + str(varNumVoxInc))
 
-    # List into which the chunks of functional data for the parallel processes
-    # will be put:
-    lstFunc = [None] * cfg.varPar
 
-    # Vector with the indicies at which the functional data will be separated
-    # in order to be chunked up for the parallel processes:
-    vecIdxChnks = np.linspace(0,
-                              varNumVoxInc,
-                              num=cfg.varPar,
-                              endpoint=False)
-    vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
 
-    # Put functional data into chunks:
-    for idxChnk in range(0, cfg.varPar):
-        # Index of first voxel to be included in current chunk:
-        varTmpChnkSrt = int(vecIdxChnks[idxChnk])
-        # Index of last voxel to be included in current chunk:
-        varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-        # Put voxel array into list:
-        lstFunc[idxChnk] = aryFunc[varTmpChnkSrt:varTmpChnkEnd, :]
 
-    # We don't need the original array with the functional data anymore:
-    del(aryFunc)
+    funcFindPrfGpu(cfg.varNumX,
+                   cfg.varNumY,
+                   cfg.varNumPrfSizes,
+                   vecMdlXpos,
+                   vecMdlYpos,
+                   vecMdlSd,
+                   aryFunc,
+                   aryPrfTc)
 
-    print('---------Creating parallel processes')
 
-    # Create processes:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc] = mp.Process(target=funcFindPrf,
-                                     args=(idxPrc,
-                                           cfg.varNumX,
-                                           cfg.varNumY,
-                                           cfg.varNumPrfSizes,
-                                           vecMdlXpos,
-                                           vecMdlYpos,
-                                           vecMdlSd,
-                                           lstFunc[idxPrc],
-                                           aryPrfTc,
-                                           cfg.lgcCython,
-                                           queOut)
-                                     )
-        # Daemon (kills processes when exiting):
-        lstPrcs[idxPrc].Daemon = True
 
-    # Start processes:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc].start()
 
-    # Collect results from queue:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrfRes[idxPrc] = queOut.get(True)
 
-    # Join processes:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc].join()
 
-    print('---------Prepare pRF finding results for export')
 
-    # Create list for vectors with fitting results, in order to put the results
-    # into the correct order:
-    lstResXpos = [None] * cfg.varPar
-    lstResYpos = [None] * cfg.varPar
-    lstResSd = [None] * cfg.varPar
-    lstResR2 = [None] * cfg.varPar
 
-    # Put output into correct order:
-    for idxRes in range(0, cfg.varPar):
-
-        # Index of results (first item in output list):
-        varTmpIdx = lstPrfRes[idxRes][0]
-
-        # Put fitting results into list, in correct order:
-        lstResXpos[varTmpIdx] = lstPrfRes[idxRes][1]
-        lstResYpos[varTmpIdx] = lstPrfRes[idxRes][2]
-        lstResSd[varTmpIdx] = lstPrfRes[idxRes][3]
-        lstResR2[varTmpIdx] = lstPrfRes[idxRes][4]
-
-    # Concatenate output vectors (into the same order as the voxels that were
-    # included in the fitting):
-    aryBstXpos = np.zeros(0)
-    aryBstYpos = np.zeros(0)
-    aryBstSd = np.zeros(0)
-    aryBstR2 = np.zeros(0)
-    for idxRes in range(0, cfg.varPar):
-        aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
-        aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
-        aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
-        aryBstR2 = np.append(aryBstR2, lstResR2[idxRes])
-
-    # Delete unneeded large objects:
-    del(lstPrfRes)
-    del(lstResXpos)
-    del(lstResYpos)
-    del(lstResSd)
-    del(lstResR2)
-
-    # Array for pRF finding results, of the form
-    # aryPrfRes[total-number-of-voxels, 0:3], where the 2nd dimension
-    # contains the parameters of the best-fitting pRF model for the voxel, in
-    # the order (0) pRF-x-pos, (1) pRF-y-pos, (2) pRF-SD, (3) pRF-R2.
-    aryPrfRes = np.zeros((varNumVoxTlt, 6))
-
-    # Put results form pRF finding into array (they originally needed to be
-    # saved in a list due to parallelisation).
-    aryPrfRes[aryLgc, 0] = aryBstXpos
-    aryPrfRes[aryLgc, 1] = aryBstYpos
-    aryPrfRes[aryLgc, 2] = aryBstSd
-    aryPrfRes[aryLgc, 3] = aryBstR2
-
-    # Reshape pRF finding results:
-    aryPrfRes = np.reshape(aryPrfRes,
-                           [vecNiiShp[0],
-                            vecNiiShp[1],
-                            vecNiiShp[2],
-                            6])
-
-    # Calculate polar angle map:
-    aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
-                                       aryPrfRes[:, :, :, 0])
-
-    # Calculate eccentricity map (r = sqrt( x^2 + y^2 ) ):
-    aryPrfRes[:, :, :, 5] = np.sqrt(np.add(np.power(aryPrfRes[:, :, :, 0],
-                                                    2.0),
-                                           np.power(aryPrfRes[:, :, :, 1],
-                                                    2.0)))
-
-    # List with name suffices of output images:
-    lstNiiNames = ['_x_pos',
-                   '_y_pos',
-                   '_SD',
-                   '_R2',
-                   '_polar_angle',
-                   '_eccentricity']
-
-    print('---------Exporting results')
-
-    # Save nii results:
-    for idxOut in range(0, 6):
-        # Create nii object for results:
-        niiOut = nb.Nifti1Image(aryPrfRes[:, :, :, idxOut],
-                                affMsk,
-                                header=hdrMsk
-                                )
-        # Save nii:
-        strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii')
-        nb.save(niiOut, strTmp)
-    # *************************************************************************
+#    # Retrieve results from list:
+#    aryBstXpos = lstPrfRes[1]
+#    aryBstYpos = lstPrfRes[2]
+#    aryBstSd = lstPrfRes[3]
+#    aryBstR2 = lstPrfRes[4]
+#
+#    # Delete unneeded large objects:
+#    del(lstPrfRes)
+#    del(lstResXpos)
+#    del(lstResYpos)
+#    del(lstResSd)
+#    del(lstResR2)
+#
+#    # Array for pRF finding results, of the form
+#    # aryPrfRes[total-number-of-voxels, 0:3], where the 2nd dimension
+#    # contains the parameters of the best-fitting pRF model for the voxel, in
+#    # the order (0) pRF-x-pos, (1) pRF-y-pos, (2) pRF-SD, (3) pRF-R2.
+#    aryPrfRes = np.zeros((varNumVoxTlt, 6))
+#
+#    # Put results form pRF finding into array (they originally needed to be
+#    # saved in a list due to parallelisation).
+#    aryPrfRes[aryLgc, 0] = aryBstXpos
+#    aryPrfRes[aryLgc, 1] = aryBstYpos
+#    aryPrfRes[aryLgc, 2] = aryBstSd
+#    aryPrfRes[aryLgc, 3] = aryBstR2
+#
+#    # Reshape pRF finding results:
+#    aryPrfRes = np.reshape(aryPrfRes,
+#                           [vecNiiShp[0],
+#                            vecNiiShp[1],
+#                            vecNiiShp[2],
+#                            6])
+#
+#    # Calculate polar angle map:
+#    aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
+#                                       aryPrfRes[:, :, :, 0])
+#
+#    # Calculate eccentricity map (r = sqrt( x^2 + y^2 ) ):
+#    aryPrfRes[:, :, :, 5] = np.sqrt(np.add(np.power(aryPrfRes[:, :, :, 0],
+#                                                    2.0),
+#                                           np.power(aryPrfRes[:, :, :, 1],
+#                                                    2.0)))
+#
+#    # List with name suffices of output images:
+#    lstNiiNames = ['_x_pos',
+#                   '_y_pos',
+#                   '_SD',
+#                   '_R2',
+#                   '_polar_angle',
+#                   '_eccentricity']
+#
+#    print('---------Exporting results')
+#
+#    # Save nii results:
+#    for idxOut in range(0, 6):
+#        # Create nii object for results:
+#        niiOut = nb.Nifti1Image(aryPrfRes[:, :, :, idxOut],
+#                                affMsk,
+#                                header=hdrMsk
+#                                )
+#        # Save nii:
+#        strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii')
+#        nb.save(niiOut, strTmp)
+#    # *************************************************************************
 
 else:
     # Error message:

@@ -43,11 +43,11 @@ varVoxRes = 0.7
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 2.940
+varSdSmthTmp = 0.0
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.7
+varSdSmthSpt = 0.0
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 400
@@ -71,20 +71,20 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-lstPathNiiFunc = ['/home/john/Desktop/20160215/nii/func_reg/func_pRF.nii.gz']  #noqa
+lstPathNiiFunc = ['/home/john/Documents/20161205/func_regAcrssRuns_cube/func_07.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Desktop/20160215/nii/retinotopy/mask/brainmask.nii.gz'  #noqa
+strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/crudebrainmask.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results_highdef/pRF_results'  #noqa
+strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
 lgcCython = True
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
@@ -101,4 +101,4 @@ if lgcCrteMdl:
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '.npy'  #noqa
+    strPathMdl = '/home/john/Documents/20161205/retinotopy/pRF_results_copy/pRF_model_tc.npy'  #noqa
