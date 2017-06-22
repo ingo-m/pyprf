@@ -47,7 +47,7 @@ varSdSmthTmp = 2.832
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.2
+varSdSmthSpt = 0.0
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 4 * 172

@@ -103,6 +103,15 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         varCntSts01 = 0
         varCntSts02 = 0
 
+    # There can be pRF model time courses with a variance of zero (i.e. pRF
+    # models that are not actually responsive to the stimuli). For time
+    # efficiency, and in order to avoid division by zero, we ignore these
+    # model time courses.
+    aryPrfTcVar = np.var(aryPrfTc, axis=3)
+
+    # Zero with float32 precision for comparison:
+    varZero32 = np.array(([0.0])).astype(np.float32)[0]
+
     # Loop through pRF models:
     for idxX in range(0, varNumX):
 
@@ -132,45 +141,49 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                         if varCntSts01 < varStsStpSze:
                             varCntSts01 = varCntSts01 + int(1)
 
-                # Calculation of the ratio of the explained variance (R square)
-                # for the current model for all voxel time courses.
+                # Only fit pRF model if variance is not zero:
+                if np.greater(aryPrfTcVar[idxX, idxY, idxSd], varZero32):
 
-                # Cython version:
-                if lgcCython:
+                    # Calculation of the ratio of the explained variance (R
+                    # square) for the current model for all voxel time courses.
 
-                    # A cython function is used to calculate the residuals
-                    # of the current model:
-                    vecTmpRes = funcCyLsq(
-                        aryPrfTc[idxX, idxY, idxSd, :].flatten(), aryFuncChnk)
+                    # Cython version:
+                    if lgcCython:
 
-                # Numpy version:
-                else:
+                        # A cython function is used to calculate the residuals
+                        # of the current model:
+                        vecTmpRes = funcCyLsq(
+                            aryPrfTc[idxX, idxY, idxSd, :].flatten(),
+                            aryFuncChnk)
 
-                    # Current pRF time course model:
-                    vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :].flatten()
+                    # Numpy version:
+                    else:
 
-                    # We create a design matrix including the current pRF time
-                    # course model, and a constant term:
-                    aryDsgn = np.vstack([vecMdlTc,
-                                         vecConst]).T
+                        # Current pRF time course model:
+                        vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :].flatten()
 
-                    # Change type to float32:
-                    aryDsgn = aryDsgn.astype(np.float32)
+                        # We create a design matrix including the current pRF
+                        # time course model, and a constant term:
+                        aryDsgn = np.vstack([vecMdlTc,
+                                             vecConst]).T
 
-                    # Calculate the least-squares solution for all voxels:
-                    vecTmpRes = np.linalg.lstsq(aryDsgn, aryFuncChnk)[1]
+                        # Change type to float32:
+                        aryDsgn = aryDsgn.astype(np.float32)
 
-                # Check whether current residuals are lower than previously
-                # calculated ones:
-                vecLgcTmpRes = np.less(vecTmpRes, vecBstRes)
+                        # Calculate the least-squares solution for all voxels:
+                        vecTmpRes = np.linalg.lstsq(aryDsgn, aryFuncChnk)[1]
 
-                # Replace best x and y position values, and SD values.
-                vecBstXpos[vecLgcTmpRes] = vecMdlXpos[idxX]
-                vecBstYpos[vecLgcTmpRes] = vecMdlYpos[idxY]
-                vecBstSd[vecLgcTmpRes] = vecMdlSd[idxSd]
+                    # Check whether current residuals are lower than previously
+                    # calculated ones:
+                    vecLgcTmpRes = np.less(vecTmpRes, vecBstRes)
 
-                # Replace best residual values:
-                vecBstRes[vecLgcTmpRes] = vecTmpRes[vecLgcTmpRes]
+                    # Replace best x and y position values, and SD values.
+                    vecBstXpos[vecLgcTmpRes] = vecMdlXpos[idxX]
+                    vecBstYpos[vecLgcTmpRes] = vecMdlYpos[idxY]
+                    vecBstSd[vecLgcTmpRes] = vecMdlSd[idxSd]
+
+                    # Replace best residual values:
+                    vecBstRes[vecLgcTmpRes] = vecTmpRes[vecLgcTmpRes]
 
                 # Status indicator (only used in the first of the parallel
                 # processes):

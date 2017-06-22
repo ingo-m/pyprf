@@ -221,8 +221,6 @@ else:
 # Only fit pRF models if dimensions of pRF time course models are correct:
 if lgcDim:
 
-    print('------Find pRF models for voxel time courses')
-
     print('---------Load & preprocess nii data')
 
     # Load mask (to restrict model fitting):
@@ -243,6 +241,8 @@ if lgcDim:
 
     # Loop through runs and load data:
     for idxRun in range(varNumRun):
+
+        print(('------Preprocess run ' + str(idxRun + 1)))
 
         # Load 4D nii data:
         niiTmpFunc = nb.load(cfg.lstPathNiiFunc[idxRun])
@@ -293,6 +293,8 @@ if lgcDim:
     # Dimensions of nii data:
     vecNiiShp = aryFunc.shape
 
+    print('------Find pRF models for voxel time courses')
+
     print('---------Preparing parallel pRF model finding')
 
     # Vector with the moddeled x-positions of the pRFs:
@@ -332,19 +334,19 @@ if lgcDim:
     aryMask = np.reshape(aryMask, varNumVoxTlt)
 
 
-
-
-    # Take mean over time of functional nii data:
-    aryFuncMean = np.mean(aryFunc, axis=1)
+    # Voxels that are outside the brain and have no, or very little, signal
+    # should not be included in the pRF model finding. We take the variance
+    # over time and exclude voxels with a suspiciously low variance. Because
+    # the data given into the cython function has float32 precision, we
+    # calculate the variance on data with float32 precision.
+    aryFuncVar = np.var(aryFunc.astype(np.float32), axis=1)
 
     # Logical test for voxel inclusion: is the voxel value greater than zero in
-    # the mask, and is the mean of the functional time series above the cutoff
-    # value?
+    # the mask, and is the variance greater than zero?
     aryLgc = np.multiply(np.greater(aryMask, 0),
-                         np.greater(aryFuncMean, cfg.varIntCtf))
-
-
-
+                         np.greater(aryFuncVar,
+                                    np.array(([0.0001])).astype(np.float32))
+                         )
 
     # Array with functional data for which conditions (mask inclusion and
     # cutoff value) are fullfilled:

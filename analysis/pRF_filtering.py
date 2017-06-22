@@ -63,8 +63,6 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
     be applied to both fMRI data or pRF model time courses. Linear trend
     removal can be performed on fMRI data.
     """
-    print('------pRF preprocessing')
-
     # *************************************************************************
     # ***  Check time
     varTme01 = time.time()
