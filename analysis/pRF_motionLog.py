@@ -30,6 +30,9 @@ class MotionLog:
     stimuli, as used for example in the PacMan experiment. The information
     about stimulus shape and the information about the order of stimuli in the
     experiment are combined to create the complete stimulus log.
+
+    For consistency with earlier versions, the numbering of frames (PNG files
+    corresponding to fMRI volumes) starts at '1' (not at '0').
     """
 
     def __init__(self, strPthMsk):
@@ -162,9 +165,11 @@ if __name__ == "__main__":
         # Create image:
         im = Image.fromarray(aryMask[:, :, varTmpStim])
 
-        # File name (with leading zeros, e.g. '*_004' or '*_042'):
+        # File name (with leading zeros, e.g. '*_004' or '*_042'). For
+        # consistency with earlier versions, the numbering of frames (PNG files
+        # corresponding to fMRI volumes) starts at '1' (not at '0').
         strTmpPth = (config.strPathPng
-                     + str(idxVol).zfill(3) 
+                     + str(idxVol + 1).zfill(3) 
                      + '.png')
 
         # Save image to disk:

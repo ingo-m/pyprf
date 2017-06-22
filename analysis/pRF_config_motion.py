@@ -47,7 +47,7 @@ varSdSmthTmp = 2.832
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.0
+varSdSmthSpt = 0.2
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 4 * 172
@@ -56,7 +56,7 @@ varNumVol = 4 * 172
 # lower than the value specified here are not included in the pRF model finding
 # (this speeds up the calculation, and, more importatnly, avoids division by
 # zero):
-varIntCtf = 100.0
+varIntCtf = 50.0
 
 # Number of processes to run in parallel:
 varPar = 10
@@ -67,7 +67,7 @@ varPar = 10
 # specified above. In other words, if the the resolution in x-direction of the
 # visual space model is ten times that of varNumX, the resolution in
 # y-direction also has to be ten times varNumY. The order is: first x, then y.
-tplVslSpcHighSze = (300, 300)
+tplVslSpcHighSze = (100, 100)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
@@ -101,7 +101,7 @@ strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskCircleBar.npz'
 lgcCython = True
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
@@ -118,4 +118,4 @@ if lgcCrteMdl:
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '~.npy'  #noqa
+    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_model_tc.npy'  #noqa

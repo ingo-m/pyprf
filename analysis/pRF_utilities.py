@@ -23,7 +23,27 @@ from scipy.stats import gamma
 
 
 def funcGauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
-    """Create 2D Gaussian kernel."""
+    """
+    Create 2D Gaussian kernel.
+    
+    Parameters
+    ----------
+    varSizeX : int, positive
+        Width of the visual field.
+    varSizeY : int, positive
+        Height of the visual field..
+    varPosX : int, positive
+        X position of centre of 2D Gauss.
+    varPosY : int, positive
+        Y position of centre of 2D Gauss.
+    varSd : float, positive
+        Standard deviation of 2D Gauss.
+
+    Returns
+    -------
+    aryGauss : 2d numpy array, shape [varSizeX, varSizeY]
+        2d Gaussian.
+    """
     varSizeX = int(varSizeX)
     varSizeY = int(varSizeY)
 
@@ -33,13 +53,12 @@ def funcGauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
 
     # The actual creation of the Gaussian array:
     aryGauss = (
-        (
-            np.power((aryX - varPosX), 2.0) +
-            np.power((aryY - varPosY), 2.0)
-        ) /
-        (2.0 * np.power(varSd, 2.0))
+        (np.square((aryX - varPosX))
+         + np.square((aryY - varPosY))
+         ) /
+        (2.0 * np.square(varSd))
         )
-    aryGauss = np.exp(-aryGauss)
+    aryGauss = np.exp(-aryGauss) / (2.0 * np.pi * np.square(varSd))
 
     return aryGauss
 
@@ -145,9 +164,11 @@ def funcPrfTc(aryMdlParamsChnk, tplVslSpcHighSze, varNumVol, aryPngDataHigh,
 
         # Normalise the pRF time course model to the size of the pRF. This
         # gives us the ratio of 'activation' of the pRF at each time point, or,
-        # in other words, the pRF time course model.
-        aryPrfTcTmp = np.divide(aryPrfTcTmp,
-                                np.sum(aryGauss, axis=(0, 1)))
+        # in other words, the pRF time course model. REMOVED - normalisation
+        # has been moved to funcGauss(); pRF models are normalised when to have
+        # an area under the curve of one when they are created.
+        # aryPrfTcTmp = np.divide(aryPrfTcTmp,
+        #                         np.sum(aryGauss, axis=(0, 1)))
 
         # Put model time courses into the function's output array:
         aryOut[idxMdl, :] = aryPrfTcTmp

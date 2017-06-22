@@ -498,7 +498,7 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
         # Loop through volumes:
         for idxVol in range(0, varNumVol):
 
-            print('------------Volume: ' + str(idxVol))
+            # print('------------Volume: ' + str(idxVol))
 
             aryFunc[:, :, :, idxVol] = gaussian_filter(
                 aryFunc[:, :, :, idxVol],

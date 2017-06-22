@@ -30,11 +30,11 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # import os
 # os.chdir(os.path.abspath(os.path.dirname(__file__)))
 import numpy as np
-import scipy as sp
+#import scipy as sp
 import nibabel as nb
 import time
 import multiprocessing as mp
-from scipy.interpolate import griddata
+#from scipy.interpolate import griddata
 from PIL import Image
 
 import pRF_config_motion as cfg
@@ -98,24 +98,37 @@ if cfg.lgcCrteMdl:  #noqa
                               + '.png')
 
     # Open first image to check PNG size:
-    objIm = Image.open(lstPngPaths[0])
-    tplPngSize = objIm.size
+    # objIm = Image.open(lstPngPaths[0])
+    # tplPngSize = objIm.size
 
     # Load png files. The png data will be saved in a numpy array of the
     # following order: aryPngData[x-pixel, y-pixel, PngNumber]. The
     # sp.misc.imread function actually contains three values per pixel (RGB),
     # but since the stimuli are black-and-white, any one of these is sufficient
     # and we discard the others.
-    aryPngData = np.zeros((tplPngSize[0],
-                           tplPngSize[1],
+
+    aryPngData = np.zeros((cfg.tplVslSpcHighSze[0],
+                           cfg.tplVslSpcHighSze[1],
                            cfg.varNumVol))
+
     for idx01 in range(0, cfg.varNumVol):
+
+        # Old version of reading images with scipy
         # aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :, 0]
-        aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :]
+        # aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :]
+
+        # Load & resize image:
+        objIm = Image.open(lstPngPaths[idx01])
+        objIm = objIm.resize((cfg.tplVslSpcHighSze[0],
+                              cfg.tplVslSpcHighSze[1]),
+                             resample=Image.NEAREST)
+        aryPngData[:, :, idx01] = np.array(objIm.getdata()).reshape( \
+            objIm.size[0], objIm.size[1])
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
-    aryPngData = (aryPngData > 200).astype(int)
+    aryPngData = (aryPngData > 200).astype(np.int8)
     # *************************************************************************
+
 
     # *************************************************************************
     # *** Create pixel-wise HRF model time courses
@@ -125,7 +138,7 @@ if cfg.lgcCrteMdl:  #noqa
     aryPixConv = funcCrtPixMdl(aryPngData,
                                cfg.varNumVol,
                                cfg.varTr,
-                               tplPngSize,
+                               cfg.tplVslSpcHighSze,
                                cfg.varPar)
 
     # # Debugging feature:
@@ -140,72 +153,6 @@ if cfg.lgcCrteMdl:  #noqa
     #                cmax=105).save(strTmp)
     # *************************************************************************
 
-    # *************************************************************************
-    # *** Resample pixel-time courses in high-res visual space
-    # The Gaussian sampling of the pixel-time courses takes place in the
-    # super-sampled visual space. Here we take the convolved pixel-time courses
-    # into this space, for each time point (volume).
-
-    print('------Resample pixel-time courses in high-res visual space')
-
-    # Array for super-sampled pixel-time courses:
-    aryPngDataHigh = np.zeros((cfg.tplVslSpcHighSze[0],
-                               cfg.tplVslSpcHighSze[1],
-                               cfg.varNumVol))
-
-    # Loop through volumes:
-    for idxVol in range(0, cfg.varNumVol):
-
-        # The following array describes the coordinates of the pixels in the
-        # flattened array (i.e. "vecOrigPixVal"). In other words, these are the
-        # row and column coordinates of the original pixel values.
-        aryOrigPixCoo = np.zeros([int(tplPngSize[0] * tplPngSize[1]),
-                                  2])
-
-        # Range for the coordinates:
-        vecRange = np.arange(0, tplPngSize[0])
-
-        # X coordinates:
-        vecCooX = np.repeat(vecRange, tplPngSize[0])
-
-        # Y coordinates:
-        vecCooY = np.tile(vecRange, tplPngSize[1])
-
-        # Put the pixel coordinates into the respective array:
-        aryOrigPixCoo[:, 0] = vecCooX
-        aryOrigPixCoo[:, 1] = vecCooY
-
-        # The following vector will contain the actual original pixel values:
-        # vecOrigPixVal = np.zeros([1,
-        #                           int(tplPngSize[0]
-        #                               * tplPngSize[1])])
-        vecOrigPixVal = aryPixConv[:, :, idxVol]
-        vecOrigPixVal = vecOrigPixVal.flatten()
-
-        # The sampling interval for the creation of the super-sampled pixel
-        # data (complex numbers are used as a convention for inclusive
-        # intervals in "np.mgrid()").:
-        # varStpSzeX = (float(tplPngSize[0])
-        #               / float(cfg.tplVslSpcHighSze[0]))
-        # varStpSzeY = (float(tplPngSize[1])
-        #               / float(cfg.tplVslSpcHighSze[1]))
-        varStpSzeX = np.complex(cfg.tplVslSpcHighSze[0])
-        varStpSzeY = np.complex(cfg.tplVslSpcHighSze[1])
-
-        # The following grid has the coordinates of the points at which we
-        # would like to re-sample the pixel data:
-        aryPixGridX, aryPixGridY = np.mgrid[0:tplPngSize[0]:varStpSzeX,
-                                            0:tplPngSize[1]:varStpSzeY]
-
-        # The actual resampling:
-        aryResampled = griddata(aryOrigPixCoo,
-                                vecOrigPixVal,
-                                (aryPixGridX, aryPixGridY),
-                                method='nearest')
-
-        # Put super-sampled pixel time courses into array:
-        aryPngDataHigh[:, :, idxVol] = aryResampled
-    # *************************************************************************
 
     # *************************************************************************
     # *** Create pRF time courses models
@@ -226,7 +173,7 @@ if cfg.lgcCrteMdl:  #noqa
                                cfg.varNumPrfSizes,
                                cfg.varPar,
                                cfg.varNumVol,
-                               aryPngDataHigh)
+                               aryPngData)
     # *************************************************************************
 
     # *************************************************************************
@@ -298,7 +245,7 @@ if lgcDim:
     for idxRun in range(varNumRun):
 
         # Load 4D nii data:
-        niiTmpFunc = nb.load(cfg.strPathNiiFunc)
+        niiTmpFunc = nb.load(cfg.lstPathNiiFunc[idxRun])
         # Load the data into memory:
         aryTmpFunc = niiTmpFunc.get_data()
         aryTmpFunc = np.array(aryTmpFunc)
@@ -384,6 +331,9 @@ if lgcDim:
     # Reshape mask:
     aryMask = np.reshape(aryMask, varNumVoxTlt)
 
+
+
+
     # Take mean over time of functional nii data:
     aryFuncMean = np.mean(aryFunc, axis=1)
 
@@ -392,6 +342,9 @@ if lgcDim:
     # value?
     aryLgc = np.multiply(np.greater(aryMask, 0),
                          np.greater(aryFuncMean, cfg.varIntCtf))
+
+
+
 
     # Array with functional data for which conditions (mask inclusion and
     # cutoff value) are fullfilled:
