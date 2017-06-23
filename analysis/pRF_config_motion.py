@@ -21,7 +21,7 @@ varNumX = 40
 # Number of y-positions to model:
 varNumY = 40
 # Number of pRF sizes to model:
-varNumPrfSizes = 80
+varNumPrfSizes = 40
 
 # Extend of visual space from centre of the screen (i.e. from the fixation
 # point) [degrees of visual angle]:
@@ -33,7 +33,7 @@ varExtYmax = 5.19
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
 varPrfStdMin = 0.20
-varPrfStdMax = 16.0
+varPrfStdMax = 7.0
 
 # Volume TR of input data [s]:
 varTr = 2.832
@@ -43,11 +43,11 @@ varVoxRes = 0.8
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 2.832
+varSdSmthTmp = 2.0
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.0
+varSdSmthSpt = 0.4
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 4 * 172
@@ -67,7 +67,7 @@ varPar = 10
 # specified above. In other words, if the the resolution in x-direction of the
 # visual space model is ten times that of varNumX, the resolution in
 # y-direction also has to be ten times varNumY. The order is: first x, then y.
-tplVslSpcHighSze = (100, 100)
+tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
@@ -101,7 +101,7 @@ strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskCircleBar.npz'
 lgcCython = True
 
 # Create pRF time course models?
-lgcCrteMdl = False
+lgcCrteMdl = True
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
