@@ -59,7 +59,7 @@ varNumVol = 400
 varIntCtf = 50.0
 
 # Number of processes to run in parallel:
-varPar = 10
+varPar = 11
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
@@ -71,20 +71,20 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-lstPathNiiFunc = ['/home/john/Desktop/20160215/nii/func_reg/func_pRF.nii.gz']  #noqa
+lstPathNiiFunc = ['/home/john/Documents/20161205/func_regAcrssRuns_cube/func_07.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Desktop/20160215/nii/retinotopy/mask/brainmask.nii.gz'  #noqa
+strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/verysmall.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results_highdef/pRF_results'  #noqa
+strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_cpu_'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
 lgcCython = True
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
@@ -101,4 +101,4 @@ if lgcCrteMdl:
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '.npy'  #noqa
+    strPathMdl = '/home/john/Documents/20161205/retinotopy/pRF_results_copy/pRF_model_tc.npy'  #noqa
