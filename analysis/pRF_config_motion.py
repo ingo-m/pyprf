@@ -85,10 +85,10 @@ strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/reti
 # List with paths of pickles with information about experimental design (order
 # of stimuli). Only needed for pRF_motionLog.py (in order to create PNGs for
 # static component of motion pRF mapping).
-lstDsgn = ['/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run01.pickle',
-           '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run02.pickle',
-           '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run03.pickle',
-           '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Conditions/Conditions_run04.pickle']
+lstDsgn = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run01.pickle',
+           '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run02.pickle',
+           '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run03.pickle',
+           '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run04.pickle']
 
 # Path to npz file containing numpy array that defines stimulus shape, created
 # with ~/py_pRF_motion/stimuli/Code/CreateMasks.py. Only needed for
