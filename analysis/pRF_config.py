@@ -59,7 +59,7 @@ varNumVol = 400
 varIntCtf = 50.0
 
 # Number of processes to run in parallel:
-varPar = 10
+varPar = 1
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
@@ -74,14 +74,14 @@ tplVslSpcHighSze = (300, 300)
 lstPathNiiFunc = ['/home/john/Documents/20161205/func_regAcrssRuns_cube/func_07.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/crudebrainmask.nii.gz'  #noqa
+strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/verysmall.nii.gz'  #noqa
 
 # Output basename:
 strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
-lgcCython = True
+lgcCython = False
 
 # Create pRF time course models?
 lgcCrteMdl = False

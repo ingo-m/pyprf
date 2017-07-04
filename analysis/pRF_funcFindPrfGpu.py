@@ -28,8 +28,8 @@ varNumY = 40
 varNumPrfSizes = 40
 
 
-def funcFindPrfGpu(varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
-                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc):
+def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
+                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, queOut):
     """Find the best pRF model for voxel time course."""
     # Number of voxels to be fitted:
     varNumVoxChnk = aryFunc.shape[0]
@@ -41,19 +41,33 @@ def funcFindPrfGpu(varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     vecBstXpos = np.zeros(varNumVoxChnk)
     vecBstYpos = np.zeros(varNumVoxChnk)
     vecBstSd = np.zeros(varNumVoxChnk)
-    # vecBstR2 = np.zeros(varNumVoxChnk)
 
     # Vector for best R-square value. For each model fit, the R-square value is
     # compared to this, and updated if it is lower than the best-fitting
     # solution so far. We initialise with an arbitrary, high value
-    vecBstRes = np.add(np.zeros(varNumVoxChnk), 100000000.0).astype(np.float32)
+    vecBstRes = np.add(np.zeros(varNumVoxChnk),
+                       100000000.0).astype(np.float32)
 
     # Vector that will hold the temporary residuals from the model fitting:
-    # vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
+    vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
 
     # We reshape the voxel time courses, so that time goes down the column,
     # i.e. from top to bottom.
     aryFunc = aryFunc.T
+
+    #    # Reshape pRF model time courses:
+    #    aryPrfTc = np.reshape(aryPrfTc,
+    #                          ((aryPrfTc.shape[0]
+    #                            * aryPrfTc.shape[1]
+    #                            * aryPrfTc.shape[2]),
+    #                           aryPrfTc.shape[3]))
+    
+    #    # Reshape back to original shape:
+    #    aryPrfTc = np.reshape(aryPrfTc,
+    #                          (cfg.varNumX,
+    #                           cfg.varNumY,
+    #                           cfg.varNumPrfSizes,
+    #                           cfg.varNumVol))
 
     # Constant term for the model:
     vecConst = np.ones((varNumVol), dtype=np.float32)
@@ -62,33 +76,36 @@ def funcFindPrfGpu(varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     aryFunc = aryFunc.astype(np.float32)
     aryPrfTc = aryPrfTc.astype(np.float32)
 
-    # We create a status indicator for the time consuming pRF model finding
-    # algorithm. Number of steps of the status indicator:
-    varStsStpSze = 20
+    # Prepare status indicator if this is the first of the parallel processes:
+    if idxPrc == 0:
 
-    # Number of pRF models to fit:
-    varNumMdls = (varNumX * varNumY * varNumPrfSizes)
+        # We create a status indicator for the time consuming pRF model finding
+        # algorithm. Number of steps of the status indicator:
+        varStsStpSze = 20
 
-    # Vector with pRF values at which to give status feedback:
-    vecStatPrf = np.linspace(0,
-                             varNumMdls,
-                             num=(varStsStpSze+1),
-                             endpoint=True)
-    vecStatPrf = np.ceil(vecStatPrf)
-    vecStatPrf = vecStatPrf.astype(int)
+        # Number of pRF models to fit:
+        varNumMdls = (varNumX * varNumY * varNumPrfSizes)
 
-    # Vector with corresponding percentage values at which to give status
-    # feedback:
-    vecStatPrc = np.linspace(0,
-                             100,
-                             num=(varStsStpSze+1),
-                             endpoint=True)
-    vecStatPrc = np.ceil(vecStatPrc)
-    vecStatPrc = vecStatPrc.astype(int)
+        # Vector with pRF values at which to give status feedback:
+        vecStatPrf = np.linspace(0,
+                                 varNumMdls,
+                                 num=(varStsStpSze+1),
+                                 endpoint=True)
+        vecStatPrf = np.ceil(vecStatPrf)
+        vecStatPrf = vecStatPrf.astype(int)
 
-    # Counter for status indicator:
-    varCntSts01 = 0
-    varCntSts02 = 0
+        # Vector with corresponding percentage values at which to give status
+        # feedback:
+        vecStatPrc = np.linspace(0,
+                                 100,
+                                 num=(varStsStpSze+1),
+                                 endpoint=True)
+        vecStatPrc = np.ceil(vecStatPrc)
+        vecStatPrc = vecStatPrc.astype(int)
+
+        # Counter for status indicator:
+        varCntSts01 = 0
+        varCntSts02 = 0
 
     # There can be pRF model time courses with a variance of zero (i.e. pRF
     # models that are not actually responsive to the stimuli). For time
@@ -99,83 +116,77 @@ def funcFindPrfGpu(varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # Zero with float32 precision for comparison:
     varZero32 = np.array(([0.0])).astype(np.float32)[0]
 
-    # "l2_regularizer: 0-D double Tensor":
-    varL2reg = 1e6 # L2 regularization factor
+    # L2 regularization factor for regression:
+    varL2reg = 0.0
 
+    # Definition of computational graph:
+    objGrph = tf.Graph()
+    with objGrph.as_default():
+        # Design matrix with two columns (graph input). The design matrix is
+        # different on every iteration, so we define a placeholder object.
+        objDsng = tf.placeholder(tf.float32, shape=(varNumVol, 2))  # ! 
 
+        # Functional data. Because the functional data does not change, we
+        # put the entire data on the graph. This may become a problem for
+        # large datasets.
+        objFunc = tf.Variable(aryFunc)
 
-    aryFunc = aryFunc[:, 0:10000]
+        # The matrix solving operation.
+        # objMatSlve = tf.matrix_solve_ls(objDsng, objFunc, varL2reg, fast=True)
 
+        # Operation that solves matrix (in the least squares sense), and
+        # calculates residuals along time dimension:
+        objMatSlve = tf.reduce_sum(
+                                   tf.subtract(
+                                               tf.matmul(
+                                                         objDsng,
+                                                         tf.matrix_solve_ls( \
+                                                             objDsng, objFunc,
+                                                             varL2reg,
+                                                             fast=True)
+                                                         ),
+                                               objFunc),
+                                   axis=0
+                                   )
 
-    # define the computational graph
-    graph = tf.Graph()
-    with graph.as_default():
-        # declare graph inputs
-        x_train = tf.placeholder(tf.float32, shape=(varNumVol, 2))  # ! Design matrix with two columns
-        #y_train = tf.placeholder(tf.float32, shape=(varNumVol, varNumVoxChnk)) # ! Data
+    # Create session with graph:
+    with tf.Session(graph=objGrph) as objSess:
 
-        y_train = tf.Variable(aryFunc)
-
-        theta = tf.Variable([[0.0], [0.0]]) # implicit bias!  # ! Initial values?
-        # optimum
-        #optimum = tf.matrix_solve_ls(x_train, y_train, LAMBDA, fast=True)
-        optimum = tf.matrix_solve_ls(x_train, y_train, varL2reg, fast=True)
-
-
-    # Put functional data into nested list:
-    #lstFunc = aryFunc.tolist()
-
-    #print('print(len(lstFunc))')
-    #print(len(lstFunc))
-
-    #print('print(len(lstFunc[0]))')
-    #print(len(lstFunc[0]))
-
-
-    #del(aryFunc)
-
-    #lalala = tf.Variable(np.ones((2,2)))
-
-
-    # run the computation: no loop needed!
-    with tf.Session(graph=graph) as s:
-        tf.initialize_all_variables().run()
-
-
-
+        # Initialise variables.
+        tf.global_variables_initializer().run()
 
         # Loop through pRF models:
         for idxX in range(0, varNumX):
-    
+
             for idxY in range(0, varNumY):
-    
+
                 for idxSd in range(0, varNumPrfSizes):
-    
-                    # Status indicator:
-                    if varCntSts02 == vecStatPrf[varCntSts01]:
-    
-                        # Prepare status message:
-                        strStsMsg = ('------------Progress: ' +
-                                     str(vecStatPrc[varCntSts01]) +
-                                     ' % --- ' +
-                                     str(vecStatPrf[varCntSts01]) +
-                                     ' pRF models out of ' +
-                                     str(varNumMdls))
-    
-                        print(strStsMsg)
-    
-                        # Only increment counter if the last value has not been
-                        # reached yet:
-                        if varCntSts01 < varStsStpSze:
-                            varCntSts01 = varCntSts01 + int(1)
+
+                    # Status indicator (only used in the first of the parallel
+                    # processes):
+                    if idxPrc == 0:
+
+                        # Status indicator:
+                        if varCntSts02 == vecStatPrf[varCntSts01]:
+
+                            # Prepare status message:
+                            strStsMsg = ('------------Progress: ' +
+                                         str(vecStatPrc[varCntSts01]) +
+                                         ' % --- ' +
+                                         str(vecStatPrf[varCntSts01]) +
+                                         ' pRF models out of ' +
+                                         str(varNumMdls))
+
+                            print(strStsMsg)
+
+                            # Only increment counter if the last value has not
+                            # been reached yet:
+                            if varCntSts01 < varStsStpSze:
+                                varCntSts01 = varCntSts01 + int(1)
     
                     # Only fit pRF model if variance is not zero:
                     if np.greater(aryPrfTcVar[idxX, idxY, idxSd], varZero32):
-    
-    
-    
-                        # Numpy version:
-    
+
                         # Current pRF time course model:
                         vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :].flatten()
     
@@ -190,51 +201,55 @@ def funcFindPrfGpu(varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                         # Design matrix to nested list:
                         lstDsng = aryDsgn.tolist()
 
+                        # Run the graph with current design matrix, returning
+                        # parameter estimates (betas):
+                        vecTmpRes = objSess.run(objMatSlve,
+                                                feed_dict={objDsng:lstDsng})
 
-                        #opt = s.run(optimum, feed_dict={x_train:lstDsng, y_train:lstFunc})
-                        opt = s.run(optimum, feed_dict={x_train:lstDsng})
+                        #print(type(aryTmpCoef))
+                        #print(aryTmpCoef.shape)
 
+                    # Check whether current residuals are lower than previously
+                    # calculated ones:
+                    vecLgcTmpRes = np.less(vecTmpRes, vecBstRes)
 
-                    # Calculate the least-squares solution for all voxels:
-                    #vecTmpRes = np.linalg.lstsq(aryDsgn, aryFunc)[1]
+                    # Replace best x and y position values, and SD values.
+                    vecBstXpos[vecLgcTmpRes] = vecMdlXpos[idxX]
+                    vecBstYpos[vecLgcTmpRes] = vecMdlYpos[idxY]
+                    vecBstSd[vecLgcTmpRes] = vecMdlSd[idxSd]
 
+                    # Replace best residual values:
+                    vecBstRes[vecLgcTmpRes] = vecTmpRes[vecLgcTmpRes]
 
+                    # Status indicator (only used in the first of the parallel
+                    # processes):
+                    if idxPrc == 0:
 
-#                # Check whether current residuals are lower than previously
-#                # calculated ones:
-#                vecLgcTmpRes = np.less(vecTmpRes, vecBstRes)
-#
-#                # Replace best x and y position values, and SD values.
-#                vecBstXpos[vecLgcTmpRes] = vecMdlXpos[idxX]
-#                vecBstYpos[vecLgcTmpRes] = vecMdlYpos[idxY]
-#                vecBstSd[vecLgcTmpRes] = vecMdlSd[idxSd]
-#
-#                # Replace best residual values:
-#                vecBstRes[vecLgcTmpRes] = vecTmpRes[vecLgcTmpRes]
-#
-#                # Increment status indicator counter:
-#                varCntSts02 = varCntSts02 + 1
-#
-#    # After finding the best fitting model for each voxel, we still have to
-#    # calculate the coefficient of determination (R-squared) for each voxel. We
-#    # start by calculating the total sum of squares (i.e. the deviation of the
-#    # data from the mean). The mean of each time course:
-#    vecFuncMean = np.mean(aryFunc, axis=0)
-#    # Deviation from the mean for each datapoint:
-#    vecFuncDev = np.subtract(aryFunc, vecFuncMean[None, :])
-#    # Sum of squares:
-#    vecSsTot = np.sum(np.power(vecFuncDev,
-#                               2.0),
-#                      axis=0)
-#    # Coefficient of determination:
-#    vecBstR2 = np.subtract(1.0,
-#                           np.divide(vecBstRes,
-#                                     vecSsTot))
-#
-#    # Output list:
-#    lstOut = [vecBstXpos,
-#              vecBstYpos,
-#              vecBstSd,
-#              vecBstR2]
-#
-#    return lstOut
+                        # Increment status indicator counter:
+                        varCntSts02 = varCntSts02 + 1
+
+    # After finding the best fitting model for each voxel, we still have to
+    # calculate the coefficient of determination (R-squared) for each voxel. We
+    # start by calculating the total sum of squares (i.e. the deviation of the
+    # data from the mean). The mean of each time course:
+    vecFuncMean = np.mean(aryFunc, axis=0)
+    # Deviation from the mean for each datapoint:
+    vecFuncDev = np.subtract(aryFunc, vecFuncMean[None, :])
+    # Sum of squares:
+    vecSsTot = np.sum(np.power(vecFuncDev,
+                               2.0),
+                      axis=0)
+    # Coefficient of determination:
+    vecBstR2 = np.subtract(1.0,
+                           np.divide(vecBstRes,
+                                     vecSsTot))
+
+    # Output list:
+    lstOut = [idxPrc,
+              vecBstXpos,
+              vecBstYpos,
+              vecBstSd,
+              vecBstR2]
+
+    queOut.put(lstOut)
+
