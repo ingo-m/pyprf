@@ -43,11 +43,11 @@ varVoxRes = 0.7
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 2.940
+varSdSmthTmp = 0.0 # 2.940
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.7
+varSdSmthSpt = 0.0 # 0.7
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 400

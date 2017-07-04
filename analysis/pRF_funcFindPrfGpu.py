@@ -30,7 +30,12 @@ varNumPrfSizes = 40
 
 def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                    vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, queOut):
-    """Find the best pRF model for voxel time course."""
+    """
+    Find the best pRF model for voxel time course.
+    
+    This version uses ```feed_dict```. Slow (i.e. slower than multi-threaded
+    cython).
+    """
     # Number of voxels to be fitted:
     varNumVoxChnk = aryFunc.shape[0]
 

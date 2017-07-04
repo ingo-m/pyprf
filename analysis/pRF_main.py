@@ -39,7 +39,7 @@ from PIL import Image
 
 import pRF_config as cfg
 from pRF_crtPixMdl import funcCrtPixMdl
-from pRF_funcFindPrfGpu import funcFindPrfGpu
+from pRF_funcFindPrfGpuQ import funcFindPrfGpu
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
 # *****************************************************************************
