@@ -137,15 +137,17 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         # Operation that solves matrix (in the least squares sense), and
         # calculates residuals along time dimension:
         objMatSlve = tf.reduce_sum(
-                                   tf.subtract(
-                                               tf.matmul(
-                                                         objDsng,
-                                                         tf.matrix_solve_ls( \
-                                                             objDsng, objFunc,
-                                                             varL2reg,
-                                                             fast=True)
-                                                         ),
-                                               objFunc),
+                                   tf.abs(
+                                          tf.subtract(
+                                                      tf.matmul(
+                                                                objDsng,
+                                                                tf.matrix_solve_ls( \
+                                                                    objDsng, objFunc,
+                                                                    varL2reg,
+                                                                    fast=True)
+                                                                ),
+                                                      objFunc),
+                                          ),
                                    axis=0
                                    )
 
