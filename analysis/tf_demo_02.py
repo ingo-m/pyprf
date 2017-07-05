@@ -88,7 +88,7 @@ for idxIt in range(varNumIt):
 print('---Defining graph')
 
 # Queue capacity:
-varCapQ = 100
+varCapQ = 50
 
 # The queue:
 objQ = tf.FIFOQueue(capacity=varCapQ, dtypes=[tf.float32, tf.float32])
@@ -161,9 +161,33 @@ objSess.run(tf.global_variables_initializer())
 # Get time:
 varTme01 = time.time()
 
-# Run the graph:
+# List for results:
+lstRes = [None] * varNumIt
+
+# Loop through input iterations:
 for idxIt in range(varNumIt):
-    obj01 = objSess.run(objGrph)
+
+    # Run main computational graph and put results in list:
+    lstRes[idxIt] = objSess.run(objGrph)
+
+    # On every 1000th call, check number of elements on queue:
+    if (idxIt % 1000) == 0:
+
+        # Number of elements on queue:
+        varTmpSzeQ = objSess.run(objSzeQ)
+
+        strTmpMsg = ('------Iteration: '
+                     + str(idxIt)
+                     + ', number of elements on queue: '
+                     + str(varTmpSzeQ))
+
+        print(strTmpMsg)
+
+# print(type(lstRes))
+# print(len(lstRes))
+
+# print(type(lstRes[0]))
+# print(lstRes[0].shape)
 
 # Stop threads.
 objCoord.request_stop()
