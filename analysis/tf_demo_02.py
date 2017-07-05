@@ -102,8 +102,7 @@ objPlcHld01 = tf.placeholder(tf.float32,
 objPlcHld02 = tf.placeholder(tf.float32,
                              shape=list(vecIn[0].shape))
 
-# The enqueue operation that puts data on the graph. The array and the
-# vector are sliced along the 0th dimension automatically.
+# The enqueue operation that puts data on the graph.
 objEnQ = objQ.enqueue([objPlcHld01, objPlcHld02])
 
 # Number of threads that will be created:
