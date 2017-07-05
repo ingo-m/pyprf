@@ -19,161 +19,177 @@
 
 import numpy as np
 import tensorflow as tf
+#import threading
 
-# Number of x-positions to model:
-varNumX = 40
-# Number of y-positions to model:
-varNumY = 40
-# Number of pRF sizes to model:
-varNumPrfSizes = 40
+## Number of x-positions to model:
+#varNumX = 40
+## Number of y-positions to model:
+#varNumY = 40
+## Number of pRF sizes to model:
+#varNumPrfSizes = 40
+#
+#
+#def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
+#                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, queOut):
+#    """
+#    Find the best pRF model for voxel time course.
+#    
+#    Testing version for queues.
+#    """
+#    # Number of voxels to be fitted:
+#    varNumVoxChnk = aryFunc.shape[0]
+#
+#    # Number of volumes:
+#    varNumVol = aryFunc.shape[1]
+#
+#    # Vectors for pRF finding results [number-of-voxels times one]:
+#    vecBstXpos = np.zeros(varNumVoxChnk)
+#    vecBstYpos = np.zeros(varNumVoxChnk)
+#    vecBstSd = np.zeros(varNumVoxChnk)
+#
+#    # Vector for best R-square value. For each model fit, the R-square value is
+#    # compared to this, and updated if it is lower than the best-fitting
+#    # solution so far. We initialise with an arbitrary, high value
+#    vecBstRes = np.add(np.zeros(varNumVoxChnk),
+#                       100000000.0).astype(np.float32)
+#
+#    # Vector that will hold the temporary residuals from the model fitting:
+#    vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
+#
+#    # We reshape the voxel time courses, so that time goes down the column,
+#    # i.e. from top to bottom.
+#    aryFunc = aryFunc.T
+#
+#    # Reshape pRF model time courses:
+#    aryPrfTc = np.reshape(aryPrfTc,
+#                          ((aryPrfTc.shape[0]
+#                            * aryPrfTc.shape[1]
+#                            * aryPrfTc.shape[2]),
+#                           aryPrfTc.shape[3]))
+#
+#    # Change type to float 32:
+#    aryFunc = aryFunc.astype(np.float32)
+#    aryPrfTc = aryPrfTc.astype(np.float32)
+#
+#    # The pRF model is fitted only if variance along time dimension is not
+#    # zero. Get variance along time dimension:
+#    vecVarPrfTc = np.var(aryPrfTc, axis=1)
+#
+#    # Zero with float32 precision for comparison:
+#    varZero32 = np.array(([0.0])).astype(np.float32)[0]
+#
+#    # Boolean array for models with variance greater than zero:
+#    vecLgcVar = np.greater(vecVarPrfTc, varZero32)
+#
+#    # Take models with variance less than zero out of the array:
+#    aryPrfTc = aryPrfTc[vecLgcVar, :]
+#
+#    # Add extra dimension for constant term:
+#    aryPrfTc = np.reshape(aryPrfTc, (aryPrfTc.shape[0], aryPrfTc.shape[1], 1))
+#
+#    # Add constant term (ones):
+#    aryPrfTc = np.concatenate((aryPrfTc,
+#                               np.ones(aryPrfTc.shape).astype(np.float32)),
+#                              axis=2)
+#
+#    # Change type to float 32:
+#    aryFunc = aryFunc.astype(np.float32)
+#    aryPrfTc = aryPrfTc.astype(np.float32)
+#
+#    # L2 regularization factor for regression:
+#    varL2reg = 0.0
+#
+#    lstPrfTc = [None] * aryPrfTc.shape[0]
+#    for idx01 in range(int(aryPrfTc.shape[0])):
+#        lstPrfTc[idx01] = aryPrfTc[idx01, :, :]
+#    del(aryPrfTc)
+#
+#    print('------Define computational graph')
+#
+#    varNumPar = 1
 
+#print('print(lstPrfTc[0].shape)')
+#print(lstPrfTc[0].shape)
 
-def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
-                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, queOut):
-    """
-    Find the best pRF model for voxel time course.
+# Define computational graph:
+#objGrph = tf.Graph()
+#with objGrph.as_default():
+#with tf.variable_scope("queue"):
+
+varNumVol = 400
+varL2reg = 0.0
+aryFunc = np.random.randn(400, 10000).astype(np.float32)
+
+with tf.variable_scope("queue"):
+    objQueue = tf.FIFOQueue(capacity=100, dtypes=tf.float32)
     
-    Testing version for queues.
-    """
-    # Number of voxels to be fitted:
-    varNumVoxChnk = aryFunc.shape[0]
+    # Design matrix with two columns (graph input). The design matrix is
+    # different on every iteration, so we define a placeholder object.
+    #objDsng = tf.placeholder(tf.float32, shape=(varNumVol, 2))  # ! 
+    #objDsng = objQueue.dequeue()
+    x_input_data = tf.cast(tf.random_normal([10000, varNumVol, 2], mean=0, stddev=1), tf.float32)
+    #x_input_data = tf.cast(tf.random_normal([varNumVol, 2], mean=0, stddev=1), tf.float32)
 
-    # Number of volumes:
-    varNumVol = aryFunc.shape[1]
+    objEnqueue = objQueue.enqueue_many(x_input_data)
+    #objEnqueue = objQueue.enqueue(x_input_data)
 
-    # Vectors for pRF finding results [number-of-voxels times one]:
-    vecBstXpos = np.zeros(varNumVoxChnk)
-    vecBstYpos = np.zeros(varNumVoxChnk)
-    vecBstSd = np.zeros(varNumVoxChnk)
+    objDequeue = objQueue.dequeue()
+    
+    objQRunner = tf.train.QueueRunner(objQueue, [objEnqueue] * 100)
+    
+    tf.train.add_queue_runner(objQRunner)
+    
+    # Functional data. Because the functional data does not change, we
+    # put the entire data on the graph. This may become a problem for
+    # large datasets.
+    objFunc = tf.Variable(aryFunc)
+    
+    
+    
+    # Operation that solves matrix (in the least squares sense), and
+    # calculates residuals along time dimension:
+    objMatSlve = tf.cast(tf.reduce_sum(
+                               tf.abs(
+                                      tf.subtract(
+                                                  tf.matmul(
+                                                            objDequeue,
+                                                            tf.matrix_solve_ls( \
+                                                                objDequeue, objFunc,
+                                                                varL2reg,
+                                                                fast=True)
+                                                            ),
+                                                  objFunc),
+                                      ),
+                               axis=0
+                               ), tf.float32)
 
-    # Vector for best R-square value. For each model fit, the R-square value is
-    # compared to this, and updated if it is lower than the best-fitting
-    # solution so far. We initialise with an arbitrary, high value
-    vecBstRes = np.add(np.zeros(varNumVoxChnk),
-                       100000000.0).astype(np.float32)
+print('------Create session')
 
-    # Vector that will hold the temporary residuals from the model fitting:
-    vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
+# Create session with graph:
+#with tf.Session(graph=objGrph) as objSess:
+with tf.Session() as objSess:
 
-    # We reshape the voxel time courses, so that time goes down the column,
-    # i.e. from top to bottom.
-    aryFunc = aryFunc.T
+    # Initialise variables.
+    #tf.global_variables_initializer().run()
+    objSess.run(tf.global_variables_initializer())
 
-    # Reshape pRF model time courses:
-    aryPrfTc = np.reshape(aryPrfTc,
-                          ((aryPrfTc.shape[0]
-                            * aryPrfTc.shape[1]
-                            * aryPrfTc.shape[2]),
-                           aryPrfTc.shape[3]))
+    # ... add the coordinator, ...
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(coord=coord)
 
-    # Change type to float 32:
-    aryFunc = aryFunc.astype(np.float32)
-    aryPrfTc = aryPrfTc.astype(np.float32)
+    print('------Run computational graph')
 
-    # The pRF model is fitted only if variance along time dimension is not
-    # zero. Get variance along time dimension:
-    vecVarPrfTc = np.var(aryPrfTc, axis=1)
+    # Run the graph with current design matrix, returning
+    # parameter estimates (betas):
+    vecTmpRes = objSess.run(objMatSlve)
 
-    # Zero with float32 precision for comparison:
-    varZero32 = np.array(([0.0])).astype(np.float32)[0]
+    print(type(vecTmpRes))
+    print(vecTmpRes.shape)
 
-    # Boolean array for models with variance greater than zero:
-    vecLgcVar = np.greater(vecVarPrfTc, varZero32)
+coord.request_stop()
+coord.join(threads)
 
-    # Take models with variance less than zero out of the array:
-    aryPrfTc = aryPrfTc[vecLgcVar, :]
-
-    # Add extra dimension for constant term:
-    aryPrfTc = np.reshape(aryPrfTc, (aryPrfTc.shape[0], aryPrfTc.shape[1], 1))
-
-    # Add constant term (ones):
-    aryPrfTc = np.concatenate((aryPrfTc,
-                               np.ones(aryPrfTc.shape).astype(np.float32)),
-                              axis=2)
-
-    # Change type to float 32:
-    aryFunc = aryFunc.astype(np.float32)
-    aryPrfTc = aryPrfTc.astype(np.float32)
-
-    # L2 regularization factor for regression:
-    varL2reg = 0.0
-
-    lstPrfTc = [None] * aryPrfTc.shape[0]
-    for idx01 in range(int(aryPrfTc.shape[0])):
-        lstPrfTc[idx01] = aryPrfTc[idx01, :, :]
-    del(aryPrfTc)
-
-    print('------Define computational graph')
-
-    varNumPar = 1
-
-    #print('print(lstPrfTc[0].shape)')
-    print(lstPrfTc[0].shape)
-
-    # Define computational graph:
-    objGrph = tf.Graph()
-    with objGrph.as_default():
-    #with tf.variable_scope("queue"):
-        # Design matrix with two columns (graph input). The design matrix is
-        # different on every iteration, so we define a placeholder object.
-        # objDsng = tf.placeholder(tf.float32, shape=(varNumVol, 2))  # ! 
-
-        objQueue = tf.FIFOQueue(capacity=1, dtypes=tf.float32)
-
-        objEnqueue = objQueue.enqueue_many(lstPrfTc[0:50])
-
-        objQRunner = tf.train.QueueRunner(objQueue, [objEnqueue] * varNumPar)
-
-        tf.train.add_queue_runner(objQRunner)
-
-        # Functional data. Because the functional data does not change, we
-        # put the entire data on the graph. This may become a problem for
-        # large datasets.
-        objFunc = tf.Variable(aryFunc[:, 0:100])
-
-        # The matrix solving operation.
-        # objMatSlve = tf.matrix_solve_ls(objDsng, objFunc, varL2reg, fast=True)
-
-        objDsng = objQueue.dequeue()
-
-        # Operation that solves matrix (in the least squares sense), and
-        # calculates residuals along time dimension:
-        objMatSlve = tf.reduce_sum(
-                                   tf.abs(
-                                          tf.subtract(
-                                                      tf.matmul(
-                                                                objDsng,
-                                                                tf.matrix_solve_ls( \
-                                                                    objDsng, objFunc,
-                                                                    varL2reg,
-                                                                    fast=True)
-                                                                ),
-                                                      objFunc),
-                                          ),
-                                   axis=0
-                                   )
-
-    print('------Create session')
-
-    # Create session with graph:
-    with tf.Session(graph=objGrph) as objSess:
-    #with tf.Session() as objSess:
-
-        # Initialise variables.
-        tf.global_variables_initializer().run()
-
-        # ... add the coordinator, ...
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
-
-        print('------Run computational graph')
-
-        # Run the graph with current design matrix, returning
-        # parameter estimates (betas):
-        vecTmpRes = objSess.run(objMatSlve)
-
-        print(type(vecTmpRes))
-        print(vecTmpRes.shape)
+print('------END')
 
 #    # Check whether current residuals are lower than previously
 #    # calculated ones:
@@ -210,7 +226,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 #              vecBstSd,
 #              vecBstR2]
 
-    lstOut = ['error']
+#lstOut = ['error']
 
-    queOut.put(lstOut)
+#queOut.put(lstOut)
 
