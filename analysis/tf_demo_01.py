@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Simple tensorflow demo using queue to place input data on graph."""
+"""
+Simple tensorflow demo using queue to place input data on graph.
+
+The problem with this way of placing data on the graph is that the
+enqueue_many operation load all data onto GPU memory, which does not work for
+large datasets.
+"""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -66,23 +72,22 @@ print('---Run graph')
 varTme01 = time.time()
 
 # Define session:
-with tf.Session() as sess:
+with tf.Session() as objSess:
 
     # Variables need to be initialised:
-    sess.run(tf.global_variables_initializer())
+    objSess.run(tf.global_variables_initializer())
 
     # Coordinator needs to be initialised as well:
     objCoord = tf.train.Coordinator()
-    #threads = tf.train.start_queue_runners(coord=objCoord)
-    threads = tf.train.start_queue_runners(coord=objCoord)
+    objThrds = tf.train.start_queue_runners(coord=objCoord)
 
     # Run the graph:
     for idxIt in range(varNumIt):
-        obj01 = sess.run(objGrph)
+        obj01 = objSess.run(objGrph)
 
     # Stop threads.
     objCoord.request_stop()
-    objCoord.join(threads)
+    objCoord.join(objThrds)
 
 # Get time:
 varTme02 = time.time()
