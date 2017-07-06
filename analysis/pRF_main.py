@@ -27,19 +27,17 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # *****************************************************************************
 # *** Import modules
 
-# import os
-# os.chdir(os.path.abspath(os.path.dirname(__file__)))
 import numpy as np
-#import scipy as sp
 import nibabel as nb
 import time
 import multiprocessing as mp
-#from scipy.interpolate import griddata
 from PIL import Image
-
 import pRF_config as cfg
 from pRF_crtPixMdl import funcCrtPixMdl
+
 from pRF_funcFindPrf import funcFindPrf
+from pRF_funcFindPrfGpuQ import funcFindPrfGpu
+
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
 # *****************************************************************************
@@ -297,6 +295,13 @@ if lgcDim:
 
     print('---------Preparing parallel pRF model finding')
 
+    # For the GPU version, we need to set down the parallelisation to 1 now,
+    # because no separate CPU threads are to be created. We may still use CPU
+    # parallelisation for preprocessing, which is why the parallelisation
+    # factor is only reduced now, not earlier.
+    if cfg.strVersion == 'gpu':
+        cfg.varPar = 1
+
     # Vector with the moddeled x-positions of the pRFs:
     vecMdlXpos = np.linspace(cfg.varExtXmin,
                              cfg.varExtXmax,
@@ -382,25 +387,52 @@ if lgcDim:
     # We don't need the original array with the functional data anymore:
     del(aryFunc)
 
-    print('---------Creating parallel processes')
+    # CPU version (using numpy or cython for pRF finding):
+    if ((cfg.strVersion == 'numpy') or (cfg.strVersion == 'cython')):
 
-    # Create processes:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc] = mp.Process(target=funcFindPrf,
-                                     args=(idxPrc,
-                                           cfg.varNumX,
-                                           cfg.varNumY,
-                                           cfg.varNumPrfSizes,
-                                           vecMdlXpos,
-                                           vecMdlYpos,
-                                           vecMdlSd,
-                                           lstFunc[idxPrc],
-                                           aryPrfTc,
-                                           cfg.lgcCython,
-                                           queOut)
-                                     )
-        # Daemon (kills processes when exiting):
-        lstPrcs[idxPrc].Daemon = True
+        print('---------pRF finding on CPU')
+
+        print('---------Creating parallel processes')
+
+        # Create processes:
+        for idxPrc in range(0, cfg.varPar):
+            lstPrcs[idxPrc] = mp.Process(target=funcFindPrf,
+                                         args=(idxPrc,
+                                               cfg.varNumX,
+                                               cfg.varNumY,
+                                               cfg.varNumPrfSizes,
+                                               vecMdlXpos,
+                                               vecMdlYpos,
+                                               vecMdlSd,
+                                               lstFunc[idxPrc],
+                                               aryPrfTc,
+                                               cfg.strVersion,
+                                               queOut)
+                                         )
+            # Daemon (kills processes when exiting):
+            lstPrcs[idxPrc].Daemon = True
+
+    # CPU version (using numpy or cython for pRF finding):
+    elif cfg.strVersion == 'gpu':
+
+        print('---------pRF finding on GPU')
+
+        # Create processes:
+        for idxPrc in range(0, cfg.varPar):
+            lstPrcs[idxPrc] = mp.Process(target=funcFindPrfGpu,
+                                         args=(idxPrc,
+                                               cfg.varNumX,
+                                               cfg.varNumY,
+                                               cfg.varNumPrfSizes,
+                                               vecMdlXpos,
+                                               vecMdlYpos,
+                                               vecMdlSd,
+                                               lstFunc[idxPrc],
+                                               aryPrfTc,
+                                               queOut)
+                                         )
+            # Daemon (kills processes when exiting):
+            lstPrcs[idxPrc].Daemon = True
 
     # Start processes:
     for idxPrc in range(0, cfg.varPar):

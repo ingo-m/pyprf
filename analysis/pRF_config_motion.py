@@ -98,7 +98,7 @@ strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskCircleBar.npz'
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
-lgcCython = True
+strVersion = True
 
 # Create pRF time course models?
 lgcCrteMdl = True

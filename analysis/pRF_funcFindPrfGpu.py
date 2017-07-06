@@ -22,7 +22,7 @@ import tensorflow as tf
 
 
 def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
-                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, lgcCython,
+                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, strVersion,
                    queOut):
     """
     Find the best pRF model for voxel time course.

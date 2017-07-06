@@ -19,12 +19,12 @@
 
 import numpy as np
 import pRF_config as cfg
-if cfg.lgcCython:
+if cfg.strVersion:
     from pRF_cython_leastsquares import funcCyLsq
 
 
 def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
-                vecMdlYpos, vecMdlSd, aryFuncChnk, aryPrfTc, lgcCython,
+                vecMdlYpos, vecMdlSd, aryFuncChnk, aryPrfTc, strVersion,
                 queOut):
     """Find the best pRF model for voxel time course."""
     # Number of voxels to be fitted in this chunk:
@@ -52,7 +52,7 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     aryFuncChnk = aryFuncChnk.T
 
     # Prepare data for cython (i.e. accelerated) least squares finding:
-    if lgcCython:
+    if strVersion == 'cython':
         # Instead of fitting a constant term, we subtract the mean from the
         # data and from the model ("FSL style"). First, we subtract the mean
         # over time from the data:
@@ -64,7 +64,7 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         aryPrfTcTmean = np.mean(aryPrfTc, axis=3)
         aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, None])
     # Otherwise, create constant term for numpy least squares finding:
-    else:
+    elif strVersion == 'numpy':
         # Constant term for the model:
         vecConst = np.ones((varNumVol), dtype=np.float32)
 
@@ -148,7 +148,7 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                     # square) for the current model for all voxel time courses.
 
                     # Cython version:
-                    if lgcCython:
+                    if strVersion == 'cython':
 
                         # A cython function is used to calculate the residuals
                         # of the current model:
@@ -157,7 +157,7 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                             aryFuncChnk)
 
                     # Numpy version:
-                    else:
+                    elif strVersion == 'numpy':
 
                         # Current pRF time course model:
                         vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :].flatten()
