@@ -27,8 +27,9 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     """
     Find the best pRF model for voxel time course.
     
-    This version uses ```feed_dict```. Slow (i.e. slower than multi-threaded
-    cython).
+    This version uses ```feed_dict``` to put model time courses on the
+    computational graph. This is slow, i.e. slower than multi-threaded cython
+    on CPU or GPU vesion using a queue.
     """
     # Number of voxels to be fitted:
     varNumVoxChnk = aryFunc.shape[0]

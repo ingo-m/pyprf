@@ -21,20 +21,14 @@ import numpy as np
 import tensorflow as tf
 import threading
 
-# Number of x-positions to model:
-varNumX = 40
-# Number of y-positions to model:
-varNumY = 40
-# Number of pRF sizes to model:
-varNumPrfSizes = 40
-
 
 def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                    vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, queOut):
     """
     Find the best pRF model for voxel time course.
     
-    Testing version for queues.
+    This version uses a queue that runs in a separate thread to put model time
+    courses on the computational graph.
     """
     # -------------------------------------------------------------------------
     # *** Wueue-feeding-function that will run in extra thread
