@@ -59,7 +59,7 @@ varNumVol = 400
 varIntCtf = 50.0
 
 # Number of processes to run in parallel:
-varPar = 1
+varPar = 11
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
@@ -77,7 +77,7 @@ lstPathNiiFunc = ['/home/john/Documents/20161205/func_regAcrssRuns_cube/func_07.
 strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/verysmall.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_gpu'  #noqa
+strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_cpu'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)

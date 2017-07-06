@@ -20,16 +20,10 @@
 import numpy as np
 import tensorflow as tf
 
-# Number of x-positions to model:
-varNumX = 40
-# Number of y-positions to model:
-varNumY = 40
-# Number of pRF sizes to model:
-varNumPrfSizes = 40
-
 
 def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
-                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, queOut):
+                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, lgcCython,
+                   queOut):
     """
     Find the best pRF model for voxel time course.
     
@@ -259,4 +253,3 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
               vecBstR2]
 
     queOut.put(lstOut)
-

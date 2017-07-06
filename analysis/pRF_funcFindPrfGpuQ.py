@@ -59,7 +59,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                 break
 
             # Stop if all data has been put on the queue:        
-            elif idxCnt == varNumMdl:
+            elif idxCnt == varNumMdls:
                 break
 
     # -------------------------------------------------------------------------
@@ -72,20 +72,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     # Number of volumes:
     varNumVol = aryFunc.shape[1]
-
-    # Vectors for pRF finding results [number-of-voxels times one]:
-    vecBstXpos = np.zeros(varNumVoxChnk)
-    vecBstYpos = np.zeros(varNumVoxChnk)
-    vecBstSd = np.zeros(varNumVoxChnk)
-
-    # Vector for best R-square value. For each model fit, the R-square value is
-    # compared to this, and updated if it is lower than the best-fitting
-    # solution so far. We initialise with an arbitrary, high value
-    vecBstRes = np.add(np.zeros(varNumVoxChnk),
-                       100000000.0).astype(np.float32)
-
-    # Vector that will hold the temporary residuals from the model fitting:
-    vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
 
     # We reshape the voxel time courses, so that time goes down the column,
     # i.e. from top to bottom.
@@ -137,8 +123,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     del(aryPrfTc)
 
     # Total number of pRF models to fit:
-    varNumMdl = len(lstPrfTc)
-
+    varNumMdls = len(lstPrfTc)
 
     # -------------------------------------------------------------------------
     # *** Define computational graph, queue & session
@@ -221,6 +206,34 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         varTmpSzeQ = objSess.run(objSzeQ)
 
     # -------------------------------------------------------------------------
+    # *** Prepare status indicator
+
+    # We create a status indicator for the time consuming pRF model finding
+    # algorithm. Number of steps of the status indicator:
+    varStsStpSze = 20
+
+    # Vector with pRF values at which to give status feedback:
+    vecStatPrf = np.linspace(0,
+                             varNumMdls,
+                             num=(varStsStpSze+1),
+                             endpoint=True)
+    vecStatPrf = np.ceil(vecStatPrf)
+    vecStatPrf = vecStatPrf.astype(int)
+
+    # Vector with corresponding percentage values at which to give status
+    # feedback:
+    vecStatPrc = np.linspace(0,
+                             100,
+                             num=(varStsStpSze+1),
+                             endpoint=True)
+    vecStatPrc = np.ceil(vecStatPrc)
+    vecStatPrc = vecStatPrc.astype(int)
+
+    # Counter for status indicator:
+    varCntSts01 = 0
+    varCntSts02 = 0
+
+    # -------------------------------------------------------------------------
     # *** Run the graph
 
     print('------Run graph')
@@ -228,84 +241,116 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # Variables need to be initialised:
     objSess.run(tf.global_variables_initializer())
 
-    # List for results:
-    lstRes = [None] * varNumMdl
+    # Array for results:
+    aryRes = np.zeros((varNumMdls, aryFunc.shape[1]), dtype=np.float32)
 
     # Loop through input iterations:
-    for idxIt in range(varNumMdl):
+    for idxIt in range(varNumMdls):
 
         # Run main computational graph and put results in list:
-        lstRes[idxIt] = objSess.run(objMatSlve)
+        aryRes[idxIt, :] = objSess.run(objMatSlve)
 
-        # On every 1000th call, check number of elements on queue:
-        if (idxIt % 1000) == 0:
-
+        # Status indicator:
+        if varCntSts02 == vecStatPrf[varCntSts01]:
             # Number of elements on queue:
             varTmpSzeQ = objSess.run(objSzeQ)
-    
-            strTmpMsg = ('---------Iteration: '
-                         + str(idxIt)
+            # Prepare status message:
+            strStsMsg = ('---------Progress: '
+                         + str(vecStatPrc[varCntSts01])
+                         + ' % --- '
+                         + str(vecStatPrf[varCntSts01])
+                         + ' pRF models out of '
+                         + str(varNumMdls)
                          + ', number of elements on queue: '
                          + str(varTmpSzeQ))
-
-            print(strTmpMsg)
-
-    print(type(lstRes))
-    print(len(lstRes))
-
-    print(type(lstRes[0]))
-    print(lstRes[0].shape)
+            print(strStsMsg)
+            # Only increment counter if the last value has not been
+            # reached yet:
+            if varCntSts01 < varStsStpSze:
+                varCntSts01 = varCntSts01 + int(1)
+        # Increment status indicator counter:
+        varCntSts02 = varCntSts02 + 1
 
     # Stop threads.
     objCoord.request_stop()
     objSess.close()
 
     # -------------------------------------------------------------------------
+    # *** Post-process results
 
+    print('------Post-processing results')
 
-# TODO
+    # Get indices of models with minimum residuals (minimum along model-space):
+    vecResMin = np.argmin(aryRes, axis=0)
+    del(aryRes)
 
-# Put residuals from list into array, find model with lowest residuals along
-# model-dimension, and output respective model parameters
+    # Array for model parameters. At the moment, we have the indices of the
+    # best fitting models, so we need an array that tells us what model
+    # parameters these indices refer to.
+    aryMdl = np.zeros((varNumMdls, 3), dtype=np.float32)
 
+    # Model parameter can be represented as float32 as well:
+    vecMdlXpos = vecMdlXpos.astype(np.float32)
+    vecMdlYpos = vecMdlYpos.astype(np.float32)
+    vecMdlSd = vecMdlSd.astype(np.float32)
 
+    # The first column is to contain model x positions:
+    aryMdl[:, 0] = np.repeat(vecMdlXpos, int(varNumY * varNumPrfSizes))
 
-#    # Check whether current residuals are lower than previously
-#    # calculated ones:
-#    vecLgcTmpRes = np.less(vecTmpRes, vecBstRes)
-#
-#    # Replace best x and y position values, and SD values.
-#    vecBstXpos[vecLgcTmpRes] = vecMdlXpos[idxX]
-#    vecBstYpos[vecLgcTmpRes] = vecMdlYpos[idxY]
-#    vecBstSd[vecLgcTmpRes] = vecMdlSd[idxSd]
-#
-#    # Replace best residual values:
-#    vecBstRes[vecLgcTmpRes] = vecTmpRes[vecLgcTmpRes]
-#
-#    # After finding the best fitting model for each voxel, we still have to
-#    # calculate the coefficient of determination (R-squared) for each voxel. We
-#    # start by calculating the total sum of squares (i.e. the deviation of the
-#    # data from the mean). The mean of each time course:
-#    vecFuncMean = np.mean(aryFunc, axis=0)
-#    # Deviation from the mean for each datapoint:
-#    vecFuncDev = np.subtract(aryFunc, vecFuncMean[None, :])
-#    # Sum of squares:
-#    vecSsTot = np.sum(np.power(vecFuncDev,
-#                               2.0),
-#                      axis=0)
-#    # Coefficient of determination:
-#    vecBstR2 = np.subtract(1.0,
-#                           np.divide(vecBstRes,
-#                                     vecSsTot))
-#
-#    # Output list:
-#    lstOut = [idxPrc,
-#              vecBstXpos,
-#              vecBstYpos,
-#              vecBstSd,
-#              vecBstR2]
+    # The second column is to contain model y positions:
+    aryMdl[:, 1] = np.repeat(
+                             np.tile(vecMdlYpos,
+                                     varNumPrfSizes),
+                             varNumX
+                             )
 
-#lstOut = ['error']
+    # The third column is to contain model pRF sizes:
+    aryMdl[:, 2] = np.tile(vecMdlSd, int(varNumX * varNumY))
 
-#queOut.put(lstOut)
+    # The above code has the same result as the below (for better readability):
+    # aryMdl = np.zeros((varNumMdls, 3), dtype=np.float32)
+    # varCount = 0
+    # # Loop through pRF models:
+    # for idxX in range(0, varNumX):
+    #     for idxY in range(0, varNumY):
+    #         for idxSd in range(0, varNumPrfSizes):
+    #             aryMdl[varCount, 0] = vecMdlXpos[idxX]
+    #             aryMdl[varCount, 1] = vecMdlYpos[idxY]
+    #             aryMdl[varCount, 2] = vecMdlSd[idxSd]
+    #             varCount += 1
+
+    # Earlier, we had removed models with a variance of less than zero. Thus
+    # those models were ignored and are not present in the results. We remove
+    # them from the model-parameter-array:
+    aryMdl = aryMdl[vecLgcVar]
+
+    # Retrieve model parameters of 'winning' model for all voxels:
+    vecBstXpos = aryMdl[:, 0][vecResMin]
+    vecBstYpos = aryMdl[:, 1][vecResMin]
+    vecBstSd = aryMdl[:, 2][vecResMin]
+
+    # After finding the best fitting model for each voxel, we still have to
+    # calculate the coefficient of determination (R-squared) for each voxel. We
+    # start by calculating the total sum of squares (i.e. the deviation of the
+    # data from the mean). The mean of each time course:
+    vecFuncMean = np.mean(aryFunc, axis=0)
+    # Deviation from the mean for each datapoint:
+    vecFuncDev = np.subtract(aryFunc, vecFuncMean[None, :])
+    # Sum of squares:
+    vecSsTot = np.sum(np.power(vecFuncDev,
+                               2.0),
+                      axis=0)
+    # Coefficient of determination:
+    vecBstR2 = np.subtract(1.0,
+                           np.divide(vecResMin,
+                                     vecSsTot))
+
+    # Output list:
+    lstOut = [idxPrc,
+              vecBstXpos,
+              vecBstYpos,
+              vecBstSd,
+              vecBstR2]
+
+    queOut.put(lstOut)
 

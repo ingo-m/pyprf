@@ -27,19 +27,17 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # *****************************************************************************
 # *** Import modules
 
-# import os
-# os.chdir(os.path.abspath(os.path.dirname(__file__)))
 import numpy as np
-#import scipy as sp
 import nibabel as nb
 import time
 import multiprocessing as mp
-#from scipy.interpolate import griddata
 from PIL import Image
-
 import pRF_config as cfg
 from pRF_crtPixMdl import funcCrtPixMdl
-from pRF_funcFindPrfGpuQ import funcFindPrfGpu
+
+#from pRF_funcFindPrfGpuQ import funcFindPrfGpu
+from pRF_funcFindPrf import funcFindPrf
+
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
 # *****************************************************************************
@@ -386,7 +384,7 @@ if lgcDim:
 
     # Create processes:
     for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc] = mp.Process(target=funcFindPrfGpu,
+        lstPrcs[idxPrc] = mp.Process(target=funcFindPrf,
                                      args=(idxPrc,
                                            cfg.varNumX,
                                            cfg.varNumY,
@@ -396,6 +394,7 @@ if lgcDim:
                                            vecMdlSd,
                                            lstFunc[idxPrc],
                                            aryPrfTc,
+                                           cfg.lgcCython,
                                            queOut)
                                      )
         # Daemon (kills processes when exiting):
