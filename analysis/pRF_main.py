@@ -27,17 +27,19 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # *****************************************************************************
 # *** Import modules
 
+# import os
+# os.chdir(os.path.abspath(os.path.dirname(__file__)))
 import numpy as np
+#import scipy as sp
 import nibabel as nb
 import time
 import multiprocessing as mp
+#from scipy.interpolate import griddata
 from PIL import Image
+
 import pRF_config as cfg
 from pRF_crtPixMdl import funcCrtPixMdl
-
-#from pRF_funcFindPrfGpuQ import funcFindPrfGpu
 from pRF_funcFindPrf import funcFindPrf
-
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
 # *****************************************************************************

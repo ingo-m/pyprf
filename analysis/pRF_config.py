@@ -43,11 +43,11 @@ varVoxRes = 0.7
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 0.0 # 2.940
+varSdSmthTmp = 2.940
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.0 # 0.7
+varSdSmthSpt = 0.7
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 400
@@ -77,7 +77,7 @@ lstPathNiiFunc = ['/home/john/Documents/20161205/func_regAcrssRuns_cube/func_07.
 strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/verysmall.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_cpu'  #noqa
+strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_cpu_'  #noqa
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
