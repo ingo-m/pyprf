@@ -20,7 +20,7 @@
 import numpy as np
 import tensorflow as tf
 import threading
-# import time
+import time
 
 
 def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
@@ -231,7 +231,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     print('------Define computational graph, queue & session')
 
     # Queue capacity:
-    varCapQ = 100
+    varCapQ = 10
 
     # Dimensions of placeholder have to be determined outside of the tensor
     # object, otherwise the object on which the size is calculated is loaded
@@ -278,9 +278,10 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                                                   tf.matmul(
                                                             objDsng,
                                                             tf.matrix_solve_ls( \
-                                                                objDsng, objFunc,
-                                                                varL2reg,
-                                                                fast=True)
+                                                                               objDsng, objFunc,
+                                                                               varL2reg,
+                                                                               fast=True
+                                                                               )
                                                             ),
                                                   objFunc),
                                       ),
@@ -307,7 +308,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
         # Buffer size (number of samples to put on queue before starting
         # execution of graph):
-        varBuff = 100
+        varBuff = 10
 
         # Define & run extra thread with graph that places data on queue:
         objThrd = threading.Thread(target=funcPlcIn)

@@ -68,9 +68,9 @@ print('-Tensorflow demo.')
 # data to the graph with enqueue_many, they are sliced along the first
 # dimension. We want to iterate through many multiplications, so both the 2D
 # array and the scaller get the number of iterations as the 0th dimension.
-varNumIt = 10000
-aryIn = np.ones((varNumIt, 500, 500), dtype=np.float32)
-vecIn = np.arange(0, varNumIt, dtype=np.float32)
+varNumIt = 1000
+aryIn = np.ones((varNumIt, 3000, 2000), dtype=np.float32)
+vecIn = np.arange(1, (varNumIt + 1), dtype=np.float32)
 vecIn = np.reshape(vecIn, (varNumIt, 1))
 
 # Put input data into lists (needed as input for feed_dict for graph that feeds
@@ -88,7 +88,7 @@ for idxIt in range(varNumIt):
 print('---Defining graph')
 
 # Queue capacity:
-varCapQ = 50
+varCapQ = 10
 
 # The queue:
 objQ = tf.FIFOQueue(capacity=varCapQ, dtypes=[tf.float32, tf.float32])
@@ -116,10 +116,51 @@ tf.train.add_queue_runner(objRunQ)
 # placeholders for the data in the queue when defining the graph.
 objIn01, objIn02 = objQ.dequeue()
 
-# The computational graph (multiplies the sliced array with the sliced 
-# vector, retrieves the first element and prints it).
-#objGrph = tf.Print(objIn02, [tf.multiply(objIn01, objIn02)[0][0]])
-objGrph = tf.multiply(objIn01, objIn02)
+# The computational graph. Just some intense nonsense computation.
+objGrph = tf.reduce_sum(
+                        tf.divide(
+                                  tf.multiply(
+                                              tf.abs(
+                                                     tf.add(
+                                                            tf.multiply(objIn01,
+                                                                        objIn01),
+                                                            objIn01
+                                                            )
+                                                     ),
+                                              objIn02
+                                              ),
+                                  tf.multiply(
+                                              tf.add(
+                                                     tf.multiply(objIn01,
+                                                                 objIn01),
+                                                     objIn01
+                                                     ),
+                                              objIn02
+                                              )
+                                  )
+                        )
+
+#objGrph = tf.divide(
+#                    tf.multiply(
+#                                tf.abs(
+#                                       tf.add(
+#                                              tf.multiply(objIn01,
+#                                                          objIn01),
+#                                              objIn01
+#                                              )
+#                                       ),
+#                                objIn02
+#                                ),
+#                    tf.multiply(
+#                                tf.add(
+#                                       tf.multiply(objIn01,
+#                                                   objIn01),
+#                                       objIn01
+#                                       ),
+#                                objIn02
+#                                )
+#                    )
+
 
 # Define session:
 objSess = tf.Session()
@@ -135,7 +176,7 @@ print('---Fill queue')
 
 # Buffer size (number of samples to put on queue before starting execution of
 # graph):
-varBuff = 50
+varBuff = 10
 
 # Define & run extra thread with graph that places data on queue:
 objThrd = threading.Thread(target=funcPlcIn)
@@ -167,10 +208,18 @@ lstRes = [None] * varNumIt
 for idxIt in range(varNumIt):
 
     # Run main computational graph and put results in list:
-    lstRes[idxIt] = objSess.run(objGrph)
+    # varTme04 = time.time()
 
-    # On every 1000th call, check number of elements on queue:
-    if (idxIt % 1000) == 0:
+    # Run main computational graph and put results in list:
+    lstRes[idxIt] = objSess.run(objGrph)
+    # lstRes[0] = objSess.run(objGrph)
+    # objSess.run(objGrph)
+
+    # print(('---------Time for graph call: '
+    #        + str(time.time() - varTme04)))
+
+    # On every xth call, check number of elements on queue:
+    if (idxIt % 50) == 0:
 
         # Number of elements on queue:
         varTmpSzeQ = objSess.run(objSzeQ)
@@ -182,11 +231,11 @@ for idxIt in range(varNumIt):
 
         print(strTmpMsg)
 
-# print(type(lstRes))
-# print(len(lstRes))
-
-# print(type(lstRes[0]))
-# print(lstRes[0].shape)
+#print(type(lstRes))
+#print(len(lstRes))
+#
+#print(type(lstRes[0]))
+#print(lstRes)
 
 # Stop threads.
 objCoord.request_stop()
