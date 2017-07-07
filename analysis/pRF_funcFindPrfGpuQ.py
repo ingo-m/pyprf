@@ -20,6 +20,7 @@
 import numpy as np
 import tensorflow as tf
 import threading
+# import time
 
 
 def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
@@ -58,19 +59,9 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                 break
 
     # -------------------------------------------------------------------------
-    # *** Prepare input data
+    # *** Prepare pRF model time courses for graph
 
-    print('------Prepare input data')
-
-    # Number of voxels to be fitted:
-    varNumVox = aryFunc.shape[0]
-
-    # Number of volumes:
-    # varNumVol = aryFunc.shape[1]
-
-    # We reshape the voxel time courses, so that time goes down the column,
-    # i.e. from top to bottom.
-    aryFunc = aryFunc.T
+    print('------Prepare pRF model time courses for graph')
 
     # Reshape pRF model time courses:
     aryPrfTc = np.reshape(aryPrfTc,
@@ -80,7 +71,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                            aryPrfTc.shape[3]))
 
     # Change type to float 32:
-    aryFunc = aryFunc.astype(np.float32)
     aryPrfTc = aryPrfTc.astype(np.float32)
 
     # The pRF model is fitted only if variance along time dimension is not
@@ -104,20 +94,13 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                                np.ones(aryPrfTc.shape).astype(np.float32)),
                               axis=2)
 
-    # Change type to float 32:
-    aryFunc = aryFunc.astype(np.float32)
-    aryPrfTc = aryPrfTc.astype(np.float32)
-
     # Size of pRF time courses in MB:
     varSzePrf = np.divide(float(aryPrfTc.nbytes),
                            1000000.0)
 
     print(('---------Size of pRF time courses: '
            + str(np.around(varSzePrf))
-           + ' MB'))
-
-    # L2 regularization factor for regression:
-    varL2reg = 0.0
+           + ' MB')) 
 
     # Put pRF model time courses into list:
     lstPrfTc = [None] * aryPrfTc.shape[0]
@@ -128,9 +111,27 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # Total number of pRF models to fit:
     varNumMdls = len(lstPrfTc)
 
+    # -------------------------------------------------------------------------
+    # *** Prepare functional data for graph
+
+    print('------Prepare functional data for graph')
+
+    # Number of voxels to be fitted:
+    varNumVox = aryFunc.shape[0]
+
+    # Number of volumes:
+    # varNumVol = aryFunc.shape[1]
+
+    # We reshape the voxel time courses, so that time goes down the column,
+    # i.e. from top to bottom.
+    aryFunc = aryFunc.T
+
+    # Change type to float 32:
+    aryFunc = aryFunc.astype(np.float32)
+
     # We cannot commit the entire functional data to GPU memory, we need to
     # create chunks. Establish the limit (maximum size) of one chunk (in MB):
-    varSzeMax = 200.0
+    varSzeMax = 100.0
 
     # Size of functional data in MB:
     varSzeFunc = np.divide(float(aryFunc.nbytes),
@@ -155,6 +156,18 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                               endpoint=False)
     vecIdxChnks = np.hstack((vecIdxChnks, varNumVox))
 
+    # List into which the chunks of functional data are put:
+    lstFunc = [None] * varNumChnk
+
+    # Put functional data into chunks:
+    for idxChnk in range(0, varNumChnk):
+        # Index of first voxel to be included in current chunk:
+        varChnkStr = int(vecIdxChnks[idxChnk])
+        # Index of last voxel to be included in current chunk:
+        varChnkEnd = int(vecIdxChnks[(idxChnk+1)])
+        # Put voxel array into list:
+        lstFunc[idxChnk] = aryFunc[:, varChnkStr:varChnkEnd]
+
     # We delete the original array holding the functional data to conserve
     # memory. Therefore, we first need to calculate the mean (will be needed
     # for calculation of R2).
@@ -171,24 +184,18 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                                2.0),
                       axis=0)
 
-    # List into which the chunks of functional data are put:
-    lstFunc = [None] * varNumChnk
-
-    # Put functional data into chunks:
-    for idxChnk in range(0, varNumChnk):
-        # Index of first voxel to be included in current chunk:
-        varChnkStr = int(vecIdxChnks[idxChnk])
-        # Index of last voxel to be included in current chunk:
-        varChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-        # Put voxel array into list:
-        lstFunc[idxChnk] = aryFunc[:, varChnkStr:varChnkEnd]
-
     # We don't need the original array with the functional data anymore (the
     # above seems to have created a hard copy):
     del(aryFunc)
 
+    # -------------------------------------------------------------------------
+    # *** Miscellaneous preparations
+
     # Vector for minimum residuals:
     vecResMin = np.zeros((varNumVox), dtype=np.float32)
+
+    # L2 regularization factor for regression:
+    varL2reg = 0.0
 
     # -------------------------------------------------------------------------
     # *** Prepare status indicator
@@ -342,7 +349,12 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         for idxMdl in range(varNumMdls):
 
             # Run main computational graph and put results in list:
+            # varTme01 = time.time()
+
             aryTmpRes[idxMdl, :] = objSess.run(objMatSlve)
+
+            # print(('---------Time for graph call: '
+            #        + str(time.time() - varTme01)))
 
             # Status indicator:
             if varCntSts02 == vecStatPrf[varCntSts01]:
