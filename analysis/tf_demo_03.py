@@ -3,7 +3,8 @@
 Simple tensorflow demo using queue to place input data on graph.
 
 This version uses a separate graph, running in a separate thread, to place data
-on the queue.
+on the queue. GLM fitting is tested, looping through voxels and models
+(inefficient).
 """
 
 # Part of py_pRF_mapping library
@@ -38,23 +39,40 @@ def funcPlcIn():
     # Iteration counter:
     idxCnt = 0
 
+    # Model counter:
+    varCntMdl = 0
+
+    # Voxel counter:
+    varCntVox = 0
+
     while True:
 
+        aryTmp01 = np.copy(ary01[varCntMdl, :, :])
+        aryTmp02 = np.copy(ary02[:, varCntVox])
+        aryTmp02 = np.reshape(aryTmp02, (aryTmp02.shape[0], 1))
+
         # Feed example to Tensorflow placeholder
-        dicIn = {objPlcHld01: lstIn01[idxCnt],
-                 objPlcHld02: lstIn02[idxCnt]}
+#        dicIn = {objPlcHld01: ary01[varCntMdl, :, :],
+#                 objPlcHld02: ary02[:, varCntVox]}
+        dicIn = {objPlcHld01: aryTmp01,
+                 objPlcHld02: aryTmp02}
 
         # Push to the queue:
         objSess.run(objEnQ, feed_dict=dicIn)
 
         idxCnt += 1
 
+        varCntMdl +=1
+        if varCntMdl == varNumMdl:
+            varCntMdl = 0
+            varCntVox += 1
+
         # Stop if coordinator says stop:
         if objCoord.should_stop():
             break
 
         # Stop if all data has been put on the queue:        
-        elif idxCnt == varNumIt:
+        elif idxCnt == (varNumMdl * varNumVox):
             break
 
 
@@ -63,27 +81,30 @@ def funcPlcIn():
 
 print('-Tensorflow demo.')
 
+varNumVol = 400
+varNumVox = 50000
+varNumBeta = 2
+varNumMdl = 10000
+strPath = '/home/john/Desktop/tmp/ary0{}.npy'
+strSwitch = 'create'
+
 # Data to perform computations on. First dimension is number of iterations.
-varNumIt = 1000
-aryIn = np.ones((varNumIt, 3000, 2000), dtype=np.float32)
-vecIn = np.arange(1, (varNumIt + 1), dtype=np.float32)
-vecIn = np.reshape(vecIn, (varNumIt, 1))
+if strSwitch == 'create':
 
-# Put input data into lists (needed as input for feed_dict for graph that feeds
-# queue):
-lstIn01 = [None] * varNumIt
-lstIn02 = [None] * varNumIt
-for idxIt in range(varNumIt):
-    lstIn01[idxIt] = aryIn[idxIt, :, :]
-    lstIn02[idxIt] = vecIn[idxIt]
+    # 'Model time courses':
+    ary01 = np.random.randn(varNumMdl, varNumVol, varNumBeta).astype(np.float32)
 
-# Remember array dimensions:
-varDim01 = aryIn.shape[1]
-varDim02 = aryIn.shape[2]
-varDim03 = vecIn[0].shape[0]
+    # 'Functional data':
+    ary02 = np.random.randn(varNumVol, varNumVox).astype(np.float32)
 
-del(aryIn)
-del(vecIn)
+    np.save(strPath.format('1'), ary01)
+    np.save(strPath.format('2'), ary02)
+
+elif strSwitch == 'load':
+
+    ary01 = np.load(strPath.format('1')).astype(np.float32)
+    ary02 = np.load(strPath.format('2')).astype(np.float32)
+
 
 # -----------------------------------------------------------------------------
 # *** Define the queue & the session
@@ -101,9 +122,9 @@ objSzeQ = objQ.size()
 
 # Placeholder that are the input for the queue:
 objPlcHld01 = tf.placeholder(tf.float32,
-                             shape=[varDim01, varDim02])
+                             shape=[varNumVol, varNumBeta])
 objPlcHld02 = tf.placeholder(tf.float32,
-                             shape=[varDim03])
+                             shape=[varNumVol, 1])
 
 # The enqueue operation that puts data on the graph.
 objEnQ = objQ.enqueue([objPlcHld01, objPlcHld02])
@@ -119,52 +140,27 @@ tf.train.add_queue_runner(objRunQ)
 # placeholders for the data in the queue when defining the graph.
 objIn01, objIn02 = objQ.dequeue()
 
+# Regularisation factor:
+varL2reg = 0.0
+
 # The computational graph. Just some intense nonsense computation.
 objGrph = tf.reduce_sum(
-                        tf.divide(
-                                  tf.multiply(
-                                              tf.abs(
-                                                     tf.add(
-                                                            tf.multiply(objIn01,
-                                                                        objIn01),
-                                                            objIn01
-                                                            )
+                        tf.abs(
+                               tf.subtract(
+                                           tf.matmul(
+                                                     objIn01,
+                                                     tf.matrix_solve_ls( \
+                                                                        objIn01, objIn02,
+                                                                        varL2reg,
+                                                                        fast=True
+                                                                        )
                                                      ),
-                                              objIn02
-                                              ),
-                                  tf.multiply(
-                                              tf.add(
-                                                     tf.multiply(objIn01,
-                                                                 objIn01),
-                                                     objIn01
-                                                     ),
-                                              objIn02
-                                              )
-                                  )
+                                           objIn02),
+                               ),
+                        axis=0
                         )
 
-# The following graph returns larger object, has lower GPU utilisation and is
-# slower (although there is one fewer caluclation).
-#objGrph = tf.divide(
-#                    tf.multiply(
-#                                tf.abs(
-#                                       tf.add(
-#                                              tf.multiply(objIn01,
-#                                                          objIn01),
-#                                              objIn01
-#                                              )
-#                                       ),
-#                                objIn02
-#                                ),
-#                    tf.multiply(
-#                                tf.add(
-#                                       tf.multiply(objIn01,
-#                                                   objIn01),
-#                                       objIn01
-#                                       ),
-#                                objIn02
-#                                )
-#                    )
+
 
 
 # Define session:
@@ -207,16 +203,16 @@ objSess.run(tf.global_variables_initializer())
 varTme01 = time.time()
 
 # List for results:
-lstRes = [None] * varNumIt
+# lstRes = [None] * (varNumMdl * varNumVox)
 
 # Loop through input iterations:
-for idxIt in range(varNumIt):
+for idxIt in range(varNumMdl * varNumVox):
 
     # Run main computational graph and put results in list:
     # varTme04 = time.time()
 
     # Run main computational graph and put results in list:
-    lstRes[idxIt] = objSess.run(objGrph)
+    vecTmp = objSess.run(objGrph)
     # lstRes[0] = objSess.run(objGrph)
     # objSess.run(objGrph)
 
@@ -224,7 +220,7 @@ for idxIt in range(varNumIt):
     #        + str(time.time() - varTme04)))
 
     # On every xth call, check number of elements on queue:
-    if (idxIt % 50) == 0:
+    if (idxIt % 100) == 0:
 
         # Number of elements on queue:
         varTmpSzeQ = objSess.run(objSzeQ)
@@ -236,11 +232,9 @@ for idxIt in range(varNumIt):
 
         print(strTmpMsg)
 
-#print(type(lstRes))
-#print(len(lstRes))
-#
-#print(type(lstRes[0]))
-#print(lstRes)
+print(type(vecTmp))
+print(type(vecTmp[0]))
+print(vecTmp[0].shape)
 
 # Stop threads.
 objCoord.request_stop()
