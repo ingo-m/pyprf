@@ -20,7 +20,7 @@
 import numpy as np
 import tensorflow as tf
 import threading
-import time
+# import time
 
 
 def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa

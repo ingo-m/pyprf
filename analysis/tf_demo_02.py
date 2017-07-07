@@ -140,6 +140,8 @@ objGrph = tf.reduce_sum(
                                   )
                         )
 
+# The following graph returns larger object, has lower GPU utilisation and is
+# slower (although there is one fewer caluclation).
 #objGrph = tf.divide(
 #                    tf.multiply(
 #                                tf.abs(
