@@ -3,7 +3,7 @@
 Simple tensorflow demo using queue to place input data on graph.
 
 This version uses a separate graph, running in a separate thread, to place data
-on the queue.
+on the queue. High GPU utilisation can be achieved with this configuration.
 """
 
 # Part of py_pRF_mapping library
@@ -33,7 +33,7 @@ import numpy as np
 
 # Define queue-feeding-function that will run in extra thread:
 def funcPlcIn():
-    """Function for placing data on queue."""
+    """Place data on queue."""
 
     # Iteration counter:
     idxCnt = 0

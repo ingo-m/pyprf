@@ -34,7 +34,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # -------------------------------------------------------------------------
     # *** Queue-feeding-function that will run in extra thread
     def funcPlcIn():
-        """Function for placing data on queue."""
+        """Place data on queue."""
 
         # Iteration counter:
         idxCnt = 0

@@ -3,8 +3,7 @@
 Simple tensorflow demo using queue to place input data on graph.
 
 This version uses a separate graph, running in a separate thread, to place data
-on the queue. GLM fitting is tested, looping through voxels and models
-(inefficient).
+on the queue. GLM fitting is tested.
 """
 
 # Part of py_pRF_mapping library
@@ -29,221 +28,272 @@ import tensorflow as tf
 import numpy as np
 
 
-# -----------------------------------------------------------------------------
-# *** Function definition
+def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
+               varNumBeta=2, varNumMdl=1000):
+    """Simulate GLM fitting on GPU."""
+    # Define queue-feeding-function that will run in extra thread:
+    def funcPlcIn():
+        """Place data on queue."""
 
-# Define queue-feeding-function that will run in extra thread:
-def funcPlcIn():
-    """Function for placing data on queue."""
+        # Iteration counter:
+        varCntIt = 0
 
-    # Iteration counter:
-    idxCnt = 0
+        # Model (design matrix) counter:
+        varCntMdl = 0
 
-    # Model counter:
-    varCntMdl = 0
+        # Voxel chunk counter:
+        varCntChnk = 0
 
-    # Voxel counter:
-    varCntVox = 0
+        while True:
 
-    while True:
+            # Input dictionary to feed:
+            dicIn = {objPlcHld01: aryDsgn[varCntMdl, :, :],
+                     objPlcHld02: aryFunc[:, varCntChnk, :]}
 
-        aryTmp01 = np.copy(ary01[varCntMdl, :, :])
-        aryTmp02 = np.copy(ary02[:, varCntVox])
-        aryTmp02 = np.reshape(aryTmp02, (aryTmp02.shape[0], 1))
+            # Push to the queue:
+            objSess.run(objEnQ, feed_dict=dicIn)
 
-        # Feed example to Tensorflow placeholder
-#        dicIn = {objPlcHld01: ary01[varCntMdl, :, :],
-#                 objPlcHld02: ary02[:, varCntVox]}
-        dicIn = {objPlcHld01: aryTmp01,
-                 objPlcHld02: aryTmp02}
+            varCntIt += 1
 
-        # Push to the queue:
-        objSess.run(objEnQ, feed_dict=dicIn)
+            # When the counter has reached the number of models (design
+            # matrices), the next chunk of voxel is accessed (and the loop
+            # through models starts again).
+            varCntMdl +=1
+            if varCntMdl == varNumMdl:
+                varCntMdl = 0
+                varCntChnk += 1
 
-        idxCnt += 1
+            # Stop if coordinator says stop:
+            if objCoord.should_stop():
+                break
 
-        varCntMdl +=1
-        if varCntMdl == varNumMdl:
-            varCntMdl = 0
-            varCntVox += 1
+            # Stop if all data has been put on the queue:        
+            elif varCntIt == (varNumTtl):
+                break
 
-        # Stop if coordinator says stop:
-        if objCoord.should_stop():
-            break
+    # -----------------------------------------------------------------------------
+    # *** Preparations
 
-        # Stop if all data has been put on the queue:        
-        elif idxCnt == (varNumMdl * varNumVox):
-            break
+    # print('-Tensorflow demo.')
 
+    # Total number of graph calls:
+    varNumTtl = varNumMdl * varNumChnk
 
-# -----------------------------------------------------------------------------
-# *** Preparations
-
-print('-Tensorflow demo.')
-
-varNumVol = 400
-varNumVox = 50000
-varNumBeta = 2
-varNumMdl = 10000
-strPath = '/home/john/Desktop/tmp/ary0{}.npy'
-strSwitch = 'create'
-
-# Data to perform computations on. First dimension is number of iterations.
-if strSwitch == 'create':
-
-    # 'Model time courses':
-    ary01 = np.random.randn(varNumMdl, varNumVol, varNumBeta).astype(np.float32)
-
+    # Data to perform computations on.
+    
+    # Design matrices:
+    aryDsgn = np.random.randn(varNumMdl, varNumVol, varNumBeta).astype(np.float32)
+    
     # 'Functional data':
-    ary02 = np.random.randn(varNumVol, varNumVox).astype(np.float32)
+    aryFunc = np.random.randn(varNumVol,
+                              varNumChnk,
+                              varNumVoxPerChnk).astype(np.float32)
+    
+    # strPath = '/home/john/Desktop/tmp/ary0{}.npy'
+    # strSwitch = 'load'
+    # np.save(strPath.format('1'), aryDsgn)
+    # np.save(strPath.format('2'), aryFunc)
+    # aryDsgn = np.load(strPath.format('1')).astype(np.float32)
+    # aryFunc = np.load(strPath.format('2')).astype(np.float32)
 
-    np.save(strPath.format('1'), ary01)
-    np.save(strPath.format('2'), ary02)
+    # -----------------------------------------------------------------------------
+    # *** Define the queue & the session
 
-elif strSwitch == 'load':
+    print('---Defining graph')
 
-    ary01 = np.load(strPath.format('1')).astype(np.float32)
-    ary02 = np.load(strPath.format('2')).astype(np.float32)
+    # Queue capacity:
+    varCapQ = 10
 
+    # The queue:
+    objQ = tf.FIFOQueue(capacity=varCapQ, dtypes=[tf.float32, tf.float32])
 
-# -----------------------------------------------------------------------------
-# *** Define the queue & the session
+    # Method for getting queue size:
+    objSzeQ = objQ.size()
 
-print('---Defining graph')
+    # Placeholder that are the input for the queue:
+    objPlcHld01 = tf.placeholder(tf.float32,
+                                 shape=[varNumVol, varNumBeta])
+    objPlcHld02 = tf.placeholder(tf.float32,
+                                 shape=[varNumVol, varNumVoxPerChnk])
 
-# Queue capacity:
-varCapQ = 10
+    # The enqueue operation that puts data on the graph.
+    objEnQ = objQ.enqueue([objPlcHld01, objPlcHld02])
 
-# The queue:
-objQ = tf.FIFOQueue(capacity=varCapQ, dtypes=[tf.float32, tf.float32])
+    # Number of threads that will be created:
+    varNumThrd = 1
 
-# Method for getting queue size:
-objSzeQ = objQ.size()
+    # The queue runner (places the enqueue operation on the queue?).
+    objRunQ = tf.train.QueueRunner(objQ, [objEnQ] * varNumThrd)
+    tf.train.add_queue_runner(objRunQ)
 
-# Placeholder that are the input for the queue:
-objPlcHld01 = tf.placeholder(tf.float32,
-                             shape=[varNumVol, varNumBeta])
-objPlcHld02 = tf.placeholder(tf.float32,
-                             shape=[varNumVol, 1])
+    # The tensor objects that are retrieved from the queue. These function like
+    # placeholders for the data in the queue when defining the graph.
+    objIn01, objIn02 = objQ.dequeue()
 
-# The enqueue operation that puts data on the graph.
-objEnQ = objQ.enqueue([objPlcHld01, objPlcHld02])
+    # Regularisation factor:
+    varL2reg = 0.0
 
-# Number of threads that will be created:
-varNumThrd = 1
+    # The computational graph. Just some intense nonsense computation.
+    objGrph = tf.reduce_sum(
+                            tf.abs(
+                                   tf.subtract(
+                                               tf.matmul(
+                                                         objIn01,
+                                                         tf.matrix_solve_ls( \
+                                                                            objIn01,
+                                                                            objIn02,
+                                                                            varL2reg,
+                                                                            fast=True
+                                                                            )
+                                                         ),
+                                               objIn02),
+                                   ),
+                            axis=0,
+                            )
 
-# The queue runner (places the enqueue operation on the queue?).
-objRunQ = tf.train.QueueRunner(objQ, [objEnQ] * varNumThrd)
-tf.train.add_queue_runner(objRunQ)
+    # Define session:
+    objSess = tf.Session()
 
-# The tensor objects that are retrieved from the queue. These function like
-# placeholders for the data in the queue when defining the graph.
-objIn01, objIn02 = objQ.dequeue()
+    # Coordinator needs to be initialised as well:
+    objCoord = tf.train.Coordinator()
 
-# Regularisation factor:
-varL2reg = 0.0
+    # -----------------------------------------------------------------------------
+    # *** Fill queue
 
-# The computational graph. Just some intense nonsense computation.
-objGrph = tf.reduce_sum(
-                        tf.abs(
-                               tf.subtract(
-                                           tf.matmul(
-                                                     objIn01,
-                                                     tf.matrix_solve_ls( \
-                                                                        objIn01, objIn02,
-                                                                        varL2reg,
-                                                                        fast=True
-                                                                        )
-                                                     ),
-                                           objIn02),
-                               ),
-                        axis=0
-                        )
+    print('---Fill queue')
 
+    # Buffer size (number of samples to put on queue before starting execution of
+    # graph):
+    varBuff = 10
 
+    # Define & run extra thread with graph that places data on queue:
+    objThrd = threading.Thread(target=funcPlcIn)
+    objThrd.setDaemon(True)
+    objThrd.start()
 
-
-# Define session:
-objSess = tf.Session()
-
-# Coordinator needs to be initialised as well:
-objCoord = tf.train.Coordinator()
-
-
-# -----------------------------------------------------------------------------
-# *** Fill queue
-
-print('---Fill queue')
-
-# Buffer size (number of samples to put on queue before starting execution of
-# graph):
-varBuff = 10
-
-# Define & run extra thread with graph that places data on queue:
-objThrd = threading.Thread(target=funcPlcIn)
-objThrd.setDaemon(True)
-objThrd.start()
-
-# Stay in this while loop until the specified number of samples (varBuffer)
-# have been placed on the queue).
-varTmpSzeQ = 0
-while varTmpSzeQ < varBuff:
-    varTmpSzeQ = objSess.run(objSzeQ)
-
-
-# -----------------------------------------------------------------------------
-# *** Run the graph
-
-print('---Run graph')
-
-# Variables need to be initialised:
-objSess.run(tf.global_variables_initializer())
-
-# Get time:
-varTme01 = time.time()
-
-# List for results:
-# lstRes = [None] * (varNumMdl * varNumVox)
-
-# Loop through input iterations:
-for idxIt in range(varNumMdl * varNumVox):
-
-    # Run main computational graph and put results in list:
-    # varTme04 = time.time()
-
-    # Run main computational graph and put results in list:
-    vecTmp = objSess.run(objGrph)
-    # lstRes[0] = objSess.run(objGrph)
-    # objSess.run(objGrph)
-
-    # print(('---------Time for graph call: '
-    #        + str(time.time() - varTme04)))
-
-    # On every xth call, check number of elements on queue:
-    if (idxIt % 100) == 0:
-
-        # Number of elements on queue:
+    # Stay in this while loop until the specified number of samples (varBuffer)
+    # have been placed on the queue).
+    varTmpSzeQ = 0
+    while varTmpSzeQ < varBuff:
         varTmpSzeQ = objSess.run(objSzeQ)
 
-        strTmpMsg = ('------Iteration: '
-                     + str(idxIt)
-                     + ', number of elements on queue: '
-                     + str(varTmpSzeQ))
+    # -----------------------------------------------------------------------------
+    # *** Run the graph
 
-        print(strTmpMsg)
+    print('---Run graph')
 
-print(type(vecTmp))
-print(type(vecTmp[0]))
-print(vecTmp[0].shape)
+    # Variables need to be initialised:
+    objSess.run(tf.global_variables_initializer())
 
-# Stop threads.
-objCoord.request_stop()
-#objCoord.join(objThrds)
-objSess.close()
+    # Get time:
+    varTme01 = time.time()
 
-# Get time:
-varTme02 = time.time()
-varTme03 = np.around((varTme02 - varTme01), decimals=3)
+    # List for results:
+    # lstRes = [None] * (varNumMdl * varNumChnk)
 
-print(('---Time for running graph: ' + str(varTme03)))
-# -----------------------------------------------------------------------------
+    # Initialise index (if we cannot use a for loop because range object would
+    # be too large, we use a while loop instead).
+    # idxIt = 0
+
+    # Loop through input iterations:
+    # while idxIt < varNumTtl:
+    for idxIt in range(varNumTtl):
+
+        # varTme04 = time.time()
+    
+        # Run main computational graph:
+        vecTmp = objSess.run(objGrph)
+        # lstRes[idxIt] = objSess.run(objGrph)
+
+        # print(('---------Time for graph call: '
+        #        + str(time.time() - varTme04)))
+
+        # On every xth call, check number of elements on queue:
+#        if (idxIt % 1000) == 0:
+#
+#            # Number of elements on queue:
+#            varTmpSzeQ = objSess.run(objSzeQ)
+#
+#            strTmpMsg = ('------Iteration: '
+#                         + str(idxIt)
+#                         + ', number of elements on queue: '
+#                         + str(varTmpSzeQ))
+#
+#            print(strTmpMsg)
+
+        # idxIt += 1
+
+    print(type(vecTmp))
+    print(type(vecTmp[0]))
+    print(vecTmp[0].shape)
+
+    # Stop threads.
+    objCoord.request_stop()
+    #objCoord.join(objThrds)
+    objSess.close()
+
+    # Get time:
+    varTme02 = time.time()
+    # varTme03 = np.around((varTme02 - varTme01), decimals=3)
+    varTme03 = varTme02 - varTme01
+
+    print(('---Time for running graph: '
+           + str(np.around(varTme03, decimals=3))))
+
+    return varTme03
+    # -----------------------------------------------------------------------------
+
+# Is this module is called directly?
+if __name__ == "__main__":
+
+    print('-GPU GLM fitting demo.')
+
+    # Totel number of voxels to use:
+    varNumVoxTtl = 100000
+
+    # List with chunk sizes:
+    lstNumChnk = list(range(2, 31))
+
+    # Resulting number of voxels per chunk:
+    lstNumVoxPerChnk = [varNumVoxTtl / x for x in lstNumChnk]
+
+    # Number of volumes:
+    varNumVol = 500
+
+    # Number of predictors in the design matrix:
+    varNumBeta = 2
+
+    # Number of design matrices to loop through:
+    varNumMdl = 1000
+
+    # Number of scenarios:
+    varNumScn = len(lstNumChnk)
+
+    # Vector for timing results:
+    vecTme = np.zeros((varNumMdl))
+
+    # Loop through scenarios:
+    for idxScn in range(varNumScn):
+
+        print(('--Scenario: ' + str(idxScn)))
+
+        print(('--Number of voxels: '
+               + str(lstNumChnk[idxScn] * lstNumVoxPerChnk[idxScn])))
+
+        print(('--Number of voxels per chunk: '
+               + str(lstNumVoxPerChnk[idxScn])))
+
+        # Call to main function performing GLM fitting on GPU
+        vecTme[idxScn] = funcGlmGpu(varNumVol=500,
+                                    varNumChnk=lstNumChnk[idxScn],
+                                    varNumVoxPerChnk=lstNumVoxPerChnk[idxScn],
+                                    varNumBeta=2,
+                                    varNumMdl=1000)
+
+    # Save results for inspection:
+    np.save('/home/john/Desktop/tmp/vecTme.npy',
+            vecTme)
+    aryNumVoxPerChnk = np.array(lstNumVoxPerChnk)
+    np.save('/home/john/Desktop/tmp/aryNumVoxPerChnk.npy',
+            aryNumVoxPerChnk)
+
