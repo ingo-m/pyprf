@@ -21,7 +21,7 @@ varNumX = 40
 # Number of y-positions to model:
 varNumY = 40
 # Number of pRF sizes to model:
-varNumPrfSizes = 40
+varNumPrfSizes = 80
 
 # Extend of visual space from centre of the screen (i.e. from the fixation
 # point) [degrees of visual angle]:
@@ -33,7 +33,7 @@ varExtYmax = 5.19
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
 varPrfStdMin = 0.20
-varPrfStdMax = 7.0
+varPrfStdMax = 14.0
 
 # Volume TR of input data [s]:
 varTr = 2.832
@@ -77,7 +77,7 @@ lstPathNiiFunc = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor
                   '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_10.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/smallmask.nii.gz'  #noqa
+strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/brainmask.nii.gz'  #noqa
 
 # Output basename:
 strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_results'  #noqa
@@ -101,7 +101,7 @@ strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskBar.npz'
 strVersion = 'cython'
 
 # Create pRF time course models?
-lgcCrteMdl = False
+lgcCrteMdl = True
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
