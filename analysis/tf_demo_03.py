@@ -26,6 +26,7 @@ import time
 import threading
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
@@ -270,7 +271,7 @@ if __name__ == "__main__":
     varNumScn = len(lstNumChnk)
 
     # Vector for timing results:
-    vecTme = np.zeros((varNumMdl))
+    vecTme = np.zeros((varNumScn))
 
     # Loop through scenarios:
     for idxScn in range(varNumScn):
@@ -297,3 +298,7 @@ if __name__ == "__main__":
     np.save('/home/john/Desktop/tmp/aryNumVoxPerChnk.npy',
             aryNumVoxPerChnk)
 
+    # -------------------------------------------------------------------------
+    # *** Create plot
+
+    plt.plot(aryNumVoxPerChnk, vecTme)
