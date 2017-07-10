@@ -59,7 +59,7 @@ varNumVol = 4 * 172
 varIntCtf = 50.0
 
 # Number of processes to run in parallel:
-varPar = 10
+varPar = 11
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
@@ -77,7 +77,7 @@ lstPathNiiFunc = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor
                   '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_10.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/brainmask.nii.gz'  #noqa
+strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/smallmask.nii.gz'  #noqa
 
 # Output basename:
 strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_results'  #noqa

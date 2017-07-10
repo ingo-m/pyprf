@@ -32,11 +32,13 @@ import nibabel as nb
 import time
 import multiprocessing as mp
 from PIL import Image
-import pRF_config as cfg
-from pRF_crtPixMdl import funcCrtPixMdl
 
+import pRF_config_motion as cfg
+
+from pRF_crtPixMdl import funcCrtPixMdl
 from pRF_funcFindPrf import funcFindPrf
-from pRF_funcFindPrfGpuQ import funcFindPrfGpu
+
+#from pRF_funcFindPrfGpuQ import funcFindPrfGpu
 
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl

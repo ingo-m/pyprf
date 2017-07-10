@@ -131,7 +131,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     # We cannot commit the entire functional data to GPU memory, we need to
     # create chunks. Establish the limit (maximum size) of one chunk (in MB):
-    varSzeMax = 100.0
+    varSzeMax = 20.0
 
     # Size of functional data in MB:
     varSzeFunc = np.divide(float(aryFunc.nbytes),
@@ -422,9 +422,9 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     #             aryMdl[varCount, 2] = vecMdlSd[idxSd]
     #             varCount += 1
 
-    # Earlier, we had removed models with a variance of less than zero. Thus
-    # those models were ignored and are not present in the results. We remove
-    # them from the model-parameter-array:
+    # Earlier, we had removed models with a variance of zero. Thus, those
+    # models were ignored and are not present in the results. We remove them
+    # from the model-parameter-array:
     aryMdl = aryMdl[vecLgcVar]
 
     # Retrieve model parameters of 'winning' model for all voxels:
@@ -432,9 +432,11 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     vecBstYpos = aryMdl[:, 1][vecResMin]
     vecBstSd = aryMdl[:, 2][vecResMin]
 
-    # Coefficient of determination:
+    # Coefficient of determination (1 - ratio of (residual sum of squares by 
+    #  total sum of squares)):
     vecBstR2 = np.subtract(1.0,
-                           np.divide(vecResMin,
+                           np.divide(np.power(vecResMin,
+                                              2.0),
                                      vecSsTot))
 
     # Output list:
