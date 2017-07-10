@@ -96,12 +96,12 @@ lstDsgn = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_
 # mapping).
 strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskBar.npz'
 
-# Use cython (i.e. compiled code) for faster performance? (Requires cython to
-# be installed.)
-strVersion = True
+# Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
+# CPU, 'gpu' for using GPU.
+strVersion = 'cython'
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
