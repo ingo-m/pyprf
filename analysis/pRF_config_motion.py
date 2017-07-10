@@ -94,7 +94,7 @@ lstDsgn = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_
 # with ~/py_pRF_motion/stimuli/Code/CreateMasks.py. Only needed for
 # pRF_motionLog.py (in order to create PNGs for static component of motion pRF
 # mapping).
-strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskCircleBar.npz'
+strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskBar.npz'
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)

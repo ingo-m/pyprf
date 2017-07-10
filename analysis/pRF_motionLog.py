@@ -149,6 +149,15 @@ if __name__ == "__main__":
     # Number of volumes in design matrix:
     varNumVol = aryDsgn.shape[0]
 
+    # When presenting the stimuli, psychopy presents the stimuli from the array
+    # 'upside down', compared to a representation of the array where the first
+    # row of the first column is in the upper left. In order to get the PNGs to
+    # have the same orientations as the stimuli on the screen during the
+    # experiment, we need to flip the array. (See
+    # ~/py_pRF_motion/stimuli/Main/prfStim_Motion*.py for the experiment script
+    # in which this 'flip' occurs.)
+    aryMask = np.flipud(aryMask)
+
     # Maximum intensity of output PNG:
     varScle = 255
 
