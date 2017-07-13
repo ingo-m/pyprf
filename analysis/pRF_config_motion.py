@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Number of x-positions to model:
-varNumX = 40
+varNumX = 50
 # Number of y-positions to model:
-varNumY = 40
+varNumY = 50
 # Number of pRF sizes to model:
-varNumPrfSizes = 80
+varNumPrfSizes = 50
 
 # Extend of visual space from centre of the screen (i.e. from the fixation
 # point) [degrees of visual angle]:
@@ -32,8 +32,8 @@ varExtYmax = 5.19
 
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
-varPrfStdMin = 0.20
-varPrfStdMax = 14.0
+varPrfStdMin = 0.1
+varPrfStdMax = 7.0
 
 # Volume TR of input data [s]:
 varTr = 2.832
@@ -43,11 +43,11 @@ varVoxRes = 0.8
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 2.0
+varSdSmthTmp = 2.832
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.4
+varSdSmthSpt = 0.8
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 4 * 172
