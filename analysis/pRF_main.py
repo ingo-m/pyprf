@@ -33,11 +33,12 @@ import time
 import multiprocessing as mp
 from PIL import Image
 
-import pRF_config_motion as cfg
+import pRF_config as cfg
+#import pRF_config_motion as cfg
 
 from pRF_crtPixMdl import funcCrtPixMdl
-from pRF_funcFindPrf import funcFindPrf
 
+from pRF_funcFindPrf import funcFindPrf
 #from pRF_funcFindPrfGpuQ import funcFindPrfGpu
 
 from pRF_filtering import funcPrfPrePrc

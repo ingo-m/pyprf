@@ -191,8 +191,11 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # -------------------------------------------------------------------------
     # *** Miscellaneous preparations
 
-    # Vector for minimum residuals:
-    vecResMin = np.zeros((varNumVox), dtype=np.float32)
+    # Vector for minimum squared residuals:
+    vecResSsMin = np.zeros((varNumVox), dtype=np.float32)
+
+    # Vector for indices of models with minimum residuals:
+    vecResSsMinIdx = np.zeros((varNumVox), dtype=np.int32)
 
     # L2 regularization factor for regression:
     varL2reg = 0.0
@@ -273,18 +276,17 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # The computational graph. Operation that solves matrix (in the least
     # squares sense), and calculates residuals along time dimension:
     objMatSlve = tf.reduce_sum(
-                               tf.abs(
-                                      tf.subtract(
-                                                  tf.matmul(
-                                                            objDsng,
-                                                            tf.matrix_solve_ls( \
-                                                                               objDsng, objFunc,
-                                                                               varL2reg,
-                                                                               fast=True
-                                                                               )
-                                                            ),
-                                                  objFunc),
-                                      ),
+                               tf.squared_difference(
+                                                     objFunc,
+                                                     tf.matmul(
+                                                               objDsng,
+                                                               tf.matrix_solve_ls( \
+                                                                                  objDsng, objFunc,
+                                                                                  varL2reg,
+                                                                                  fast=True
+                                                                                  )
+                                                               ),
+                                                     ),
                                axis=0
                                )
 
@@ -380,7 +382,9 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
         # Get indices of models with minimum residuals (minimum along
         # model-space) for current chunk:
-        vecResMin[varChnkStr:varChnkEnd] = np.argmin(aryTmpRes, axis=0)
+        vecResSsMinIdx[varChnkStr:varChnkEnd] = np.argmin(aryTmpRes, axis=0)
+        # Get minimum residuals of those models:
+        vecResSsMin[varChnkStr:varChnkEnd] = np.min(aryTmpRes, axis=0)
 
     # -------------------------------------------------------------------------
     # *** Post-process results
@@ -428,16 +432,22 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     aryMdl = aryMdl[vecLgcVar]
 
     # Retrieve model parameters of 'winning' model for all voxels:
-    vecBstXpos = aryMdl[:, 0][vecResMin]
-    vecBstYpos = aryMdl[:, 1][vecResMin]
-    vecBstSd = aryMdl[:, 2][vecResMin]
+    vecBstXpos = aryMdl[:, 0][vecResSsMinIdx]
+    vecBstYpos = aryMdl[:, 1][vecResSsMinIdx]
+    vecBstSd = aryMdl[:, 2][vecResSsMinIdx]
+
+    np.save('/home/john/Desktop/tmp/vecResSsMin.npy',
+            vecResSsMin)
+
+    np.save('/home/john/Desktop/tmp/vecSsTot.npy',
+            vecSsTot)
 
     # Coefficient of determination (1 - ratio of (residual sum of squares by 
     #  total sum of squares)):
     vecBstR2 = np.subtract(1.0,
-                           np.divide(np.power(vecResMin,
-                                              2.0),
-                                     vecSsTot))
+                           np.divide(vecResSsMin,
+                                     vecSsTot)
+                           )
 
     # Output list:
     lstOut = [idxPrc,

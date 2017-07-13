@@ -74,14 +74,14 @@ tplVslSpcHighSze = (300, 300)
 lstPathNiiFunc = ['/home/john/Documents/20161205/func_regAcrssRuns_cube/func_07.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/crudebrainmask.nii.gz'  #noqa
-
-# Output basename:
-strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_gpu_Q3'  #noqa
+strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/verysmall.nii.gz'  #noqa
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.
-strVersion = 'gpu'
+strVersion = 'cython'
+
+# Output basename:
+strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_{}'.format(strVersion)  #noqa
 
 # Create pRF time course models?
 lgcCrteMdl = False

@@ -125,6 +125,6 @@ cdef float[:] funcCyRes(float[:] vecPrfTc_view,
 
         vecRes_view[idxVox] = varRes
 
-    # Return memory viewL
+    # Return memory view:
     return vecRes_view
 # *****************************************************************************
