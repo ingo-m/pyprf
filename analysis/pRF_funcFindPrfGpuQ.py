@@ -436,12 +436,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     vecBstYpos = aryMdl[:, 1][vecResSsMinIdx]
     vecBstSd = aryMdl[:, 2][vecResSsMinIdx]
 
-    np.save('/home/john/Desktop/tmp/vecResSsMin.npy',
-            vecResSsMin)
-
-    np.save('/home/john/Desktop/tmp/vecSsTot.npy',
-            vecSsTot)
-
     # Coefficient of determination (1 - ratio of (residual sum of squares by 
     #  total sum of squares)):
     vecBstR2 = np.subtract(1.0,
