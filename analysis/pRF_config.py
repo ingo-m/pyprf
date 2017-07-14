@@ -78,7 +78,7 @@ strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/verysmall.nii.gz
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.
-strVersion = 'cython'
+strVersion = 'gpu'
 
 # Output basename:
 strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_{}'.format(strVersion)  #noqa

@@ -26,7 +26,7 @@ import time
 import threading
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
@@ -89,13 +89,6 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     aryFunc = np.random.randn(varNumVol,
                               varNumChnk,
                               varNumVoxPerChnk).astype(np.float32)
-    
-    # strPath = '/home/john/Desktop/tmp/ary0{}.npy'
-    # strSwitch = 'load'
-    # np.save(strPath.format('1'), aryDsgn)
-    # np.save(strPath.format('2'), aryFunc)
-    # aryDsgn = np.load(strPath.format('1')).astype(np.float32)
-    # aryFunc = np.load(strPath.format('2')).astype(np.float32)
 
     # -----------------------------------------------------------------------------
     # *** Define the queue & the session
@@ -132,25 +125,51 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     objIn01, objIn02 = objQ.dequeue()
 
     # Regularisation factor:
-    varL2reg = 0.0
+    #  varL2reg = 0.0
 
-    # The computational graph. Just some intense nonsense computation.
+    # The computational graph.
     objGrph = tf.reduce_sum(
                             tf.abs(
                                    tf.subtract(
                                                tf.matmul(
                                                          objIn01,
-                                                         tf.matrix_solve_ls( \
-                                                                            objIn01,
-                                                                            objIn02,
-                                                                            varL2reg,
-                                                                            fast=True
-                                                                            )
+                                                         tf.matmul(
+                                                                   tf.matmul(
+                                                                             tf.matrix_inverse(
+                                                                                               tf.matmul(
+                                                                                                         objIn01,
+                                                                                                         objIn01,
+                                                                                                         transpose_a=True,
+                                                                                                         transpose_b=False
+                                                                                                         )
+                                                                                               ),
+                                                                             objIn01,
+                                                                             transpose_a=False,
+                                                                             transpose_b=True
+                                                                             ),
+                                                                   objIn02
+                                                                   )
                                                          ),
                                                objIn02),
                                    ),
                             axis=0,
                             )
+#    objGrph = tf.matmul(
+#                        tf.matmul(
+#                                  tf.matrix_inverse(
+#                                                    tf.matmul(
+#                                                              objIn01,
+#                                                              objIn01,
+#                                                              transpose_a=True,
+#                                                              transpose_b=False
+#                                                              )
+#                                                    ),
+#                                  objIn01,
+#                                  transpose_a=False,
+#                                  transpose_b=True
+#                                  ),
+#                        objIn02
+#                        )
 
     # Define session:
     objSess = tf.Session()
@@ -226,7 +245,8 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
 
     print(type(vecTmp))
     print(type(vecTmp[0]))
-    print(vecTmp[0].shape)
+    print(vecTmp.shape)
+    print(vecTmp[0:5, 0:5])
 
     # Stop threads.
     objCoord.request_stop()
@@ -250,22 +270,22 @@ if __name__ == "__main__":
     print('-GPU GLM fitting demo.')
 
     # Totel number of voxels to use:
-    varNumVoxTtl = 100000
+    varNumVoxTtl = 2000
 
     # List with chunk sizes:
-    lstNumChnk = list(range(2, 31))
+    lstNumChnk = [1]  #list(range(2, 31))
 
     # Resulting number of voxels per chunk:
     lstNumVoxPerChnk = [varNumVoxTtl / x for x in lstNumChnk]
 
     # Number of volumes:
-    varNumVol = 500
+    varNumVol = 2000
 
     # Number of predictors in the design matrix:
-    varNumBeta = 2
+    varNumBeta = 5
 
     # Number of design matrices to loop through:
-    varNumMdl = 1000
+    varNumMdl = 1500
 
     # Number of scenarios:
     varNumScn = len(lstNumChnk)
@@ -285,20 +305,20 @@ if __name__ == "__main__":
                + str(lstNumVoxPerChnk[idxScn])))
 
         # Call to main function performing GLM fitting on GPU
-        vecTme[idxScn] = funcGlmGpu(varNumVol=500,
+        vecTme[idxScn] = funcGlmGpu(varNumVol=varNumVol,
                                     varNumChnk=lstNumChnk[idxScn],
                                     varNumVoxPerChnk=lstNumVoxPerChnk[idxScn],
-                                    varNumBeta=2,
-                                    varNumMdl=1000)
+                                    varNumBeta=varNumBeta,
+                                    varNumMdl=varNumMdl)
 
     # Save results for inspection:
-    np.save('/home/john/Desktop/tmp/vecTme.npy',
-            vecTme)
-    aryNumVoxPerChnk = np.array(lstNumVoxPerChnk)
-    np.save('/home/john/Desktop/tmp/aryNumVoxPerChnk.npy',
-            aryNumVoxPerChnk)
+    #np.save('/home/john/Desktop/tmp/vecTme.npy',
+    #        vecTme)
+    #aryNumVoxPerChnk = np.array(lstNumVoxPerChnk)
+    #np.save('/home/john/Desktop/tmp/aryNumVoxPerChnk.npy',
+    #        aryNumVoxPerChnk)
 
     # -------------------------------------------------------------------------
     # *** Create plot
 
-    plt.plot(aryNumVoxPerChnk, vecTme)
+    #plt.plot(aryNumVoxPerChnk, vecTme)

@@ -229,7 +229,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     varCntSts02 = 0
 
     # -------------------------------------------------------------------------
-    # *** Define computational graph, queue & session
+    # *** Prepare queue
 
     print('------Define computational graph, queue & session')
 
@@ -268,28 +268,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # placeholders for the data in the queue when defining the graph.
     objDsng = objQ.dequeue()
 
-    # Functional data. Here we put the first chunk of data on the graph. This
-    # needs to be updated later for subsequent chunks.
-    aryTmp01 = np.copy(lstFunc[0])
-    objFunc = tf.Variable(aryTmp01)
-
-    # The computational graph. Operation that solves matrix (in the least
-    # squares sense), and calculates residuals along time dimension:
-    objMatSlve = tf.reduce_sum(
-                               tf.squared_difference(
-                                                     objFunc,
-                                                     tf.matmul(
-                                                               objDsng,
-                                                               tf.matrix_solve_ls( \
-                                                                                  objDsng, objFunc,
-                                                                                  varL2reg,
-                                                                                  fast=True
-                                                                                  )
-                                                               ),
-                                                     ),
-                               axis=0
-                               )
-
     # -------------------------------------------------------------------------
     # *** Loop through chunks
 
@@ -324,15 +302,40 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             varTmpSzeQ = objSess.run(objSzeQ)
 
         # ---------------------------------------------------------------------
-        # *** Run the graph
+        # *** Prepare & run the graph
 
-        # One the second and all subsequent iterations of the loop, a new
-        # chunk of functional data needs to be placed on the graph.
-        if 0 < idxChnk:
-
-            # New chunk of functional data:
-            aryTmp01 = np.copy(lstFunc[idxChnk])
+        # Chunk of functional data:
+        aryTmp01 = np.copy(lstFunc[idxChnk])
+        with tf.device('/gpu:0'):
             objFunc = tf.Variable(aryTmp01)
+
+        # The computational graph. Operation that solves matrix (in the least
+        # squares sense), and calculates residuals along time dimension:
+        objMatSlve = tf.reduce_sum(
+                                   tf.squared_difference(
+                                                         objFunc,
+                                                         tf.matmul(
+                                                                   objDsng,
+                                                                   tf.matmul(
+                                                                             tf.matmul(
+                                                                                       tf.matrix_inverse(
+                                                                                                         tf.matmul(
+                                                                                                                   objDsng,
+                                                                                                                   objDsng,
+                                                                                                                   transpose_a=True,
+                                                                                                                   transpose_b=False
+                                                                                                                   )
+                                                                                                         ),
+                                                                                       objDsng,
+                                                                                       transpose_a=False,
+                                                                                       transpose_b=True
+                                                                                       ),
+                                                                             objFunc
+                                                                             )
+                                                                   ),
+                                                         ),
+                                   axis=0
+                                   )
 
         # Variables need to be (re-)initialised:
         objSess.run(tf.global_variables_initializer())
