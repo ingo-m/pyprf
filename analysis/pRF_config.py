@@ -74,7 +74,7 @@ tplVslSpcHighSze = (300, 300)
 lstPathNiiFunc = ['/home/john/Documents/20161205/func_regAcrssRuns_cube/func_07.nii.gz']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/verysmall.nii.gz'  #noqa
+strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/crudebrainmask.nii.gz'  #noqa
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.

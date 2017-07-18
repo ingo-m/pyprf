@@ -228,45 +228,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     varCntSts01 = 0
     varCntSts02 = 0
 
-    # -------------------------------------------------------------------------
-    # *** Prepare queue
-
-    print('------Define computational graph, queue & session')
-
-    # Queue capacity:
-    varCapQ = 10
-
-    # Dimensions of placeholder have to be determined outside of the tensor
-    # object, otherwise the object on which the size is calculated is loaded
-    # into GPU memory.
-    varDim01 = lstPrfTc[0].shape[0]
-    varDim02 = lstPrfTc[0].shape[1]
-
-    # The queue:
-    objQ = tf.FIFOQueue(capacity=varCapQ,
-                        dtypes=[tf.float32],
-                        shapes=[(varDim01, varDim02)])
-
-    # Method for getting queue size:
-    objSzeQ = objQ.size()
-
-    # Placeholder that is used to put design matrix on computational graph:
-    objPlcHld01 = tf.placeholder(tf.float32,
-                                 shape=[varDim01, varDim02])
-
-    # The enqueue operation that puts data on the graph.
-    objEnQ = objQ.enqueue([objPlcHld01])
-
-    # Number of threads that will be created:
-    varNumThrd = 1
-
-    # The queue runner (places the enqueue operation on the queue?).
-    objRunQ = tf.train.QueueRunner(objQ, [objEnQ] * varNumThrd)
-    tf.train.add_queue_runner(objRunQ)
-
-    # The tensor object that is retrieved from the queue. Functions like
-    # placeholders for the data in the queue when defining the graph.
-    objDsng = objQ.dequeue()
 
     # -------------------------------------------------------------------------
     # *** Loop through chunks
@@ -278,110 +239,151 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         print(('---------Chunk: ' + str(idxChnk)))
 
         # Define session:
-        objSess = tf.Session()
+        # objSess = tf.Session()
+        with tf.Graph().as_default(), tf.Session() as objSess:
 
-        # Coordinator needs to be initialised as well:
-        objCoord = tf.train.Coordinator()
+            # -------------------------------------------------------------------------
+            # *** Prepare queue
+        
+            print('------Define computational graph, queue & session')
+        
+            # Queue capacity:
+            varCapQ = 10
+        
+            # Dimensions of placeholder have to be determined outside of the tensor
+            # object, otherwise the object on which the size is calculated is loaded
+            # into GPU memory.
+            varDim01 = lstPrfTc[0].shape[0]
+            varDim02 = lstPrfTc[0].shape[1]
+        
+            # The queue:
+            objQ = tf.FIFOQueue(capacity=varCapQ,
+                                dtypes=[tf.float32],
+                                shapes=[(varDim01, varDim02)])
+        
+            # Method for getting queue size:
+            objSzeQ = objQ.size()
+        
+            # Placeholder that is used to put design matrix on computational graph:
+            objPlcHld01 = tf.placeholder(tf.float32,
+                                         shape=[varDim01, varDim02])
+        
+            # The enqueue operation that puts data on the graph.
+            objEnQ = objQ.enqueue([objPlcHld01])
+        
+            # Number of threads that will be created:
+            varNumThrd = 1
+        
+            # The queue runner (places the enqueue operation on the queue?).
+            objRunQ = tf.train.QueueRunner(objQ, [objEnQ] * varNumThrd)
+            tf.train.add_queue_runner(objRunQ)
+        
+            # The tensor object that is retrieved from the queue. Functions like
+            # placeholders for the data in the queue when defining the graph.
+            objDsng = objQ.dequeue()
 
-        # ---------------------------------------------------------------------
-        # *** Fill queue
-
-        # Buffer size (number of samples to put on queue before starting
-        # execution of graph):
-        varBuff = 10
-
-        # Define & run extra thread with graph that places data on queue:
-        objThrd = threading.Thread(target=funcPlcIn)
-        objThrd.setDaemon(True)
-        objThrd.start()
-
-        # Stay in this while loop until the specified number of samples
-        # (varBuffer) have been placed on the queue).
-        varTmpSzeQ = 0
-        while varTmpSzeQ < varBuff:
-            varTmpSzeQ = objSess.run(objSzeQ)
-
-        # ---------------------------------------------------------------------
-        # *** Prepare & run the graph
-
-        # Chunk of functional data:
-        aryTmp01 = np.copy(lstFunc[idxChnk])
-        with tf.device('/gpu:0'):
-            objFunc = tf.Variable(aryTmp01)
-
-        # The computational graph. Operation that solves matrix (in the least
-        # squares sense), and calculates residuals along time dimension:
-        objMatSlve = tf.reduce_sum(
-                                   tf.squared_difference(
-                                                         objFunc,
-                                                         tf.matmul(
-                                                                   objDsng,
-                                                                   tf.matmul(
-                                                                             tf.matmul(
-                                                                                       tf.matrix_inverse(
-                                                                                                         tf.matmul(
-                                                                                                                   objDsng,
-                                                                                                                   objDsng,
-                                                                                                                   transpose_a=True,
-                                                                                                                   transpose_b=False
-                                                                                                                   )
-                                                                                                         ),
-                                                                                       objDsng,
-                                                                                       transpose_a=False,
-                                                                                       transpose_b=True
-                                                                                       ),
-                                                                             objFunc
-                                                                             )
-                                                                   ),
-                                                         ),
-                                   axis=0
-                                   )
-
-        # Variables need to be (re-)initialised:
-        objSess.run(tf.global_variables_initializer())
-
-        # Index of first voxel in current chunk (needed to assign results):
-        varChnkStr = int(vecIdxChnks[idxChnk])
-
-        # Index of last voxel in current chunk (needed to assign results):
-        varChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-
-        # Array for results of current chunk:
-        aryTmpRes = np.zeros((varNumMdls,
-                              lstFunc[idxChnk].shape[1]),
-                             dtype=np.float32)
-
-        # Loop through models:
-        for idxMdl in range(varNumMdls):
-
-            # Run main computational graph and put results in list:
-            # varTme01 = time.time()
-
-            aryTmpRes[idxMdl, :] = objSess.run(objMatSlve)
-
-            # print(('---------Time for graph call: '
-            #        + str(time.time() - varTme01)))
-
-            # Status indicator:
-            if varCntSts02 == vecStatPrf[varCntSts01]:
-                # Number of elements on queue:
+            # Coordinator needs to be initialised:
+            objCoord = tf.train.Coordinator()
+    
+            # ---------------------------------------------------------------------
+            # *** Fill queue
+    
+            # Buffer size (number of samples to put on queue before starting
+            # execution of graph):
+            varBuff = 10
+    
+            # Define & run extra thread with graph that places data on queue:
+            objThrd = threading.Thread(target=funcPlcIn)
+            objThrd.setDaemon(True)
+            objThrd.start()
+    
+            # Stay in this while loop until the specified number of samples
+            # (varBuffer) have been placed on the queue).
+            varTmpSzeQ = 0
+            while varTmpSzeQ < varBuff:
                 varTmpSzeQ = objSess.run(objSzeQ)
-                # Prepare status message:
-                strStsMsg = ('---------Progress: '
-                             + str(vecStatPrc[varCntSts01])
-                             + ' % --- Number of elements on queue: '
-                             + str(varTmpSzeQ))
-                print(strStsMsg)
-                # Only increment counter if the last value has not been
-                # reached yet:
-                if varCntSts01 < varStsStpSze:
-                    varCntSts01 = varCntSts01 + int(1)
-            # Increment status indicator counter:
-            varCntSts02 = varCntSts02 + 1
-
-        # Stop threads.
-        objCoord.request_stop()
-        objSess.close()
+    
+            # ---------------------------------------------------------------------
+            # *** Prepare & run the graph
+    
+            # Chunk of functional data:
+            aryTmp01 = np.copy(lstFunc[idxChnk])
+            with tf.device('/gpu:0'):
+                objFunc = tf.Variable(aryTmp01)
+    
+            # The computational graph. Operation that solves matrix (in the least
+            # squares sense), and calculates residuals along time dimension:
+            objMatSlve = tf.reduce_sum(
+                                       tf.squared_difference(
+                                                             objFunc,
+                                                             tf.matmul(
+                                                                       objDsng,
+                                                                       tf.matmul(
+                                                                                 tf.matmul(
+                                                                                           tf.matrix_inverse(
+                                                                                                             tf.matmul(
+                                                                                                                       objDsng,
+                                                                                                                       objDsng,
+                                                                                                                       transpose_a=True,
+                                                                                                                       transpose_b=False
+                                                                                                                       )
+                                                                                                             ),
+                                                                                           objDsng,
+                                                                                           transpose_a=False,
+                                                                                           transpose_b=True
+                                                                                           ),
+                                                                                 objFunc
+                                                                                 )
+                                                                       ),
+                                                             ),
+                                       axis=0
+                                       )
+    
+            # Variables need to be (re-)initialised:
+            objSess.run(tf.global_variables_initializer())
+    
+            # Index of first voxel in current chunk (needed to assign results):
+            varChnkStr = int(vecIdxChnks[idxChnk])
+    
+            # Index of last voxel in current chunk (needed to assign results):
+            varChnkEnd = int(vecIdxChnks[(idxChnk+1)])
+    
+            # Array for results of current chunk:
+            aryTmpRes = np.zeros((varNumMdls,
+                                  lstFunc[idxChnk].shape[1]),
+                                 dtype=np.float32)
+    
+            # Loop through models:
+            for idxMdl in range(varNumMdls):
+    
+                # Run main computational graph and put results in list:
+                # varTme01 = time.time()
+    
+                aryTmpRes[idxMdl, :] = objSess.run(objMatSlve)
+    
+                # print(('---------Time for graph call: '
+                #        + str(time.time() - varTme01)))
+    
+                # Status indicator:
+                if varCntSts02 == vecStatPrf[varCntSts01]:
+                    # Number of elements on queue:
+                    varTmpSzeQ = objSess.run(objSzeQ)
+                    # Prepare status message:
+                    strStsMsg = ('---------Progress: '
+                                 + str(vecStatPrc[varCntSts01])
+                                 + ' % --- Number of elements on queue: '
+                                 + str(varTmpSzeQ))
+                    print(strStsMsg)
+                    # Only increment counter if the last value has not been
+                    # reached yet:
+                    if varCntSts01 < varStsStpSze:
+                        varCntSts01 = varCntSts01 + int(1)
+                # Increment status indicator counter:
+                varCntSts02 = varCntSts02 + 1
+    
+            # Stop threads.
+            objCoord.request_stop()
+            # objSess.close()
 
         # Get indices of models with minimum residuals (minimum along
         # model-space) for current chunk:
