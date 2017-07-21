@@ -6,21 +6,35 @@ import numpy as np
 import os
 import pickle
 
-# set parameters
-TR = 2.94
+# %% set parameters
+
+# set the TR
+TR = 1.20
+# set the target duration in [s]
 TargetDuration = 0.3
 
-NrOfBlocks = 4
+# set the number of bar orientations (i.e. # of steps between 0 and 360 deg)
 NrOfOrientation = 8
+# set nr of steps when traversing the visual field, e.g. from left to right
 NrOfSteps = 12
+# nr of blocks per run (one block contains all possible steps x orientations)
+NrOfBlocks = 4
 
+# number of TRs of rest at start of experiment
 NrNullFixStart = 8
+# number of TRs of rest at end of experiment
 NrNullFixEnd = 8
+# number of TRs of rest during the experiment (if not desired set to zero)
+NrNullFixBetween = 50
+if NrNullFixBetween > 0:
+    # avoid that two rest periods can occur immdetialey after each other?
+    lgcRep = True
+    # how many TRs should one rest preiod be? (default 1)
+    NrOfTrPerNull = 3
 
-NrOfVols = (NrOfBlocks * NrOfOrientation * NrOfSteps + NrNullFixStart
-            + NrNullFixEnd)
+NrOfVolsExclNull = (NrOfBlocks * NrOfOrientation * NrOfSteps)
 
-# create arrays for position and orientation
+# %% create arrays for position and orientation
 aryOri = np.empty(0)
 aryPos = np.empty(0)
 for indBlock in np.arange(NrOfBlocks):
@@ -35,13 +49,25 @@ for indBlock in np.arange(NrOfBlocks):
     aryOri = np.append(aryOri, aryOriBlock)
     aryPos = np.append(aryPos, aryPosBlock)
 
-# add fixation blocks in beginning and end
+# add fixation blocks inbetween the experiment
 conditions = np.vstack((aryPos, aryOri)).T
+
+if NrNullFixBetween > 0:
+    while lgcRep:
+        NullPos = np.random.choice(np.arange(1, NrOfVolsExclNull),
+                                   NrNullFixBetween, replace=False)
+        lgcRep = np.greater(np.sum(np.diff(np.sort(NullPos)) == 1), 0)
+
+# insert null trials in between
+conditions = np.insert(conditions, NullPos, np.array([0, 0]),
+                       axis=0)
+
+# add fixation blocks in beginning and end
 conditions = np.vstack((np.zeros((NrNullFixStart, 2)),
                         conditions,
                         np.zeros((NrNullFixEnd, 2))))
 
-# prepare targets
+# %% prepare target arrays
 NrOfTargets = int(len(conditions)/10)
 targets = np.zeros(len(conditions))
 lgcRep = True
@@ -54,8 +80,7 @@ targets[targetPos] = 1
 assert NrOfTargets == np.sum(targets)
 targets = targets.astype(bool)
 
-
-# prepare random target onset delay
+# %% prepare random target onset delay
 BlockOnsetinSec = np.arange(len(conditions)) * TR
 TargetOnsetinSec = BlockOnsetinSec[targets]
 TargetOnsetDelayinSec = np.random.uniform(0.1,
@@ -63,7 +88,7 @@ TargetOnsetDelayinSec = np.random.uniform(0.1,
                                           size=NrOfTargets)
 TargetOnsetinSec = TargetOnsetinSec + TargetOnsetDelayinSec
 
-# create dictionary for saving to pickle
+# %% create dictionary for saving to pickle
 array_run1 = {'Conditions': conditions,
               'TargetOnsetinSec': TargetOnsetinSec,
               'TR': TR,
@@ -72,8 +97,7 @@ array_run1 = {'Conditions': conditions,
               'NrOfVols': NrOfVols,
               }
 
-
-# save dictionary to pickle
+# %% save dictionary to pickle
 folderpath = '/media/sf_D_DRIVE/ParamContrast/pRFStimuli/prfStim/prfStim/Conditions'
 filename1 = os.path.join(folderpath, 'Conditions_run01.pickle')
 
