@@ -28,13 +28,14 @@ import numpy as np
 import scipy as sp
 import nibabel as nb
 import time
+import os
 import multiprocessing as mp
 from scipy.interpolate import griddata
 
 import pRF_config as cfg
 from pRF_crtPixMdl import funcCrtPixMdl
 from pRF_funcFindPrf import funcFindPrf
-from pRF_filtering import funcPrfPrePrc
+from pRF_filtering import funcLnTrRm, funcSmthTmp
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
 # *****************************************************************************
 
@@ -75,7 +76,7 @@ cfg.varSdSmthSpt = np.divide(cfg.varSdSmthSpt, cfg.varVoxRes)
 # *****************************************************************************
 # *** Create new pRF time course models, or load existing models
 
-if cfg.lgcCrteMdl:  #noqa
+if cfg.lgcCrteMdl:  # noqa
 
     # Create new pRF time course models
 
@@ -235,8 +236,6 @@ if cfg.lgcCrteMdl:  #noqa
     niiPrfTc = nb.Nifti1Image(aryPrfTc, np.eye(4))
     nb.save(niiPrfTc, cfg.strPathMdl)
 
-    # Set test for correct dimensions of '*.npy' file to true:
-    lgcDim = True
     # *************************************************************************
 
 else:
@@ -260,261 +259,263 @@ else:
               (vecPrfTcShp[2] == cfg.varNumPrfSizes)
               and
               (vecPrfTcShp[3] == cfg.varNumVol))
-# *****************************************************************************
 
+    # Only continue if dimensions of pRF time course models are correct:
+    strErrMsg = ('Dimensions of specified pRF time course models ' +
+                 'do not agree with specified model parameters')
+    assert vecPrfTcShp[0] == cfg.varNumX and \
+        vecPrfTcShp[1] == cfg.varNumY and \
+        vecPrfTcShp[2] == cfg.varNumPrfSizes and \
+        vecPrfTcShp[3] == cfg.varNumVol, strErrMsg
+# *****************************************************************************
 
 # *****************************************************************************
 # *** Find pRF models for voxel time courses
 
-# Only fit pRF models if dimensions of pRF time course models are correct:
-if lgcDim:
+print('------Find pRF models for voxel time courses')
 
-    print('------Find pRF models for voxel time courses')
+print('---------Loading nii data')
 
-    print('---------Loading nii data')
+# Load mask (to restrict model finding):
+niiMask = nb.load(cfg.strPathNiiMask)
+# Get nii header of mask:
+hdrMsk = niiMask.header
+# Get nii 'affine':
+affMsk = niiMask.affine
+# Load the data into memory:
+aryMask = niiMask.get_data().astype('bool')
 
+# prepare aryFunc for functional data
+aryFunc = np.empty((np.sum(aryMask), 0), dtype='float32')
+for idx in np.arange(len(cfg.lstNiiFls)):
+    print('------------Loading run: ' + str(idx+1))
     # Load 4D nii data:
-    niiFunc = nb.load(cfg.strPathNiiFunc)
+    niiFunc = nb.load(os.path.join(cfg.strPathNiiFunc,
+                                   cfg.lstNiiFls[idx]))
     # Load the data into memory:
-    aryFunc = niiFunc.get_data()
-    aryFunc = np.array(aryFunc)
+    aryFuncTemp = niiFunc.get_data()
+    aryFunc = np.append(aryFunc, aryFuncTemp[aryMask, :], axis=1)
 
-    # Load mask (to restrict model fining):
-    niiMask = nb.load(cfg.strPathNiiMask)
-    # Get nii header of mask:
-    hdrMsk = niiMask.header
-    # Get nii 'affine':
-    affMsk = niiMask.affine
-    # Load the data into memory:
-    aryMask = niiMask.get_data()
-    aryMask = np.array(aryMask)
+# remove unneccary array
+del(aryFuncTemp)
 
-    # Preprocessing of fMRI data and pRF time course models:
-    aryFunc, aryPrfTc = funcPrfPrePrc(aryFunc,
-                                      aryMask,
-                                      aryPrfTc,
-                                      cfg.varSdSmthTmp,
-                                      cfg.varSdSmthSpt,
-                                      cfg.varIntCtf,
-                                      cfg.varPar)
+# Preprocessing of fMRI data and pRF time course models:
 
-    # Number of non-zero voxels in mask (i.e. number of voxels for which pRF
-    # finding will be performed):
-    varNumMskVox = int(np.count_nonzero(aryMask))
+# Perform linear trend removal (parallelised over voxels):
+if cfg.lgcDetrend:
+    print('---------Linear trend removal')
+    aryFunc = funcLnTrRm(aryFunc,
+                         cfg.varSdSmthSpt
+                         )
 
-    # Dimensions of nii data:
-    vecNiiShp = aryFunc.shape
+# Perform temporal smoothing on fMRI data:
+if 0.0 < cfg.varSdSmthTmp:
+    print('---------Temporal smoothing on fMRI data')
+    aryFunc = funcSmthTmp(aryFunc,
+                          cfg.varSdSmthTmp,
+                          )
 
-    print('---------Preparing parallel pRF model finding')
+# Perform temporal smoothing on pRF time course models:
+if 0.0 < cfg.varSdSmthTmp:
+    print('---------Temporal smoothing on pRF time course models')
+    aryPrfTc = funcSmthTmp(aryPrfTc,
+                           cfg.varSdSmthTmp,
+                           )
+# *************************************************************************
 
-    # Vector with the moddeled x-positions of the pRFs:
-    vecMdlXpos = np.linspace(cfg.varExtXmin,
-                             cfg.varExtXmax,
-                             cfg.varNumX,
-                             endpoint=True)
 
-    # Vector with the moddeled y-positions of the pRFs:
-    vecMdlYpos = np.linspace(cfg.varExtYmin,
-                             cfg.varExtYmax,
-                             cfg.varNumY,
-                             endpoint=True)
+# Number of non-zero voxels in mask (i.e. number of voxels for which pRF
+# finding will be performed):
+varNumMskVox = int(np.count_nonzero(aryMask))
 
-    # Vector with the moddeled standard deviations of the pRFs:
-    vecMdlSd = np.linspace(cfg.varPrfStdMin,
-                           cfg.varPrfStdMax,
-                           cfg.varNumPrfSizes,
-                           endpoint=True)
+# Dimensions of nii data:
+vecNiiShp = aryMask.shape
 
-    # Empty list for results (parameters of best fitting pRF model):
-    lstPrfRes = [None] * cfg.varPar
+print('---------Preparing parallel pRF model finding')
 
-    # Empty list for processes:
-    lstPrcs = [None] * cfg.varPar
+# Vector with the moddeled x-positions of the pRFs:
+vecMdlXpos = np.linspace(cfg.varExtXmin,
+                         cfg.varExtXmax,
+                         cfg.varNumX,
+                         endpoint=True)
 
-    # Create a queue to put the results in:
-    queOut = mp.Queue()
+# Vector with the moddeled y-positions of the pRFs:
+vecMdlYpos = np.linspace(cfg.varExtYmin,
+                         cfg.varExtYmax,
+                         cfg.varNumY,
+                         endpoint=True)
 
-    # Total number of voxels:
-    varNumVoxTlt = (vecNiiShp[0] * vecNiiShp[1] * vecNiiShp[2])
+# Vector with the moddeled standard deviations of the pRFs:
+vecMdlSd = np.linspace(cfg.varPrfStdMin,
+                       cfg.varPrfStdMax,
+                       cfg.varNumPrfSizes,
+                       endpoint=True)
 
-    # Reshape functional nii data:
-    aryFunc = np.reshape(aryFunc, [varNumVoxTlt, vecNiiShp[3]])
+# Empty list for results (parameters of best fitting pRF model):
+lstPrfRes = [None] * cfg.varPar
 
-    # Reshape mask:
-    aryMask = np.reshape(aryMask, varNumVoxTlt)
+# Empty list for processes:
+lstPrcs = [None] * cfg.varPar
 
-    # Take mean over time of functional nii data:
-    aryFuncMean = np.mean(aryFunc, axis=1)
+# Create a queue to put the results in:
+queOut = mp.Queue()
 
-    # Logical test for voxel inclusion: is the voxel value greater than zero in
-    # the mask, and is the mean of the functional time series above the cutoff
-    # value?
-    aryLgc = np.multiply(np.greater(aryMask, 0),
-                         np.greater(aryFuncMean, cfg.varIntCtf))
+# Take mean over time of functional nii data:
+aryFuncMean = np.mean(aryFunc, axis=1)
 
-    # Array with functional data for which conditions (mask inclusion and
-    # cutoff value) are fullfilled:
-    aryFunc = aryFunc[aryLgc, :]
+# Number of voxels for which pRF finding will be performed:
+varNumVoxInc = aryFunc.shape[0]
 
-    # Number of voxels for which pRF finding will be performed:
-    varNumVoxInc = aryFunc.shape[0]
+print('---------Number of voxels on which pRF finding will be ' +
+      'performed: ' + str(varNumVoxInc))
 
-    print('---------Number of voxels on which pRF finding will be ' +
-          'performed: ' + str(varNumVoxInc))
+# List into which the chunks of functional data for the parallel processes
+# will be put:
+lstFunc = [None] * cfg.varPar
 
-    # List into which the chunks of functional data for the parallel processes
-    # will be put:
-    lstFunc = [None] * cfg.varPar
+# Vector with the indicies at which the functional data will be separated
+# in order to be chunked up for the parallel processes:
+vecIdxChnks = np.linspace(0,
+                          varNumVoxInc,
+                          num=cfg.varPar,
+                          endpoint=False)
+vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
 
-    # Vector with the indicies at which the functional data will be separated
-    # in order to be chunked up for the parallel processes:
-    vecIdxChnks = np.linspace(0,
-                              varNumVoxInc,
-                              num=cfg.varPar,
-                              endpoint=False)
-    vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
+# Put functional data into chunks:
+for idxChnk in range(0, cfg.varPar):
+    # Index of first voxel to be included in current chunk:
+    varTmpChnkSrt = int(vecIdxChnks[idxChnk])
+    # Index of last voxel to be included in current chunk:
+    varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
+    # Put voxel array into list:
+    lstFunc[idxChnk] = aryFunc[varTmpChnkSrt:varTmpChnkEnd, :]
 
-    # Put functional data into chunks:
-    for idxChnk in range(0, cfg.varPar):
-        # Index of first voxel to be included in current chunk:
-        varTmpChnkSrt = int(vecIdxChnks[idxChnk])
-        # Index of last voxel to be included in current chunk:
-        varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-        # Put voxel array into list:
-        lstFunc[idxChnk] = aryFunc[varTmpChnkSrt:varTmpChnkEnd, :]
+# We don't need the original array with the functional data anymore:
+del(aryFunc)
 
-    # We don't need the original array with the functional data anymore:
-    del(aryFunc)
+print('---------Creating parallel processes')
 
-    print('---------Creating parallel processes')
+# Create processes:
+for idxPrc in range(0, cfg.varPar):
+    lstPrcs[idxPrc] = mp.Process(target=funcFindPrf,
+                                 args=(idxPrc,
+                                       cfg.varNumX,
+                                       cfg.varNumY,
+                                       cfg.varNumPrfSizes,
+                                       vecMdlXpos,
+                                       vecMdlYpos,
+                                       vecMdlSd,
+                                       lstFunc[idxPrc],
+                                       aryPrfTc,
+                                       cfg.lgcCython,
+                                       queOut)
+                                 )
+    # Daemon (kills processes when exiting):
+    lstPrcs[idxPrc].Daemon = True
 
-    # Create processes:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc] = mp.Process(target=funcFindPrf,
-                                     args=(idxPrc,
-                                           cfg.varNumX,
-                                           cfg.varNumY,
-                                           cfg.varNumPrfSizes,
-                                           vecMdlXpos,
-                                           vecMdlYpos,
-                                           vecMdlSd,
-                                           lstFunc[idxPrc],
-                                           aryPrfTc,
-                                           cfg.lgcCython,
-                                           queOut)
-                                     )
-        # Daemon (kills processes when exiting):
-        lstPrcs[idxPrc].Daemon = True
+# Start processes:
+for idxPrc in range(0, cfg.varPar):
+    lstPrcs[idxPrc].start()
 
-    # Start processes:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc].start()
+# Collect results from queue:
+for idxPrc in range(0, cfg.varPar):
+    lstPrfRes[idxPrc] = queOut.get(True)
 
-    # Collect results from queue:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrfRes[idxPrc] = queOut.get(True)
+# Join processes:
+for idxPrc in range(0, cfg.varPar):
+    lstPrcs[idxPrc].join()
 
-    # Join processes:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc].join()
+print('---------Prepare pRF finding results for export')
 
-    print('---------Prepare pRF finding results for export')
+# Create list for vectors with fitting results, in order to put the results
+# into the correct order:
+lstResXpos = [None] * cfg.varPar
+lstResYpos = [None] * cfg.varPar
+lstResSd = [None] * cfg.varPar
+lstResR2 = [None] * cfg.varPar
 
-    # Create list for vectors with fitting results, in order to put the results
-    # into the correct order:
-    lstResXpos = [None] * cfg.varPar
-    lstResYpos = [None] * cfg.varPar
-    lstResSd = [None] * cfg.varPar
-    lstResR2 = [None] * cfg.varPar
+# Put output into correct order:
+for idxRes in range(0, cfg.varPar):
 
-    # Put output into correct order:
-    for idxRes in range(0, cfg.varPar):
+    # Index of results (first item in output list):
+    varTmpIdx = lstPrfRes[idxRes][0]
 
-        # Index of results (first item in output list):
-        varTmpIdx = lstPrfRes[idxRes][0]
+    # Put fitting results into list, in correct order:
+    lstResXpos[varTmpIdx] = lstPrfRes[idxRes][1]
+    lstResYpos[varTmpIdx] = lstPrfRes[idxRes][2]
+    lstResSd[varTmpIdx] = lstPrfRes[idxRes][3]
+    lstResR2[varTmpIdx] = lstPrfRes[idxRes][4]
 
-        # Put fitting results into list, in correct order:
-        lstResXpos[varTmpIdx] = lstPrfRes[idxRes][1]
-        lstResYpos[varTmpIdx] = lstPrfRes[idxRes][2]
-        lstResSd[varTmpIdx] = lstPrfRes[idxRes][3]
-        lstResR2[varTmpIdx] = lstPrfRes[idxRes][4]
+# Concatenate output vectors (into the same order as the voxels that were
+# included in the fitting):
+aryBstXpos = np.zeros(0)
+aryBstYpos = np.zeros(0)
+aryBstSd = np.zeros(0)
+aryBstR2 = np.zeros(0)
+for idxRes in range(0, cfg.varPar):
+    aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
+    aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
+    aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
+    aryBstR2 = np.append(aryBstR2, lstResR2[idxRes])
 
-    # Concatenate output vectors (into the same order as the voxels that were
-    # included in the fitting):
-    aryBstXpos = np.zeros(0)
-    aryBstYpos = np.zeros(0)
-    aryBstSd = np.zeros(0)
-    aryBstR2 = np.zeros(0)
-    for idxRes in range(0, cfg.varPar):
-        aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
-        aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
-        aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
-        aryBstR2 = np.append(aryBstR2, lstResR2[idxRes])
+# Delete unneeded large objects:
+del(lstPrfRes)
+del(lstResXpos)
+del(lstResYpos)
+del(lstResSd)
+del(lstResR2)
 
-    # Delete unneeded large objects:
-    del(lstPrfRes)
-    del(lstResXpos)
-    del(lstResYpos)
-    del(lstResSd)
-    del(lstResR2)
+# Array for pRF finding results, of the form
+# aryPrfRes[total-number-of-voxels, 0:3], where the 2nd dimension
+# contains the parameters of the best-fitting pRF model for the voxel, in
+# the order (0) pRF-x-pos, (1) pRF-y-pos, (2) pRF-SD, (3) pRF-R2.
+aryPrfRes = np.zeros((aryMask[0]*aryMask[1]*aryMask[2], 6))
 
-    # Array for pRF finding results, of the form
-    # aryPrfRes[total-number-of-voxels, 0:3], where the 2nd dimension
-    # contains the parameters of the best-fitting pRF model for the voxel, in
-    # the order (0) pRF-x-pos, (1) pRF-y-pos, (2) pRF-SD, (3) pRF-R2.
-    aryPrfRes = np.zeros((varNumVoxTlt, 6))
+# Put results form pRF finding into array (they originally needed to be
+# saved in a list due to parallelisation).
+aryPrfRes[aryMask, 0] = aryBstXpos
+aryPrfRes[aryMask, 1] = aryBstYpos
+aryPrfRes[aryMask, 2] = aryBstSd
+aryPrfRes[aryMask, 3] = aryBstR2
 
-    # Put results form pRF finding into array (they originally needed to be
-    # saved in a list due to parallelisation).
-    aryPrfRes[aryLgc, 0] = aryBstXpos
-    aryPrfRes[aryLgc, 1] = aryBstYpos
-    aryPrfRes[aryLgc, 2] = aryBstSd
-    aryPrfRes[aryLgc, 3] = aryBstR2
+# Reshape pRF finding results:
+aryPrfRes = np.reshape(aryPrfRes,
+                       [vecNiiShp[0],
+                        vecNiiShp[1],
+                        vecNiiShp[2],
+                        6])
 
-    # Reshape pRF finding results:
-    aryPrfRes = np.reshape(aryPrfRes,
-                           [vecNiiShp[0],
-                            vecNiiShp[1],
-                            vecNiiShp[2],
-                            6])
+# Calculate polar angle map:
+aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
+                                   aryPrfRes[:, :, :, 0])
 
-    # Calculate polar angle map:
-    aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
-                                       aryPrfRes[:, :, :, 0])
+# Calculate eccentricity map (r = sqrt( x^2 + y^2 ) ):
+aryPrfRes[:, :, :, 5] = np.sqrt(np.add(np.power(aryPrfRes[:, :, :, 0],
+                                                2.0),
+                                       np.power(aryPrfRes[:, :, :, 1],
+                                                2.0)))
 
-    # Calculate eccentricity map (r = sqrt( x^2 + y^2 ) ):
-    aryPrfRes[:, :, :, 5] = np.sqrt(np.add(np.power(aryPrfRes[:, :, :, 0],
-                                                    2.0),
-                                           np.power(aryPrfRes[:, :, :, 1],
-                                                    2.0)))
+# List with name suffices of output images:
+lstNiiNames = ['_x_pos',
+               '_y_pos',
+               '_SD',
+               '_R2',
+               '_polar_angle',
+               '_eccentricity']
 
-    # List with name suffices of output images:
-    lstNiiNames = ['_x_pos',
-                   '_y_pos',
-                   '_SD',
-                   '_R2',
-                   '_polar_angle',
-                   '_eccentricity']
+print('---------Exporting results')
 
-    print('---------Exporting results')
-
-    # Save nii results:
-    for idxOut in range(0, 6):
-        # Create nii object for results:
-        niiOut = nb.Nifti1Image(aryPrfRes[:, :, :, idxOut],
-                                affMsk,
-                                header=hdrMsk
-                                )
-        # Save nii:
-        strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii')
-        nb.save(niiOut, strTmp)
-    # *************************************************************************
-
-else:
-    # Error message:
-    strErrMsg = ('---Error: Dimensions of specified pRF time course models ' +
-                 'do not agree with specified model parameters')
-    print(strErrMsg)
+# Save nii results:
+for idxOut in range(0, 6):
+    # Create nii object for results:
+    niiOut = nb.Nifti1Image(aryPrfRes[:, :, :, idxOut],
+                            affMsk,
+                            header=hdrMsk
+                            )
+    # Save nii:
+    strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii')
+    nb.save(niiOut, strTmp)
+# *****************************************************************************
 
 # *****************************************************************************
 # *** Report time

@@ -1,4 +1,5 @@
-"""Define pRF finding parameters here."""
+# -*- coding: utf-8 -*-
+"""Define pRF finding parameters here"""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -18,53 +19,47 @@
 
 
 # Number of x-positions to model:
-varNumX = 40
+varNumX = 25
 # Number of y-positions to model:
-varNumY = 40
+varNumY = 25
 # Number of pRF sizes to model:
-varNumPrfSizes = 40
+varNumPrfSizes = 22
 
 # Extend of visual space from centre of the screen (i.e. from the fixation
 # point) [degrees of visual angle]:
-varExtXmin = -5.19
-varExtXmax = 5.19
-varExtYmin = -5.19
-varExtYmax = 5.19
+varExtXmin = -12.00
+varExtXmax = 12.00
+varExtYmin = -12.00
+varExtYmax = 12.00
 
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
-varPrfStdMin = 0.20
-varPrfStdMax = 7.0
+varPrfStdMin = 1.0
+varPrfStdMax = 22.0
 
 # Volume TR of input data [s]:
-# varTr = 2.940
-varTr = 2.0
+varTr = 3.0
 
 # Voxel resolution of the fMRI data [mm]:
-# varVoxRes = 0.7
-varVoxRes = 0.9
+varVoxRes = 0.8
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
-# [standard deviation of the Gaussian kernel, in seconds]:
-# varSdSmthTmp = 2.940
-varSdSmthTmp = 2.0
+# [standard deviation of the Gaussian kernel, in seconds], set to zero if no
+# smoothing should be performed:
+varSdSmthTmp = 3.0
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
-# kernel, in mm]
-# varSdSmthSpt = 0.7
-varSdSmthSpt = 0.9
+# kernel, in mm], set to zero if no smoothing should be performed
+varSdSmthSpt = 0.0
+
+# should the data be detrended
+lgcDetrend = False
 
 # Number of fMRI volumes and png files to load:
-varNumVol = 400
-
-# Intensity cutoff value for fMRI time series. Voxels with a mean intensity
-# lower than the value specified here are not included in the pRF model finding
-# (this speeds up the calculation, and, more importatnly, avoids division by
-# zero):
-varIntCtf = 50.0
+varNumVol = 1204
 
 # Number of processes to run in parallel:
-varPar = 10
+varPar = 8
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
@@ -72,17 +67,27 @@ varPar = 10
 # specified above. In other words, if the the resolution in x-direction of the
 # visual space model is ten times that of varNumX, the resolution in
 # y-direction also has to be ten times varNumY. The order is: first x, then y.
-tplVslSpcHighSze = (300, 300)
+tplVslSpcHighSze = (200, 200)
 
-# Path of functional data (needs to have same number of volumes as there are
-# PNGs):
-strPathNiiFunc = '/home/john/Desktop/20160215/nii/func_reg/func_pRF.nii.gz'  #noqa
+# Parent path to functional data
+strPathNiiFunc = '/media/sf_D_DRIVE/MotionLocaliser/Analysis/P02/05_SpatSmoothDemean'
+# list of nii files in parent directory (all nii files together need to have
+# same number of volumes as there are PNGs):
+lstNiiFls = ['demean_rafunc01_hpf.nii',
+             'demean_rafunc02_hpf.nii',
+             'demean_rafunc03_hpf.nii',
+             'demean_rafunc04_hpf.nii',
+             'demean_rafunc05_hpf.nii',
+             'demean_rafunc06_hpf.nii',
+             'demean_rafunc07_hpf.nii',
+             ]
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Desktop/20160215/nii/retinotopy/mask/brainmask.nii.gz'  #noqa
+strPathNiiMask = '/media/sf_D_DRIVE/MotionLocaliser/Analysis/P02/Struct/mask.nii'
+# '/media/sf_D_DRIVE/MotionLocaliser/Analysis/Pilot1_08112016/Struct/FuncMask_mas_man4.nii.gz'
 
 # Output basename:
-strPathOut = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_results'  #noqa
+strPathOut = '/media/sf_D_DRIVE/MotionLocaliser/Analysis/P02/FitResults/Cython'
 
 # Use cython (i.e. compiled code) for faster performance? (Requires cython to
 # be installed.)
@@ -96,17 +101,18 @@ if lgcCrteMdl:
     # be provided:
 
     # Size of png files (pixel*pixel):
-    tplPngSize = (300, 300)
+    tplPngSize = (128, 128)
 
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/home/john/Desktop/20160215/nii/retinotopy/pRF_stimuli/frame'  #noqa
+    strPathPng = '/media/sf_D_DRIVE/MotionLocaliser/Analysis/P02/PNGs/Ima_'
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_model_tc'  #noqa
+    strPathMdl = '/media/sf_D_DRIVE/MotionLocaliser/Analysis/P02/FitResults/pRF_model_tc'
+
 
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '/home/john/Desktop/20160215/nii/retinotopy/pRF_results/pRF_model_tc.npy'  #noqa
+    strPathMdl = '/media/sf_D_DRIVE/MotionLocaliser/Analysis/P02/FitResults/pRF_model_tc.npy'
