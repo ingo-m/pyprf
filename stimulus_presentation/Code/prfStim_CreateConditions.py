@@ -94,7 +94,7 @@ array_run1 = {'Conditions': conditions,
               'TR': TR,
               'TargetDuration': TargetDuration,
               'NrOfSteps': NrOfSteps,
-              'NrOfVols': NrOfVols,
+              'NrOfVols': len(conditions),
               }
 
 # %% save dictionary to pickle
