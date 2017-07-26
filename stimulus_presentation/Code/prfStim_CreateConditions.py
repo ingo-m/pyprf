@@ -61,13 +61,14 @@ if NrNullFixBetween > 0:
     while lgcRep:
         NullPos = np.random.choice(np.arange(1, NrOfVolsExclNull),
                                    NrNullFixBetween, replace=False)
-        lgcRep = np.greater(np.sum(np.diff(np.sort(NullPos)) == 1), 0)
+        NullPos = np.sort(NullPos)
+        lgcRep = np.greater(np.sum(np.diff(NullPos) == 1), 0)
 
 # create null trials in between to be inserted into conditions
 NullTrialsInBetween = np.zeros(NrOfTrPerNull)[:, None]
 # insert null trials in between
 for i, idx in enumerate(NullPos):
-    idx = idx+i*NrOfTrPerNull
+    idx = idx + (i*NrOfTrPerNull)  # adjustment to consider prev. iterations
     conditions = np.insert(conditions, idx, NullTrialsInBetween, axis=0)
 
 # add fixation blocks in beginning and end
