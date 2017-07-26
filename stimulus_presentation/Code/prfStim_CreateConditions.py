@@ -63,9 +63,12 @@ if NrNullFixBetween > 0:
                                    NrNullFixBetween, replace=False)
         lgcRep = np.greater(np.sum(np.diff(np.sort(NullPos)) == 1), 0)
 
+# create null trials in between to be inserted into conditions
+NullTrialsInBetween = np.zeros(NrOfTrPerNull)[:, None]
 # insert null trials in between
-conditions = np.insert(conditions, NullPos, np.array([0, 0]),
-                       axis=0)
+for i, idx in enumerate(NullPos):
+    idx = idx+i*NrOfTrPerNull
+    conditions = np.insert(conditions, idx, NullTrialsInBetween, axis=0)
 
 # add fixation blocks in beginning and end
 conditions = np.vstack((np.zeros((NrNullFixStart, 2)),
