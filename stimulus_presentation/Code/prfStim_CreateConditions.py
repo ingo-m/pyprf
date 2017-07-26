@@ -4,9 +4,14 @@
 from __future__ import division  # so that 1/3=0.333 instead of 1/3=0
 import numpy as np
 import os
+import errno
 import pickle
 
-# %% set parameters
+# %% Set parameters
+
+# set folder for stimulation condition
+OutFolderPath = '/home/faruk/Documents/test/Conditions'
+OutFileName = 'Conditions_run01.pickle'
 
 # set the TR
 TR = 1.20
@@ -34,7 +39,7 @@ if NrNullFixBetween > 0:
 
 NrOfVolsExclNull = (NrOfBlocks * NrOfOrientation * NrOfSteps)
 
-# %% create arrays for position and orientation
+# %% Create arrays for position and orientation
 aryOri = np.empty(0)
 aryPos = np.empty(0)
 for indBlock in np.arange(NrOfBlocks):
@@ -67,7 +72,7 @@ conditions = np.vstack((np.zeros((NrNullFixStart, 2)),
                         conditions,
                         np.zeros((NrNullFixEnd, 2))))
 
-# %% prepare target arrays
+# %% Prepare target arrays
 NrOfTargets = int(len(conditions)/10)
 targets = np.zeros(len(conditions))
 lgcRep = True
@@ -80,7 +85,7 @@ targets[targetPos] = 1
 assert NrOfTargets == np.sum(targets)
 targets = targets.astype(bool)
 
-# %% prepare random target onset delay
+# %% Prepare random target onset delay
 BlockOnsetinSec = np.arange(len(conditions)) * TR
 TargetOnsetinSec = BlockOnsetinSec[targets]
 TargetOnsetDelayinSec = np.random.uniform(0.1,
@@ -88,7 +93,7 @@ TargetOnsetDelayinSec = np.random.uniform(0.1,
                                           size=NrOfTargets)
 TargetOnsetinSec = TargetOnsetinSec + TargetOnsetDelayinSec
 
-# %% create dictionary for saving to pickle
+# %% Create dictionary for saving to pickle
 array_run1 = {'Conditions': conditions,
               'TargetOnsetinSec': TargetOnsetinSec,
               'TR': TR,
@@ -97,9 +102,13 @@ array_run1 = {'Conditions': conditions,
               'NrOfVols': len(conditions),
               }
 
-# %% save dictionary to pickle
-folderpath = '/media/sf_D_DRIVE/ParamContrast/pRFStimuli/prfStim/prfStim/Conditions'
-filename1 = os.path.join(folderpath, 'Conditions_run01.pickle')
+# %% Save dictionary to pickle
+OutFile = os.path.join(OutFolderPath, OutFileName)
 
-with open(filename1, 'wb') as handle:
-    pickle.dump(array_run1, handle)
+try:
+    os.makedirs(OutFolderPath)
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        raise
+    with open(OutFile, 'wb') as handle:
+        pickle.dump(array_run1, handle)
