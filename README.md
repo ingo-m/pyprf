@@ -1,4 +1,5 @@
 # py_pRF_mapping (...work in progress...)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.835162.svg)](https://doi.org/10.5281/zenodo.835162)
 A free & open source *python tool for population receptive field analysis* consisting of two main parts:
 
 ### 1. Stimulus presentation  
