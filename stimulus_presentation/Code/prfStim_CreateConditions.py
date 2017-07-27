@@ -37,8 +37,6 @@ if NrNullFixBetween > 0:
     # how many TRs should one rest preiod be? (default 1)
     NrOfTrPerNull = 3
 
-NrOfVolsExclNull = (NrOfBlocks * NrOfOrientation * NrOfSteps)
-
 # %% Create arrays for position and orientation
 aryOri = np.empty(0)
 aryPos = np.empty(0)
@@ -59,17 +57,17 @@ conditions = np.vstack((aryPos, aryOri)).T
 
 if NrNullFixBetween > 0:
     while lgcRep:
-        NullPos = np.random.choice(np.arange(1, NrOfVolsExclNull),
+        NullPos = np.random.choice(np.arange(1, len(conditions)),
                                    NrNullFixBetween, replace=False)
         NullPos = np.sort(NullPos)
         lgcRep = np.greater(np.sum(np.diff(NullPos) == 1), 0)
 
-# create null trials in between to be inserted into conditions
-NullTrialsInBetween = np.zeros(NrOfTrPerNull)[:, None]
-# insert null trials in between
-for i, idx in enumerate(NullPos):
-    idx = idx + (i*NrOfTrPerNull)  # adjustment to consider prev. iterations
-    conditions = np.insert(conditions, idx, NullTrialsInBetween, axis=0)
+    # create null trials in between to be inserted into conditions
+    NullTrialsInBetween = np.zeros(NrOfTrPerNull)[:, None]
+    # insert null trials in between
+    for i, idx in enumerate(NullPos):
+        idx = idx + (i*NrOfTrPerNull)  # adjustment to consider prev. iterations
+        conditions = np.insert(conditions, idx, NullTrialsInBetween, axis=0)
 
 # add fixation blocks in beginning and end
 conditions = np.vstack((np.zeros((NrNullFixStart, 2)),
