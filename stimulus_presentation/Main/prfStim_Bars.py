@@ -29,7 +29,8 @@ from psychopy.misc import pol2cart
 import numpy as np
 import pickle
 import os
-import scipy.misc
+# import scipy.misc
+from PIL import Image
 
 # %% Settings for stimulus logging
 # If in normal mode, this scrip presents stimuli for population receptive field
@@ -41,7 +42,7 @@ import scipy.misc
 # directly be loaded into the py_pRF_mapping pipepline.
 
 # Logging mode?
-lgcLogMde = False
+lgcLogMde = True
 
 # %% set checkerbar sptial and temporal frequency
 # define reversal frequency
@@ -156,7 +157,7 @@ TargetDur = arrays["TargetDuration"]
 if lgcLogMde:
     # Note: If the 'ExpectedTR' is set too low in logging mode, frames are
     # dropped and the stimuli do not get logged properly.
-    ExpectedTR = 0.5
+    ExpectedTR = 0.1
 # Otherwise, use actual volume TR:
 else:
     ExpectedTR = arrays["TR"]
@@ -503,69 +504,81 @@ myWin.close()
 
 # %%
 """SAVE DATA"""
+
+# create python dictionary
+output = {'ExperimentName': expInfo['expName'],
+          'Date': expInfo['date'],
+          'SubjectID': expInfo['participant'],
+          'Run_Number': expInfo['run'],
+          'Conditions': Conditions,
+          'TriggerPresses': TriggerPressedArray,
+          'TargetPresses': TargetPressedArray,
+          }
 try:
-    # create python dictionary
-    output = {'ExperimentName': expInfo['expName'],
-              'Date': expInfo['date'],
-              'SubjectID': expInfo['participant'],
-              'Run_Number': expInfo['run'],
-              'Conditions': Conditions,
-              'TriggerPresses': TriggerPressedArray,
-              'TargetPresses': TargetPressedArray,
-              }
-    # save dictionary as a pickle in outpu folder
+    # save dictionary as a pickle in output folder
     misc.toFile(outFileName + '.pickle', output)
     print 'Output Data saved as: ' + outFileName + '.pickle'
-
-    # Save screenshots (logging mode)
-    if lgcLogMde:
-
-        print('Saving screenshots')
-
-        # Target directory for frames (screenshots):
-        strPthFrm = (dataFolderName + '/Frames/')
-
-        # Check whether directory for frames exists, if not create it:
-        lgcDir = os.path.isdir(strPthFrm)
-        # If directory does exist, delete it:
-        if not(lgcDir):
-            # Create direcotry for segments:
-            os.mkdir(strPthFrm)
-
-        # Save stimulus frame array to npy file:
-        aryFrames = aryFrames.astype(np.int16)
-        np.save((strPthFrm + 'stimFramesRun' + expInfo['run']), aryFrames)
-
-        # Save frames as png:
-        # for idxFrame in range(0, NrOfVols):
-        if False:
-
-            # Create string for screenshot filename:
-            strTmp = (strPthFrm + 'frame_' + str(idxFrame) + '.png')
-
-            # In order to save frames as png, we have to recreate the third
-            # dimension of the array (RGB). (We only saved one value per pixel
-            # beforehands because the array gets excessively large with three
-            # values per pixel).
-            aryRgb = np.array((aryFrames[:, :, idxFrame],
-                               aryFrames[:, :, idxFrame],
-                               aryFrames[:, :, idxFrame]),
-                              dtype=np.int16)
-            aryRgb = np.swapaxes(aryRgb, 0, 1)
-            aryRgb = np.swapaxes(aryRgb, 1, 2)
-
-            print(('---Frame '
-                  + str(idxFrame)
-                  + ' out of '
-                  + str(int(NrOfVols))))
-
-            # Save stimulus frames as png files:
-            scipy.misc.toimage(aryRgb,
-                               cmin=0.0,
-                               cmax=255.0).save(strTmp)
-
 except:
     print '(OUTPUT folder could not be created.)'
+
+# Save screenshots (logging mode)
+if lgcLogMde:
+
+    print('Saving screenshots')
+
+    # Target directory for frames (screenshots):
+    strPthFrm = (dataFolderName + os.path.sep + 'Frames')
+
+    # Check whether directory for frames exists, if not create it:
+    lgcDir = os.path.isdir(strPthFrm)
+    # If directory does not exist, create it:
+    if not(lgcDir):
+        # Create direcotry for segments:
+        os.mkdir(strPthFrm)
+
+    # Save stimulus frame array to npy file:
+    aryFrames = aryFrames.astype(np.int16)
+    np.savez_compressed((strPthFrm
+                         + os.path.sep
+                         + 'stimFramesRun'
+                         + expInfo['run']),
+                        aryFrames=aryFrames)
+
+    # Maximum intensity of output PNG:
+    varScle = 255
+
+    # Rescale array:
+    aryFrames = np.logical_or(np.equal(aryFrames, np.min(aryFrames)),
+                              np.equal(aryFrames, np.max(aryFrames))
+                              )
+    aryFrames = np.multiply(aryFrames, varScle)
+    aryFrames = aryFrames.astype(np.uint8)
+
+    # Loop through volumes and save PNGs:
+    for idxVol in range(NrOfVols):
+
+        print(('---Frame '
+              + str(idxVol)
+              + ' out of '
+              + str(int(NrOfVols))))
+
+        # Create image:
+        im = Image.fromarray(aryFrames[:, :, idxVol])
+
+        # File name (with leading zeros, e.g. '*_004' or '*_042'). For
+        # consistency with earlier versions, the numbering of frames (PNG
+        # files  corresponding to fMRI volumes) starts at '1' (not at '0').
+        strTmpPth = (strPthFrm
+                     + os.path.sep
+                     + 'frame_'
+                     + str(idxVol + 1).zfill(3)
+                     + '.png')
+
+        # Save image to disk:
+        im.save(strTmpPth)
+
+        # aryRgb = np.swapaxes(aryRgb, 0, 1)
+        # aryRgb = np.swapaxes(aryRgb, 1, 2)
 
 # %%
 """FINISH"""

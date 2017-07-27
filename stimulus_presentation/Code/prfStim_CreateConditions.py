@@ -10,8 +10,11 @@ import pickle
 # %% Set parameters
 
 # set folder for stimulation condition
-OutFolderPath = '/home/faruk/Documents/test/Conditions'
-OutFileName = 'Conditions_run01.pickle'
+OutFileName = 'Conditions_run03.pickle'
+
+# Output path ('~/py_pRF_mapping/stimulus_presentation/Conditions'):
+OutFolderPath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+OutFolderPath = os.path.join(OutFolderPath, 'Conditions')
 
 # set the TR
 TR = 1.20
@@ -66,7 +69,8 @@ if NrNullFixBetween > 0:
     NullTrialsInBetween = np.zeros(NrOfTrPerNull)[:, None]
     # insert null trials in between
     for i, idx in enumerate(NullPos):
-        idx = idx + (i*NrOfTrPerNull)  # adjustment to consider prev. iterations
+        # adjustment to consider prev. iterations
+        idx = idx + (i*NrOfTrPerNull)
         conditions = np.insert(conditions, idx, NullTrialsInBetween, axis=0)
 
 # add fixation blocks in beginning and end
