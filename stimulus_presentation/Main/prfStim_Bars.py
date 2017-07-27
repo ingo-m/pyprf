@@ -157,7 +157,7 @@ TargetDur = arrays["TargetDuration"]
 if lgcLogMde:
     # Note: If the 'ExpectedTR' is set too low in logging mode, frames are
     # dropped and the stimuli do not get logged properly.
-    ExpectedTR = 0.1
+    ExpectedTR = 0.2
 # Otherwise, use actual volume TR:
 else:
     ExpectedTR = arrays["TR"]
@@ -430,7 +430,7 @@ while clock.getTime() < totalTime:  # noqa
 
     i = i + 1
 
-    # %% Save screenshot to array
+    # %% Save screenshots to array
     if lgcLogMde:
         print(('---Frame '
               + str(idxFrame)
@@ -570,7 +570,9 @@ if lgcLogMde:
         # files  corresponding to fMRI volumes) starts at '1' (not at '0').
         strTmpPth = (strPthFrm
                      + os.path.sep
-                     + 'frame_'
+                     + 'run_'
+                     + expInfo['run']
+                     + '_frame_'
                      + str(idxVol + 1).zfill(3)
                      + '.png')
 
