@@ -412,8 +412,8 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # The second column is to contain model y positions:
     aryMdl[:, 1] = np.repeat(
                              np.tile(vecMdlYpos,
-                                     varNumPrfSizes),
-                             varNumX
+                                     varNumX),
+                             varNumPrfSizes
                              )
 
     # The third column is to contain model pRF sizes:
