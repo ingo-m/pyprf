@@ -70,24 +70,24 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-lstPathNiiFunc = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_07_up_aniso_smth.nii.gz',
-                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_08_up_aniso_smth.nii.gz',
-                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_09_up_aniso_smth.nii.gz',
-                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_10_up_aniso_smth.nii.gz',]  #noqa
+lstPathNiiFunc = ['/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_07_up_aniso_smth.nii.gz',
+                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_08_up_aniso_smth.nii.gz',
+                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_09_up_aniso_smth.nii.gz',
+                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_10_up_aniso_smth.nii.gz',]  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/brainmask.nii.gz'  #noqa
+strPathNiiMask = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/dummy_mask_up.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_results'  #noqa
+strPathOut = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_results'  #noqa
 
 # List with paths of pickles with information about experimental design (order
 # of stimuli). Only needed for pRF_motionLog.py (in order to create PNGs for
 # static component of motion pRF mapping).
-lstDsgn = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run01.pickle',
-           '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run02.pickle',
-           '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run03.pickle',
-           '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run04.pickle']
+lstDsgn = ['/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run01.pickle',
+           '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run02.pickle',
+           '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run03.pickle',
+           '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/log/PacMan_Pilot3_20161220/ModBasedMotLoc/Conditions/Conditions_run04.pickle']
 
 # Path to npz file containing numpy array that defines stimulus shape, created
 # with ~/py_pRF_motion/stimuli/Code/CreateMasks.py. Only needed for
@@ -97,7 +97,7 @@ strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskBar.npz'
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.
-strVersion = 'cython'
+strVersion = 'gpu'
 
 # Create pRF time course models?
 lgcCrteMdl = True
@@ -109,12 +109,12 @@ if lgcCrteMdl:
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_stimuli/frame_'  #noqa
+    strPathPng = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_stimuli/frame_'  #noqa
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa
+    strPathMdl = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_model_tc'  #noqa
 
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results/pRF_model_tc.npy'  #noqa
+    strPathMdl = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_model_tc.npy'  #noqa

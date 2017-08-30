@@ -27,7 +27,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                    vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, queOut):
     """
     Find best pRF model for voxel time course.
-    
+
     This version uses a queue that runs in a separate thread to put model time
     courses on the computational graph.
     """
@@ -35,7 +35,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # *** Queue-feeding-function that will run in extra thread
     def funcPlcIn():
         """Place data on queue."""
-
         # Iteration counter:
         idxCnt = 0
 
@@ -54,7 +53,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             if objCoord.should_stop():
                 break
 
-            # Stop if all data has been put on the queue:        
+            # Stop if all data has been put on the queue:
             elif idxCnt == varNumMdls:
                 break
 
@@ -96,11 +95,11 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     # Size of pRF time courses in MB:
     varSzePrf = np.divide(float(aryPrfTc.nbytes),
-                           1000000.0)
+                          1000000.0)
 
     print(('---------Size of pRF time courses: '
            + str(np.around(varSzePrf))
-           + ' MB')) 
+           + ' MB'))
 
     # Put pRF model time courses into list:
     lstPrfTc = [None] * aryPrfTc.shape[0]
@@ -131,7 +130,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     # We cannot commit the entire functional data to GPU memory, we need to
     # create chunks. Establish the limit (maximum size) of one chunk (in MB):
-    varSzeMax = 20.0
+    varSzeMax = 50.0
 
     # Size of functional data in MB:
     varSzeFunc = np.divide(float(aryFunc.nbytes),
@@ -198,7 +197,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     vecResSsMinIdx = np.zeros((varNumVox), dtype=np.int32)
 
     # L2 regularization factor for regression:
-    varL2reg = 0.0
+    # varL2reg = 0.0
 
     # -------------------------------------------------------------------------
     # *** Prepare status indicator
@@ -228,7 +227,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     varCntSts01 = 0
     varCntSts02 = 0
 
-
     # -------------------------------------------------------------------------
     # *** Loop through chunks
 
@@ -242,77 +240,80 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         # objSess = tf.Session()
         with tf.Graph().as_default(), tf.Session() as objSess:
 
-            # -------------------------------------------------------------------------
+            # ------------------------------------------------------------------
             # *** Prepare queue
-        
+
             print('------Define computational graph, queue & session')
-        
+
             # Queue capacity:
             varCapQ = 10
-        
-            # Dimensions of placeholder have to be determined outside of the tensor
-            # object, otherwise the object on which the size is calculated is loaded
-            # into GPU memory.
+
+            # Dimensions of placeholder have to be determined outside of the
+            # tensor object, otherwise the object on which the size is
+            # calculated is loaded into GPU memory.
             varDim01 = lstPrfTc[0].shape[0]
             varDim02 = lstPrfTc[0].shape[1]
-        
+
             # The queue:
             objQ = tf.FIFOQueue(capacity=varCapQ,
                                 dtypes=[tf.float32],
                                 shapes=[(varDim01, varDim02)])
-        
+
             # Method for getting queue size:
             objSzeQ = objQ.size()
-        
-            # Placeholder that is used to put design matrix on computational graph:
+
+            # Placeholder that is used to put design matrix on computational
+            # graph:
             objPlcHld01 = tf.placeholder(tf.float32,
                                          shape=[varDim01, varDim02])
-        
+
             # The enqueue operation that puts data on the graph.
             objEnQ = objQ.enqueue([objPlcHld01])
-        
+
             # Number of threads that will be created:
             varNumThrd = 1
-        
+
             # The queue runner (places the enqueue operation on the queue?).
             objRunQ = tf.train.QueueRunner(objQ, [objEnQ] * varNumThrd)
             tf.train.add_queue_runner(objRunQ)
-        
-            # The tensor object that is retrieved from the queue. Functions like
-            # placeholders for the data in the queue when defining the graph.
+
+            # The tensor object that is retrieved from the queue. Functions
+            # like placeholders for the data in the queue when defining the
+            # graph.
             objDsng = objQ.dequeue()
 
             # Coordinator needs to be initialised:
             objCoord = tf.train.Coordinator()
-    
-            # ---------------------------------------------------------------------
+
+            # ------------------------------------------------------------------
             # *** Fill queue
-    
+
             # Buffer size (number of samples to put on queue before starting
             # execution of graph):
             varBuff = 10
-    
+
             # Define & run extra thread with graph that places data on queue:
             objThrd = threading.Thread(target=funcPlcIn)
             objThrd.setDaemon(True)
             objThrd.start()
-    
+
             # Stay in this while loop until the specified number of samples
             # (varBuffer) have been placed on the queue).
             varTmpSzeQ = 0
             while varTmpSzeQ < varBuff:
                 varTmpSzeQ = objSess.run(objSzeQ)
-    
-            # ---------------------------------------------------------------------
+
+            # ------------------------------------------------------------------
             # *** Prepare & run the graph
-    
+
             # Chunk of functional data:
             aryTmp01 = np.copy(lstFunc[idxChnk])
             with tf.device('/gpu:0'):
                 objFunc = tf.Variable(aryTmp01)
-    
-            # The computational graph. Operation that solves matrix (in the least
-            # squares sense), and calculates residuals along time dimension:
+
+            # The computational graph. Operation that solves matrix (in the
+            # least squares sense), and calculates residuals along time
+            # dimension:
             objMatSlve = tf.reduce_sum(
                                        tf.squared_difference(
                                                              objFunc,
@@ -338,32 +339,32 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                                                              ),
                                        axis=0
                                        )
-    
+
             # Variables need to be (re-)initialised:
             objSess.run(tf.global_variables_initializer())
-    
+
             # Index of first voxel in current chunk (needed to assign results):
             varChnkStr = int(vecIdxChnks[idxChnk])
-    
+
             # Index of last voxel in current chunk (needed to assign results):
             varChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-    
+
             # Array for results of current chunk:
             aryTmpRes = np.zeros((varNumMdls,
                                   lstFunc[idxChnk].shape[1]),
                                  dtype=np.float32)
-    
+
             # Loop through models:
             for idxMdl in range(varNumMdls):
-    
+
                 # Run main computational graph and put results in list:
                 # varTme01 = time.time()
-    
+
                 aryTmpRes[idxMdl, :] = objSess.run(objMatSlve)
-    
+
                 # print(('---------Time for graph call: '
                 #        + str(time.time() - varTme01)))
-    
+
                 # Status indicator:
                 if varCntSts02 == vecStatPrf[varCntSts01]:
                     # Number of elements on queue:
@@ -380,7 +381,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                         varCntSts01 = varCntSts01 + int(1)
                 # Increment status indicator counter:
                 varCntSts02 = varCntSts02 + 1
-    
+
             # Stop threads.
             objCoord.request_stop()
             # objSess.close()
@@ -391,7 +392,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         # Get minimum residuals of those models:
         vecResSsMin[varChnkStr:varChnkEnd] = np.min(aryTmpRes, axis=0)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # *** Post-process results
 
     print('------Post-processing results')
@@ -441,7 +442,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     vecBstYpos = aryMdl[:, 1][vecResSsMinIdx]
     vecBstSd = aryMdl[:, 2][vecResSsMinIdx]
 
-    # Coefficient of determination (1 - ratio of (residual sum of squares by 
+    # Coefficient of determination (1 - ratio of (residual sum of squares by
     #  total sum of squares)):
     vecBstR2 = np.subtract(1.0,
                            np.divide(vecResSsMin,
