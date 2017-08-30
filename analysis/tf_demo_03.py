@@ -2,31 +2,32 @@
 """
 Simple tensorflow demo using queue to place input data on graph.
 
-This version uses a separate graph, running in a separate thread, to place data
-on the queue. GLM fitting is tested.
+This version uses a separate graph, running in a separate thread, to
+place data on the queue. GLM fitting is tested.
 """
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify it
+# This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
 
 import time
 import threading
 import tensorflow as tf
 import numpy as np
-#import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
@@ -35,7 +36,6 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     # Define queue-feeding-function that will run in extra thread:
     def funcPlcIn():
         """Place data on queue."""
-
         # Iteration counter:
         varCntIt = 0
 
@@ -56,10 +56,10 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
 
             varCntIt += 1
 
-            # When the counter has reached the number of models (design
-            # matrices), the next chunk of voxel is accessed (and the loop
-            # through models starts again).
-            varCntMdl +=1
+            # When the counter has reached the number of models
+            # (design matrices), the next chunk of voxel is accessed
+            # (and the loop through models starts again).
+            varCntMdl += 1
             if varCntMdl == varNumMdl:
                 varCntMdl = 0
                 varCntChnk += 1
@@ -68,11 +68,11 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
             if objCoord.should_stop():
                 break
 
-            # Stop if all data has been put on the queue:        
+            # Stop if all data has been put on the queue:
             elif varCntIt == (varNumTtl):
                 break
 
-    # -----------------------------------------------------------------------------
+    # ----------------------------------------------------------------
     # *** Preparations
 
     # print('-Tensorflow demo.')
@@ -81,16 +81,19 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     varNumTtl = varNumMdl * varNumChnk
 
     # Data to perform computations on.
-    
+
     # Design matrices:
-    aryDsgn = np.random.randn(varNumMdl, varNumVol, varNumBeta).astype(np.float32)
-    
+    aryDsgn = np.random.randn(varNumMdl,
+                              varNumVol,
+                              varNumBeta
+                              ).astype(np.float32)
+
     # 'Functional data':
     aryFunc = np.random.randn(varNumVol,
                               varNumChnk,
                               varNumVoxPerChnk).astype(np.float32)
 
-    # -----------------------------------------------------------------------------
+    # ----------------------------------------------------------------
     # *** Define the queue & the session
 
     print('---Defining graph')
@@ -99,7 +102,8 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     varCapQ = 10
 
     # The queue:
-    objQ = tf.FIFOQueue(capacity=varCapQ, dtypes=[tf.float32, tf.float32])
+    objQ = tf.FIFOQueue(capacity=varCapQ,
+                        dtypes=[tf.float32, tf.float32])
 
     # Method for getting queue size:
     objSzeQ = objQ.size()
@@ -120,8 +124,9 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     objRunQ = tf.train.QueueRunner(objQ, [objEnQ] * varNumThrd)
     tf.train.add_queue_runner(objRunQ)
 
-    # The tensor objects that are retrieved from the queue. These function like
-    # placeholders for the data in the queue when defining the graph.
+    # The tensor objects that are retrieved from the queue. These
+    # function like placeholders for the data in the queue when
+    # defining the graph.
     objIn01, objIn02 = objQ.dequeue()
 
     # Regularisation factor:
@@ -177,13 +182,13 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     # Coordinator needs to be initialised as well:
     objCoord = tf.train.Coordinator()
 
-    # -----------------------------------------------------------------------------
+    # ----------------------------------------------------------------
     # *** Fill queue
 
     print('---Fill queue')
 
-    # Buffer size (number of samples to put on queue before starting execution of
-    # graph):
+    # Buffer size (number of samples to put on queue before starting
+    # execution of graph):
     varBuff = 10
 
     # Define & run extra thread with graph that places data on queue:
@@ -191,13 +196,13 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     objThrd.setDaemon(True)
     objThrd.start()
 
-    # Stay in this while loop until the specified number of samples (varBuffer)
-    # have been placed on the queue).
+    # Stay in this while loop until the specified number of samples
+    # (varBuffer) have been placed on the queue).
     varTmpSzeQ = 0
     while varTmpSzeQ < varBuff:
         varTmpSzeQ = objSess.run(objSzeQ)
 
-    # -----------------------------------------------------------------------------
+    # ----------------------------------------------------------------
     # *** Run the graph
 
     print('---Run graph')
@@ -211,8 +216,8 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     # List for results:
     # lstRes = [None] * (varNumMdl * varNumChnk)
 
-    # Initialise index (if we cannot use a for loop because range object would
-    # be too large, we use a while loop instead).
+    # Initialise index (if we cannot use a for loop because range
+    # object would be too large, we use a while loop instead).
     # idxIt = 0
 
     # Loop through input iterations:
@@ -220,7 +225,7 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
     for idxIt in range(varNumTtl):
 
         # varTme04 = time.time()
-    
+
         # Run main computational graph:
         vecTmp = objSess.run(objGrph)
         # lstRes[idxIt] = objSess.run(objGrph)
@@ -250,7 +255,7 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
 
     # Stop threads.
     objCoord.request_stop()
-    #objCoord.join(objThrds)
+    # objCoord.join(objThrds)
     objSess.close()
 
     # Get time:
@@ -262,7 +267,8 @@ def funcGlmGpu(varNumVol=500, varNumChnk=2, varNumVoxPerChnk=200000,
            + str(np.around(varTme03, decimals=3))))
 
     return varTme03
-    # -----------------------------------------------------------------------------
+    # ----------------------------------------------------------------
+
 
 # Is this module is called directly?
 if __name__ == "__main__":
@@ -273,7 +279,7 @@ if __name__ == "__main__":
     varNumVoxTtl = 2000
 
     # List with chunk sizes:
-    lstNumChnk = [1]  #list(range(2, 31))
+    lstNumChnk = [1]  # list(range(2, 31))
 
     # Resulting number of voxels per chunk:
     lstNumVoxPerChnk = [varNumVoxTtl / x for x in lstNumChnk]
@@ -318,7 +324,7 @@ if __name__ == "__main__":
     #np.save('/home/john/Desktop/tmp/aryNumVoxPerChnk.npy',
     #        aryNumVoxPerChnk)
 
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------------------
     # *** Create plot
 
     #plt.plot(aryNumVoxPerChnk, vecTme)

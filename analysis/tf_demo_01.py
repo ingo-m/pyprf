@@ -3,7 +3,7 @@
 Simple tensorflow demo using queue to place input data on graph.
 
 The problem with this way of placing data on the graph is that the
-enqueue_many operation load all data onto GPU memory, which does not work for
+enqueue_many operation loads all data onto GPU memory, which does not work for
 large datasets.
 """
 
@@ -62,7 +62,7 @@ with tf.variable_scope('queue'):
     # placeholders for the data in the queue when defining the graph.
     objIn01, objIn02 = objQ.dequeue()
 
-    # The computational graph (multiplies the sliced array with the sliced 
+    # The computational graph (multiplies the sliced array with the sliced
     # vector, retrieves the first element and prints it).
     objGrph = tf.Print(objIn02, [tf.multiply(objIn01, objIn02)[0][0]])
 

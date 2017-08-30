@@ -2,25 +2,27 @@
 """
 Simple tensorflow demo using queue to place input data on graph.
 
-This version uses a separate graph, running in a separate thread, to place data
-on the queue. High GPU utilisation can be achieved with this configuration.
+This version uses a separate graph, running in a separate thread, to
+place data on the queue. High GPU utilisation can be achieved with
+this configuration.
 """
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify it
+# This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
 
 import time
 import threading
@@ -28,13 +30,12 @@ import tensorflow as tf
 import numpy as np
 
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------
 # *** Function definition
 
 # Define queue-feeding-function that will run in extra thread:
 def funcPlcIn():
     """Place data on queue."""
-
     # Iteration counter:
     idxCnt = 0
 
@@ -53,24 +54,25 @@ def funcPlcIn():
         if objCoord.should_stop():
             break
 
-        # Stop if all data has been put on the queue:        
+        # Stop if all data has been put on the queue:
         elif idxCnt == varNumIt:
             break
 
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------
 # *** Preparations
 
 print('-Tensorflow demo.')
 
-# Data to perform computations on. First dimension is number of iterations.
+# Data to perform computations on. First dimension is number of
+# iterations.
 varNumIt = 1000
 aryIn = np.ones((varNumIt, 3000, 2000), dtype=np.float32)
 vecIn = np.arange(1, (varNumIt + 1), dtype=np.float32)
 vecIn = np.reshape(vecIn, (varNumIt, 1))
 
-# Put input data into lists (needed as input for feed_dict for graph that feeds
-# queue):
+# Put input data into lists (needed as input for feed_dict for graph
+# that feeds queue):
 lstIn01 = [None] * varNumIt
 lstIn02 = [None] * varNumIt
 for idxIt in range(varNumIt):
@@ -85,7 +87,7 @@ varDim03 = vecIn[0].shape[0]
 del(aryIn)
 del(vecIn)
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------
 # *** Define the queue & the session
 
 print('---Defining graph')
@@ -115,8 +117,8 @@ varNumThrd = 1
 objRunQ = tf.train.QueueRunner(objQ, [objEnQ] * varNumThrd)
 tf.train.add_queue_runner(objRunQ)
 
-# The tensor objects that are retrieved from the queue. These function like
-# placeholders for the data in the queue when defining the graph.
+# The tensor objects that are retrieved from the queue. These function
+# like placeholders for the data in the queue when defining the graph.
 objIn01, objIn02 = objQ.dequeue()
 
 # The computational graph. Just some intense nonsense computation.
@@ -174,13 +176,13 @@ objSess = tf.Session()
 objCoord = tf.train.Coordinator()
 
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------
 # *** Fill queue
 
 print('---Fill queue')
 
-# Buffer size (number of samples to put on queue before starting execution of
-# graph):
+# Buffer size (number of samples to put on queue before starting
+# execution of graph):
 varBuff = 10
 
 # Define & run extra thread with graph that places data on queue:
@@ -188,14 +190,14 @@ objThrd = threading.Thread(target=funcPlcIn)
 objThrd.setDaemon(True)
 objThrd.start()
 
-# Stay in this while loop until the specified number of samples (varBuffer)
-# have been placed on the queue).
+# Stay in this while loop until the specified number of samples
+# (varBuffer) have been placed on the queue).
 varTmpSzeQ = 0
 while varTmpSzeQ < varBuff:
     varTmpSzeQ = objSess.run(objSzeQ)
 
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------
 # *** Run the graph
 
 print('---Run graph')
@@ -252,4 +254,4 @@ varTme02 = time.time()
 varTme03 = np.around((varTme02 - varTme01), decimals=3)
 
 print(('---Time for running graph: ' + str(varTme03)))
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------
