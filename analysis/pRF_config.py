@@ -52,10 +52,9 @@ varSdSmthSpt = 0.0 # 0.7
 # Number of fMRI volumes and png files to load:
 varNumVol = 400
 
-# Intensity cutoff value for fMRI time series. Voxels with a mean intensity
-# lower than the value specified here are not included in the pRF model finding
-# (this speeds up the calculation, and, more importatnly, avoids division by
-# zero):
+# Intensity cutoff value of fMRI time series for preprocessing. Voxels with a
+# mean intensity lower than the value specified here are ignored (this speeds
+# up the computation, and, more importatnly, avoids division by zero):
 varIntCtf = 50.0
 
 # Number of processes to run in parallel:

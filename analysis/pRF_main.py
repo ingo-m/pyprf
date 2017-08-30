@@ -34,7 +34,7 @@ import multiprocessing as mp
 from PIL import Image
 
 import pRF_config as cfg
-#import pRF_config_motion as cfg
+# import pRF_config_motion as cfg
 
 from pRF_crtPixMdl import funcCrtPixMdl
 
@@ -123,13 +123,12 @@ if cfg.lgcCrteMdl:  #noqa
         objIm = objIm.resize((cfg.tplVslSpcHighSze[0],
                               cfg.tplVslSpcHighSze[1]),
                              resample=Image.NEAREST)
-        aryPngData[:, :, idx01] = np.array(objIm.getdata()).reshape( \
+        aryPngData[:, :, idx01] = np.array(objIm.getdata()).reshape(
             objIm.size[0], objIm.size[1])
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
     aryPngData = (aryPngData > 200).astype(np.int8)
     # *************************************************************************
-
 
     # *************************************************************************
     # *** Create pixel-wise HRF model time courses
@@ -153,7 +152,6 @@ if cfg.lgcCrteMdl:  #noqa
     #                cmin=-5,
     #                cmax=105).save(strTmp)
     # *************************************************************************
-
 
     # *************************************************************************
     # *** Create pRF time courses models
@@ -220,7 +218,7 @@ else:
 # *** Find pRF models for voxel time courses
 
 # Only fit pRF models if dimensions of pRF time course models are correct:
-if lgcDim:
+if lgcDim:  #noqa
 
     print('---------Load & preprocess nii data')
 
@@ -260,12 +258,14 @@ if lgcDim:
                                    varIntCtf=cfg.varIntCtf,
                                    varPar=cfg.varPar)
 
-        # Demeaning (runs are concatenated, therefore we demean) - POSSIBLE
-        # ENHANCEMENT: don't demean runs, but model across-runs variance
-        # explicitly in GLM.
-        aryTmpMne = np.mean(aryTmpFunc, axis=3)
-        aryTmpFunc = np.subtract(aryTmpFunc,
-                                 aryTmpMne[:, :, :, None])
+        # Convert intensities into z-scores. If there are several pRF runs,
+        # these are concatenated. Z-scoring ensures that differences in mean
+        # image intensity and/or variance between runs do not confound the
+        # analysis. Possible enhancement: Explicitly model across-runs variance
+        # with a nuisance regressor in the GLM.
+        aryTmpStd = np.std(aryTmpFunc, axis=3)
+        aryTmpFunc = np.divide(aryTmpFunc,
+                               aryTmpStd[:, :, :, None])
 
         # Put preprocessed functional data of current run into list:
         lstFunc.append(np.copy(aryTmpFunc))
@@ -285,7 +285,6 @@ if lgcDim:
                              varSdSmthSpt=0.0,
                              varIntCtf=0.0,
                              varPar=cfg.varPar)
-
 
     # Number of non-zero voxels in mask (i.e. number of voxels for which pRF
     # finding will be performed):
@@ -341,7 +340,6 @@ if lgcDim:
     # Reshape mask:
     aryMask = np.reshape(aryMask, varNumVoxTlt)
 
-
     # Voxels that are outside the brain and have no, or very little, signal
     # should not be included in the pRF model finding. We take the variance
     # over time and exclude voxels with a suspiciously low variance. Because
@@ -363,8 +361,8 @@ if lgcDim:
     # Number of voxels for which pRF finding will be performed:
     varNumVoxInc = aryFunc.shape[0]
 
-    print('---------Number of voxels on which pRF finding will be ' +
-          'performed: ' + str(varNumVoxInc))
+    print('---------Number of voxels on which pRF finding will be '
+          + 'performed: ' + str(varNumVoxInc))
 
     # List into which the chunks of functional data for the parallel processes
     # will be put:

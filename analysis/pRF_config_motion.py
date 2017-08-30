@@ -39,7 +39,7 @@ varPrfStdMax = 7.0
 varTr = 2.832
 
 # Voxel resolution of the fMRI data [mm]:
-varVoxRes = 0.8
+varVoxRes = 0.4
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
@@ -47,15 +47,14 @@ varSdSmthTmp = 2.832
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.8
+varSdSmthSpt = 0.0
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 4 * 172
 
-# Intensity cutoff value for fMRI time series. Voxels with a mean intensity
-# lower than the value specified here are not included in the pRF model finding
-# (this speeds up the calculation, and, more importatnly, avoids division by
-# zero):
+# Intensity cutoff value of fMRI time series for preprocessing. Voxels with a
+# mean intensity lower than the value specified here are ignored (this speeds
+# up the computation, and, more importatnly, avoids division by zero):
 varIntCtf = 50.0
 
 # Number of processes to run in parallel:
@@ -71,10 +70,10 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-lstPathNiiFunc = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_07.nii.gz',
-                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_08.nii.gz',
-                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_09.nii.gz',
-                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube/func_10.nii.gz']  #noqa
+lstPathNiiFunc = ['/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_07_up_aniso_smth.nii.gz',
+                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_08_up_aniso_smth.nii.gz',
+                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_09_up_aniso_smth.nii.gz',
+                  '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_10_up_aniso_smth.nii.gz',]  #noqa
 
 # Path of mask (to restrict pRF model finding):
 strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/brainmask.nii.gz'  #noqa
