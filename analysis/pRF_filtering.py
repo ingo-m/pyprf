@@ -24,20 +24,20 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.filters import gaussian_filter1d
 
 
-def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
-                  varSdSmthTmp=0.0, varSdSmthSpt=0.0, varIntCtf=0.0, varPar=1):
+def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
+                  lgcLinTrnd=False, varSdSmthTmp=0.0, varSdSmthSpt=0.0,
+                  varIntCtf=0.0, varPar=1):
     """
     Preprocess fMRI data or pRF time course models for a pRF analysis.
-    
+
     Parameters
     ----------
     aryFunc : np.array
-        Array with fMRI data or pRF time course models (trhee-dimensional).
-
+        Array with fMRI data or pRF time course models (four-dimensional).
     aryMask : np.array
         If temporal smoothing is supposed to be restricted to a subset of
-        voxels, a mask can be provided (e.g. brain mask). Same dimension as
-        functional dara (aryFunc).
+        voxels, a mask can be provided (e.g. brain mask). 3D, with same spatial
+        dimensions as functional dara (aryFunc).
     lgcLinTrnd : bool
         Whether to perform linear trend removal.
     varSdSmthTmp : float
@@ -55,7 +55,7 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
     Returns
     -------
     aryFunc : np.array
-        Preprocessed data, same dimensions as input array.
+        Preprocessed data, same dimensions as respective input array.
 
     Notes
     -----
@@ -191,7 +191,7 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
-        aryRes = np.array([]).reshape(0, varNumVol)
+        aryRes = np.array([], dtype=np.float32).reshape(0, varNumVol)
         for idxRes in range(0, varPar):
             aryRes = np.append(aryRes, lstRes[idxRes], axis=0)
 
@@ -202,7 +202,8 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
         # Array for output, same size as input (i.e. accounting for those
         # elements that were masked out):
         aryOut = np.zeros((varNumEleTlt,
-                           vecInShp[3]))
+                           vecInShp[3]),
+                          dtype=np.float32)
 
         if 0 < aryMask.size:
 
@@ -317,10 +318,10 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
-        aryRes = np.array([]).reshape(vecInShp[0],
-                                      vecInShp[1],
-                                      vecInShp[2],
-                                      0)
+        aryRes = np.array([], dtype=np.float32).reshape(vecInShp[0],
+                                                        vecInShp[1],
+                                                        vecInShp[2],
+                                                        0)
         for idxRes in range(0, varPar):
             aryRes = np.append(aryRes, lstRes[idxRes], axis=3)
 
@@ -356,24 +357,30 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
         vecMdlTc = np.linspace(0,
                                1,
                                num=varNumVol,
-                               endpoint=True)
+                               endpoint=True,
+                               dtype=np.float32)
         # vecMdlTc = vecMdlTc.flatten()
 
         # We create a design matrix including the linear trend and a
         # constant term:
-        aryDsgn = np.vstack([vecMdlTc, np.ones(len(vecMdlTc))]).T
+        aryDsgn = np.vstack([vecMdlTc,
+                             np.ones(len(vecMdlTc), dtype=np.float32)]).T
+        aryDsgn = aryDsgn.astype(np.float32, copy=False)
 
         # Calculate the least-squares solution for all voxels:
         aryLstSqFt = np.linalg.lstsq(aryDsgn, aryFuncChnk)[0]
 
         # Multiply the linear term with the respective parameters to obtain the
         # fitted line for all voxels:
-        aryLneFt = np.multiply(vecMdlTc[:, None], aryLstSqFt[0, :])
+        aryLneFt = np.multiply(vecMdlTc[:, None],
+                               aryLstSqFt[0, :],
+                               dtype=np.float32)
 
         # Using the least-square fitted model parameters, we remove the linear
         # term from the data:
         aryFuncChnk = np.subtract(aryFuncChnk,
-                                  aryLneFt)
+                                  aryLneFt,
+                                  dtype=np.float32)
 
         # Using the constant term, we remove the mean from the data:
         # aryFuncChnk = np.subtract(aryFuncChnk,
@@ -384,7 +391,7 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
 
         # Output list:
         lstOut = [idxPrc,
-                  aryFuncChnk]
+                  aryFuncChnk.astype(np.float32, copy=False)]
 
         queOut.put(lstOut)
     # *************************************************************************
@@ -401,6 +408,9 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
         # Number of time points in this chunk:
         varNumVol = aryFuncChnk.shape[3]
 
+        # Input data should already be float32. Just to be sure:
+        aryFuncChnk = aryFuncChnk.astype(np.float32, copy=False)
+
         # Loop through volumes:
         for idxVol in range(0, varNumVol):
 
@@ -409,7 +419,7 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
                 varSdSmthSpt,
                 order=0,
                 mode='nearest',
-                truncate=4.0)
+                truncate=4.0).astype(np.float32, copy=False)
 
         # Output list:
         lstOut = [idxPrc,
@@ -432,7 +442,8 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
         # (over time) at the beginning and at the end.
         aryFuncChnkMean = np.mean(aryFuncChnk,
                                   axis=1,
-                                  keepdims=True)
+                                  keepdims=True,
+                                  dtype=np.float32)
 
         aryFuncChnk = np.concatenate((aryFuncChnkMean,
                                       aryFuncChnk,
@@ -452,12 +463,15 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
 
         # Output list:
         lstOut = [idxPrc,
-                  aryFuncChnk]
+                  aryFuncChnk.astype(np.float32, copy=False)]
 
         queOut.put(lstOut)
 
     # *************************************************************************
     # *** Apply functions:
+
+    # Data type for all computations should be float32 to avoid memory issues.
+    aryFunc = aryFunc.astype(np.float32, copy=False)
 
     if lgcLinTrnd:
         # Perform linear trend removal (parallelised over voxels):
@@ -527,5 +541,5 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([]), lgcLinTrnd=False,
 
     # *************************************************************************
     # Return preprocessed data:
-    return aryFunc
+    return aryFunc.astype(np.float32, copy=False)
     # **************************************************************************

@@ -19,13 +19,84 @@
 
 import numpy as np
 import scipy as sp
+import nibabel as nb
 from scipy.stats import gamma
+
+
+def fncLoadNii(strPathIn):
+    """
+    Load nii file.
+
+    Parameters
+    ----------
+    strPathIn : str
+        Path to nifti file to load.
+
+    Returns
+    -------
+    aryNii : np.array
+        Array containing nii data. 32 bit floating point precision.
+    objHdr : header object
+        Header of nii file.
+    aryAff : np.array
+        Array containing 'affine', i.e. information about spatial positioning
+        of nii data.
+    """
+    # Load nii file (this doesn't load the data into memory yet):
+    objNii = nb.load(strPathIn)
+    # Load data into array:
+    aryNii = np.asarray(objNii.dataobj).astype(np.float32)
+    # Get headers:
+    objHdr = objNii.header
+    # Get 'affine':
+    aryAff = objNii.affine
+    # Output nii data as numpy array and header:
+    return aryNii, objHdr, aryAff
+
+
+def fncLoadLargeNii(strPathIn):
+    """
+    Load large nii file volume by volume, at float32 precision.
+
+    Parameters
+    ----------
+    strPathIn : str
+        Path to nifti file to load.
+
+    Returns
+    -------
+    aryNii : np.array
+        Array containing nii data. 32 bit floating point precision.
+    objHdr : header object
+        Header of nii file.
+    aryAff : np.array
+        Array containing 'affine', i.e. information about spatial positioning
+        of nii data.
+    """
+    # Load nii file (this does not load the data into memory yet):
+    objNii = nb.load(strPathIn)
+    # Get image dimensions:
+    tplSze = objNii.shape
+    # Create empty array for nii data:
+    aryNii = np.zeros(tplSze, dtype=np.float32)
+
+    # Loop through volumes:
+    for idxVol in range(tplSze[3]):
+        aryNii[..., idxVol] = np.asarray(
+              objNii.dataobj[..., idxVol]).astype(np.float32)
+
+    # Get headers:
+    objHdr = objNii.header
+    # Get 'affine':
+    aryAff = objNii.affine
+    # Output nii data as numpy array and header:
+    return aryNii, objHdr, aryAff
 
 
 def funcGauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
     """
     Create 2D Gaussian kernel.
-    
+
     Parameters
     ----------
     varSizeX : int, positive

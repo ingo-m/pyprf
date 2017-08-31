@@ -70,13 +70,13 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-lstPathNiiFunc = ['/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_07_up_aniso_smth.nii.gz',
-                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_08_up_aniso_smth.nii.gz',
-                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_09_up_aniso_smth.nii.gz',
-                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_10_up_aniso_smth.nii.gz',]  #noqa
+lstPathNiiFunc = ['/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_07_up_aniso_smth.nii',
+                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_08_up_aniso_smth.nii',
+                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_09_up_aniso_smth.nii',
+                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_10_up_aniso_smth.nii',]  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/dummy_mask_up.nii.gz'  #noqa
+strPathNiiMask = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/mp2rage/04_seg/02_up/20161221_mp2rage_seg_v26.nii.gz'  #noqa
 
 # Output basename:
 strPathOut = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_results'  #noqa
@@ -100,7 +100,7 @@ strShpe = '/home/john/PhD/GitHub/py_pRF_motion/stimuli/Masks/mskBar.npz'
 strVersion = 'gpu'
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to

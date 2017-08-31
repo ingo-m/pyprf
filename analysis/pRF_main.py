@@ -10,18 +10,18 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 # *****************************************************************************
@@ -33,14 +33,13 @@ import time
 import multiprocessing as mp
 from PIL import Image
 
-import pRF_config as cfg
-# import pRF_config_motion as cfg
+# import pRF_config as cfg
+import pRF_config_motion as cfg
 
+from pRF_utilities import fncLoadNii, fncLoadLargeNii
 from pRF_crtPixMdl import funcCrtPixMdl
-
 from pRF_funcFindPrf import funcFindPrf
 from pRF_funcFindPrfGpuQ import funcFindPrfGpu
-
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
 # *****************************************************************************
@@ -185,9 +184,6 @@ if cfg.lgcCrteMdl:  #noqa
     # Save 4D array as '*.nii' file (for debugging purposes):
     niiPrfTc = nb.Nifti1Image(aryPrfTc, np.eye(4))
     nb.save(niiPrfTc, cfg.strPathMdl)
-
-    # Set test for correct dimensions of '*.npy' file to true:
-    lgcDim = True
     # *************************************************************************
 
 else:
@@ -211,339 +207,369 @@ else:
               (vecPrfTcShp[2] == cfg.varNumPrfSizes)
               and
               (vecPrfTcShp[3] == cfg.varNumVol))
+
+    # Only fit pRF models if dimensions of pRF time course models are correct:
+    if not(lgcDim):
+        # Error message:
+        strErrMsg = ('---Error: Dimensions of specified pRF time course ' +
+                     'models do not agree with specified model parameters')
+        raise ValueError(strErrMsg)
+# *****************************************************************************
+
+
+# *****************************************************************************
+# *** Preprocessing
+
+print('------Load & preprocess nii data')
+
+# Load mask (to restrict model fitting):
+aryMask, hdrMsk, affMsk = fncLoadNii(cfg.strPathNiiMask)
+
+# Mask is loaded as float32, but is better represented as integer:
+aryMask = np.array(aryMask).astype(np.int16)
+
+# Number of non-zero voxels in mask:
+# varNumVoxMsk = int(np.count_nonzero(aryMask))
+
+# Dimensions of nii data:
+vecNiiShp = aryMask.shape
+
+# Total number of voxels:
+varNumVoxTlt = (vecNiiShp[0] * vecNiiShp[1] * vecNiiShp[2])
+
+# Reshape mask:
+aryMask = np.reshape(aryMask, varNumVoxTlt)
+
+# List for arrays with functional data (possibly several runs):
+lstFunc = []
+
+# Number of runs:
+varNumRun = len(cfg.lstPathNiiFunc)
+
+# Loop through runs and load data:
+for idxRun in range(varNumRun):
+
+    print(('------Preprocess run ' + str(idxRun + 1)))
+
+    # Load 4D nii data:
+    aryTmpFunc, _, _ = fncLoadLargeNii(cfg.lstPathNiiFunc[idxRun])
+
+    # Dimensions of nii data (including temporal dimension; spatial dimensions
+    # need to be the same for mask & functional data):
+    vecNiiShp = aryTmpFunc.shape
+
+    # Preprocessing of nii data:
+    aryTmpFunc = funcPrfPrePrc(aryTmpFunc,
+                               aryMask=aryMask,
+                               lgcLinTrnd=True,
+                               varSdSmthTmp=cfg.varSdSmthTmp,
+                               varSdSmthSpt=cfg.varSdSmthSpt,
+                               varIntCtf=cfg.varIntCtf,
+                               varPar=cfg.varPar)
+
+    # Reshape functional nii data, from now on of the form
+    # aryTmpFunc[voxelCount, time]:
+    aryTmpFunc = np.reshape(aryTmpFunc, [varNumVoxTlt, vecNiiShp[3]])
+
+    # Convert intensities into z-scores. If there are several pRF runs, these
+    # are concatenated. Z-scoring ensures that differences in mean image
+    # intensity and/or variance between runs do not confound the analysis.
+    # Possible enhancement: Explicitly model across-runs variance with a
+    # nuisance regressor in the GLM.
+    aryTmpStd = np.std(aryTmpFunc, axis=1)
+
+    # In order to avoid devision by zero, only divide those voxels with a
+    # standard deviation greater than zero:
+    aryTmpLgc = np.greater(aryTmpStd.astype(np.float32),
+                           np.array([0.0], dtype=np.float32)[0])
+    # Z-scoring:
+    aryTmpFunc[aryTmpLgc, :] = np.divide(aryTmpFunc[aryTmpLgc, :],
+                                         aryTmpStd[aryTmpLgc, None])
+    # Set voxels with a variance of zero to intensity zero:
+    aryTmpLgc = np.not_equal(aryTmpLgc, True)
+    aryTmpFunc[aryTmpLgc, :] = np.array([0.0], dtype=np.float32)[0]
+
+    # Apply mask:
+    aryLgcMsk = np.greater(aryMask.astype(np.int16),
+                           np.array([0], dtype=np.int16)[0])
+    aryTmpFunc = aryTmpFunc[aryLgcMsk, :]
+
+    # Put preprocessed functional data of current run into list:
+    lstFunc.append(np.copy(aryTmpFunc))
+    del(aryTmpFunc)
+
+# Put functional data from separate runs into one array. 2D array of the form
+# aryFunc[voxelCount, time]
+aryFunc = np.concatenate(lstFunc, axis=1).astype(np.float32, copy=False)
+del(lstFunc)
+
+# Voxels that are outside the brain and have no, or very little, signal should
+# not be included in the pRF model finding. We take the variance over time and
+# exclude voxels with a suspiciously low variance. Because the data given into
+# the cython or GPU function has float32 precision, we calculate the variance
+# on data with float32 precision.
+aryFuncVar = np.var(aryFunc, axis=1, dtype=np.float32)
+
+# Is the variance greater than zero?
+aryLgcVar = np.greater(aryFuncVar,
+                       np.array([0.0001]).astype(np.float32)[0])
+
+# Array with functional data for which conditions (mask inclusion and cutoff
+# value) are fullfilled:
+aryFunc = aryFunc[aryLgcVar, :]
+
+# Number of voxels for which pRF finding will be performed:
+varNumVoxInc = aryFunc.shape[0]
+
+print('---------Number of voxels on which pRF finding will be performed: '
+      + str(varNumVoxInc))
+
+print('---------Preprocess pRF time course models')
+
+# Preprocessing of pRF time course models:
+aryPrfTc = funcPrfPrePrc(aryPrfTc,
+                         aryMask=np.array([]),
+                         lgcLinTrnd=False,
+                         varSdSmthTmp=cfg.varSdSmthTmp,
+                         varSdSmthSpt=0.0,
+                         varIntCtf=0.0,
+                         varPar=cfg.varPar)
 # *****************************************************************************
 
 
 # *****************************************************************************
 # *** Find pRF models for voxel time courses
 
-# Only fit pRF models if dimensions of pRF time course models are correct:
-if lgcDim:  #noqa
+print('------Find pRF models for voxel time courses')
 
-    print('---------Load & preprocess nii data')
+print('---------Preparing parallel pRF model finding')
 
-    # Load mask (to restrict model fitting):
-    niiMask = nb.load(cfg.strPathNiiMask)
-    # Get nii header of mask:
-    hdrMsk = niiMask.header
-    # Get nii 'affine':
-    affMsk = niiMask.affine
-    # Load the data into memory:
-    aryMask = niiMask.get_data()
-    aryMask = np.array(aryMask)
+# For the GPU version, we need to set down the parallelisation to 1 now,
+# because no separate CPU threads are to be created. We may still use CPU
+# parallelisation for preprocessing, which is why the parallelisation factor is
+# only reduced now, not earlier.
+if cfg.strVersion == 'gpu':
+    cfg.varPar = 1
 
-    # List for arrays with functional datas for runs:
-    lstFunc = []
+# Vector with the moddeled x-positions of the pRFs:
+vecMdlXpos = np.linspace(cfg.varExtXmin,
+                         cfg.varExtXmax,
+                         cfg.varNumX,
+                         endpoint=True)
 
-    # Number of runs:
-    varNumRun = len(cfg.lstPathNiiFunc)
+# Vector with the moddeled y-positions of the pRFs:
+vecMdlYpos = np.linspace(cfg.varExtYmin,
+                         cfg.varExtYmax,
+                         cfg.varNumY,
+                         endpoint=True)
 
-    # Loop through runs and load data:
-    for idxRun in range(varNumRun):
+# Vector with the moddeled standard deviations of the pRFs:
+vecMdlSd = np.linspace(cfg.varPrfStdMin,
+                       cfg.varPrfStdMax,
+                       cfg.varNumPrfSizes,
+                       endpoint=True)
 
-        print(('------Preprocess run ' + str(idxRun + 1)))
+# Empty list for results (parameters of best fitting pRF model):
+lstPrfRes = [None] * cfg.varPar
 
-        # Load 4D nii data:
-        niiTmpFunc = nb.load(cfg.lstPathNiiFunc[idxRun])
-        # Load the data into memory:
-        aryTmpFunc = niiTmpFunc.get_data()
-        aryTmpFunc = np.array(aryTmpFunc)
+# Empty list for processes:
+lstPrcs = [None] * cfg.varPar
 
-        # Preprocessing of nii data:
-        aryTmpFunc = funcPrfPrePrc(aryTmpFunc,
-                                   aryMask=aryMask,
-                                   lgcLinTrnd=True,
-                                   varSdSmthTmp=cfg.varSdSmthTmp,
-                                   varSdSmthSpt=cfg.varSdSmthSpt,
-                                   varIntCtf=cfg.varIntCtf,
-                                   varPar=cfg.varPar)
+# Create a queue to put the results in:
+queOut = mp.Queue()
 
-        # Convert intensities into z-scores. If there are several pRF runs,
-        # these are concatenated. Z-scoring ensures that differences in mean
-        # image intensity and/or variance between runs do not confound the
-        # analysis. Possible enhancement: Explicitly model across-runs variance
-        # with a nuisance regressor in the GLM.
-        aryTmpStd = np.std(aryTmpFunc, axis=3)
-        aryTmpFunc = np.divide(aryTmpFunc,
-                               aryTmpStd[:, :, :, None])
+# List into which the chunks of functional data for the parallel processes will
+# be put:
+lstFunc = [None] * cfg.varPar
 
-        # Put preprocessed functional data of current run into list:
-        lstFunc.append(np.copy(aryTmpFunc))
+# Vector with the indicies at which the functional data will be separated in
+# order to be chunked up for the parallel processes:
+vecIdxChnks = np.linspace(0,
+                          varNumVoxInc,
+                          num=cfg.varPar,
+                          endpoint=False)
+vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
 
-    # Put functional data from separate runs into one array:
-    aryFunc = np.concatenate(lstFunc, axis=3)
-    del(lstFunc)
-    del(aryTmpFunc)
+# Put functional data into chunks:
+for idxChnk in range(0, cfg.varPar):
+    # Index of first voxel to be included in current chunk:
+    varTmpChnkSrt = int(vecIdxChnks[idxChnk])
+    # Index of last voxel to be included in current chunk:
+    varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
+    # Put voxel array into list:
+    lstFunc[idxChnk] = aryFunc[varTmpChnkSrt:varTmpChnkEnd, :]
 
-    print('---------Preprocess pRF time course models')
+# We don't need the original array with the functional data anymore:
+del(aryFunc)
 
-    # Preprocessing of pRF time course models:
-    aryPrfTc = funcPrfPrePrc(aryPrfTc,
-                             aryMask=np.array([]),
-                             lgcLinTrnd=False,
-                             varSdSmthTmp=cfg.varSdSmthTmp,
-                             varSdSmthSpt=0.0,
-                             varIntCtf=0.0,
-                             varPar=cfg.varPar)
+# CPU version (using numpy or cython for pRF finding):
+if ((cfg.strVersion == 'numpy') or (cfg.strVersion == 'cython')):
 
-    # Number of non-zero voxels in mask (i.e. number of voxels for which pRF
-    # finding will be performed):
-    varNumMskVox = int(np.count_nonzero(aryMask))
+    print('---------pRF finding on CPU')
 
-    # Dimensions of nii data:
-    vecNiiShp = aryFunc.shape
+    print('---------Creating parallel processes')
 
-    print('------Find pRF models for voxel time courses')
-
-    print('---------Preparing parallel pRF model finding')
-
-    # For the GPU version, we need to set down the parallelisation to 1 now,
-    # because no separate CPU threads are to be created. We may still use CPU
-    # parallelisation for preprocessing, which is why the parallelisation
-    # factor is only reduced now, not earlier.
-    if cfg.strVersion == 'gpu':
-        cfg.varPar = 1
-
-    # Vector with the moddeled x-positions of the pRFs:
-    vecMdlXpos = np.linspace(cfg.varExtXmin,
-                             cfg.varExtXmax,
-                             cfg.varNumX,
-                             endpoint=True)
-
-    # Vector with the moddeled y-positions of the pRFs:
-    vecMdlYpos = np.linspace(cfg.varExtYmin,
-                             cfg.varExtYmax,
-                             cfg.varNumY,
-                             endpoint=True)
-
-    # Vector with the moddeled standard deviations of the pRFs:
-    vecMdlSd = np.linspace(cfg.varPrfStdMin,
-                           cfg.varPrfStdMax,
-                           cfg.varNumPrfSizes,
-                           endpoint=True)
-
-    # Empty list for results (parameters of best fitting pRF model):
-    lstPrfRes = [None] * cfg.varPar
-
-    # Empty list for processes:
-    lstPrcs = [None] * cfg.varPar
-
-    # Create a queue to put the results in:
-    queOut = mp.Queue()
-
-    # Total number of voxels:
-    varNumVoxTlt = (vecNiiShp[0] * vecNiiShp[1] * vecNiiShp[2])
-
-    # Reshape functional nii data:
-    aryFunc = np.reshape(aryFunc, [varNumVoxTlt, vecNiiShp[3]])
-
-    # Reshape mask:
-    aryMask = np.reshape(aryMask, varNumVoxTlt)
-
-    # Voxels that are outside the brain and have no, or very little, signal
-    # should not be included in the pRF model finding. We take the variance
-    # over time and exclude voxels with a suspiciously low variance. Because
-    # the data given into the cython function has float32 precision, we
-    # calculate the variance on data with float32 precision.
-    aryFuncVar = np.var(aryFunc.astype(np.float32), axis=1)
-
-    # Logical test for voxel inclusion: is the voxel value greater than zero in
-    # the mask, and is the variance greater than zero?
-    aryLgc = np.multiply(np.greater(aryMask, 0),
-                         np.greater(aryFuncVar,
-                                    np.array(([0.0001])).astype(np.float32))
-                         )
-
-    # Array with functional data for which conditions (mask inclusion and
-    # cutoff value) are fullfilled:
-    aryFunc = aryFunc[aryLgc, :]
-
-    # Number of voxels for which pRF finding will be performed:
-    varNumVoxInc = aryFunc.shape[0]
-
-    print('---------Number of voxels on which pRF finding will be '
-          + 'performed: ' + str(varNumVoxInc))
-
-    # List into which the chunks of functional data for the parallel processes
-    # will be put:
-    lstFunc = [None] * cfg.varPar
-
-    # Vector with the indicies at which the functional data will be separated
-    # in order to be chunked up for the parallel processes:
-    vecIdxChnks = np.linspace(0,
-                              varNumVoxInc,
-                              num=cfg.varPar,
-                              endpoint=False)
-    vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
-
-    # Put functional data into chunks:
-    for idxChnk in range(0, cfg.varPar):
-        # Index of first voxel to be included in current chunk:
-        varTmpChnkSrt = int(vecIdxChnks[idxChnk])
-        # Index of last voxel to be included in current chunk:
-        varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-        # Put voxel array into list:
-        lstFunc[idxChnk] = aryFunc[varTmpChnkSrt:varTmpChnkEnd, :]
-
-    # We don't need the original array with the functional data anymore:
-    del(aryFunc)
-
-    # CPU version (using numpy or cython for pRF finding):
-    if ((cfg.strVersion == 'numpy') or (cfg.strVersion == 'cython')):
-
-        print('---------pRF finding on CPU')
-
-        print('---------Creating parallel processes')
-
-        # Create processes:
-        for idxPrc in range(0, cfg.varPar):
-            lstPrcs[idxPrc] = mp.Process(target=funcFindPrf,
-                                         args=(idxPrc,
-                                               cfg.varNumX,
-                                               cfg.varNumY,
-                                               cfg.varNumPrfSizes,
-                                               vecMdlXpos,
-                                               vecMdlYpos,
-                                               vecMdlSd,
-                                               lstFunc[idxPrc],
-                                               aryPrfTc,
-                                               cfg.strVersion,
-                                               queOut)
-                                         )
-            # Daemon (kills processes when exiting):
-            lstPrcs[idxPrc].Daemon = True
-
-    # CPU version (using numpy or cython for pRF finding):
-    elif cfg.strVersion == 'gpu':
-
-        print('---------pRF finding on GPU')
-
-        # Create processes:
-        for idxPrc in range(0, cfg.varPar):
-            lstPrcs[idxPrc] = mp.Process(target=funcFindPrfGpu,
-                                         args=(idxPrc,
-                                               cfg.varNumX,
-                                               cfg.varNumY,
-                                               cfg.varNumPrfSizes,
-                                               vecMdlXpos,
-                                               vecMdlYpos,
-                                               vecMdlSd,
-                                               lstFunc[idxPrc],
-                                               aryPrfTc,
-                                               queOut)
-                                         )
-            # Daemon (kills processes when exiting):
-            lstPrcs[idxPrc].Daemon = True
-
-    # Start processes:
+    # Create processes:
     for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc].start()
+        lstPrcs[idxPrc] = mp.Process(target=funcFindPrf,
+                                     args=(idxPrc,
+                                           cfg.varNumX,
+                                           cfg.varNumY,
+                                           cfg.varNumPrfSizes,
+                                           vecMdlXpos,
+                                           vecMdlYpos,
+                                           vecMdlSd,
+                                           lstFunc[idxPrc],
+                                           aryPrfTc,
+                                           cfg.strVersion,
+                                           queOut)
+                                     )
+        # Daemon (kills processes when exiting):
+        lstPrcs[idxPrc].Daemon = True
 
-    # Collect results from queue:
+# CPU version (using numpy or cython for pRF finding):
+elif cfg.strVersion == 'gpu':
+
+    print('---------pRF finding on GPU')
+
+    # Create processes:
     for idxPrc in range(0, cfg.varPar):
-        lstPrfRes[idxPrc] = queOut.get(True)
+        lstPrcs[idxPrc] = mp.Process(target=funcFindPrfGpu,
+                                     args=(idxPrc,
+                                           cfg.varNumX,
+                                           cfg.varNumY,
+                                           cfg.varNumPrfSizes,
+                                           vecMdlXpos,
+                                           vecMdlYpos,
+                                           vecMdlSd,
+                                           lstFunc[idxPrc],
+                                           aryPrfTc,
+                                           queOut)
+                                     )
+        # Daemon (kills processes when exiting):
+        lstPrcs[idxPrc].Daemon = True
 
-    # Join processes:
-    for idxPrc in range(0, cfg.varPar):
-        lstPrcs[idxPrc].join()
+# Start processes:
+for idxPrc in range(0, cfg.varPar):
+    lstPrcs[idxPrc].start()
 
-    print('---------Prepare pRF finding results for export')
+# Collect results from queue:
+for idxPrc in range(0, cfg.varPar):
+    lstPrfRes[idxPrc] = queOut.get(True)
 
-    # Create list for vectors with fitting results, in order to put the results
-    # into the correct order:
-    lstResXpos = [None] * cfg.varPar
-    lstResYpos = [None] * cfg.varPar
-    lstResSd = [None] * cfg.varPar
-    lstResR2 = [None] * cfg.varPar
+# Join processes:
+for idxPrc in range(0, cfg.varPar):
+    lstPrcs[idxPrc].join()
 
-    # Put output into correct order:
-    for idxRes in range(0, cfg.varPar):
+print('---------Prepare pRF finding results for export')
 
-        # Index of results (first item in output list):
-        varTmpIdx = lstPrfRes[idxRes][0]
+# Create list for vectors with fitting results, in order to put the results
+# into the correct order:
+lstResXpos = [None] * cfg.varPar
+lstResYpos = [None] * cfg.varPar
+lstResSd = [None] * cfg.varPar
+lstResR2 = [None] * cfg.varPar
 
-        # Put fitting results into list, in correct order:
-        lstResXpos[varTmpIdx] = lstPrfRes[idxRes][1]
-        lstResYpos[varTmpIdx] = lstPrfRes[idxRes][2]
-        lstResSd[varTmpIdx] = lstPrfRes[idxRes][3]
-        lstResR2[varTmpIdx] = lstPrfRes[idxRes][4]
+# Put output into correct order:
+for idxRes in range(0, cfg.varPar):
 
-    # Concatenate output vectors (into the same order as the voxels that were
-    # included in the fitting):
-    aryBstXpos = np.zeros(0)
-    aryBstYpos = np.zeros(0)
-    aryBstSd = np.zeros(0)
-    aryBstR2 = np.zeros(0)
-    for idxRes in range(0, cfg.varPar):
-        aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
-        aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
-        aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
-        aryBstR2 = np.append(aryBstR2, lstResR2[idxRes])
+    # Index of results (first item in output list):
+    varTmpIdx = lstPrfRes[idxRes][0]
 
-    # Delete unneeded large objects:
-    del(lstPrfRes)
-    del(lstResXpos)
-    del(lstResYpos)
-    del(lstResSd)
-    del(lstResR2)
+    # Put fitting results into list, in correct order:
+    lstResXpos[varTmpIdx] = lstPrfRes[idxRes][1]
+    lstResYpos[varTmpIdx] = lstPrfRes[idxRes][2]
+    lstResSd[varTmpIdx] = lstPrfRes[idxRes][3]
+    lstResR2[varTmpIdx] = lstPrfRes[idxRes][4]
 
-    # Array for pRF finding results, of the form
-    # aryPrfRes[total-number-of-voxels, 0:3], where the 2nd dimension
-    # contains the parameters of the best-fitting pRF model for the voxel, in
-    # the order (0) pRF-x-pos, (1) pRF-y-pos, (2) pRF-SD, (3) pRF-R2.
-    aryPrfRes = np.zeros((varNumVoxTlt, 6))
+# Concatenate output vectors (into the same order as the voxels that were
+# included in the fitting):
+aryBstXpos = np.zeros(0)
+aryBstYpos = np.zeros(0)
+aryBstSd = np.zeros(0)
+aryBstR2 = np.zeros(0)
+for idxRes in range(0, cfg.varPar):
+    aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
+    aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
+    aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
+    aryBstR2 = np.append(aryBstR2, lstResR2[idxRes])
 
-    # Put results form pRF finding into array (they originally needed to be
-    # saved in a list due to parallelisation).
-    aryPrfRes[aryLgc, 0] = aryBstXpos
-    aryPrfRes[aryLgc, 1] = aryBstYpos
-    aryPrfRes[aryLgc, 2] = aryBstSd
-    aryPrfRes[aryLgc, 3] = aryBstR2
+# Delete unneeded large objects:
+del(lstPrfRes)
+del(lstResXpos)
+del(lstResYpos)
+del(lstResSd)
+del(lstResR2)
 
-    # Reshape pRF finding results:
-    aryPrfRes = np.reshape(aryPrfRes,
-                           [vecNiiShp[0],
-                            vecNiiShp[1],
-                            vecNiiShp[2],
-                            6])
+# Put results form pRF finding into array (they originally needed to be saved
+# in a list due to parallelisation). Voxels were selected for pRF model finding
+# in two stages: First, a mask was applied. Second, voxels with low variance
+# were removed. Voxels are put back into the original format accordingly.
 
-    # Calculate polar angle map:
-    aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
-                                       aryPrfRes[:, :, :, 0])
+# Number of voxels that were included in the mask:
+varNumVoxMsk = np.sum(aryLgcMsk)
 
-    # Calculate eccentricity map (r = sqrt( x^2 + y^2 ) ):
-    aryPrfRes[:, :, :, 5] = np.sqrt(np.add(np.power(aryPrfRes[:, :, :, 0],
-                                                    2.0),
-                                           np.power(aryPrfRes[:, :, :, 1],
-                                                    2.0)))
+# Array for pRF finding results, of the form aryPrfRes[voxel-count, 0:3], where
+# the 2nd dimension contains the parameters of the best-fitting pRF model for
+# the voxel, in the order (0) pRF-x-pos, (1) pRF-y-pos, (2) pRF-SD, (3) pRF-R2.
+# At this step, only the voxels included in the mask are represented.
+aryPrfRes01 = np.zeros((varNumVoxMsk, 6), dtype=np.float32)
 
-    # List with name suffices of output images:
-    lstNiiNames = ['_x_pos',
-                   '_y_pos',
-                   '_SD',
-                   '_R2',
-                   '_polar_angle',
-                   '_eccentricity']
+# Place voxels based on low-variance exlusion:
+aryPrfRes01[aryLgcVar, 0] = aryBstXpos
+aryPrfRes01[aryLgcVar, 1] = aryBstYpos
+aryPrfRes01[aryLgcVar, 2] = aryBstSd
+aryPrfRes01[aryLgcVar, 3] = aryBstR2
 
-    print('---------Exporting results')
+# Place voxels based on mask-exclusion:
+aryPrfRes02 = np.zeros((varNumVoxTlt, 6), dtype=np.float32)
+aryPrfRes02[aryLgcMsk, 0] = aryPrfRes01[:, 0]
+aryPrfRes02[aryLgcMsk, 1] = aryPrfRes01[:, 1]
+aryPrfRes02[aryLgcMsk, 2] = aryPrfRes01[:, 2]
+aryPrfRes02[aryLgcMsk, 3] = aryPrfRes01[:, 3]
 
-    # Save nii results:
-    for idxOut in range(0, 6):
-        # Create nii object for results:
-        niiOut = nb.Nifti1Image(aryPrfRes[:, :, :, idxOut],
-                                affMsk,
-                                header=hdrMsk
-                                )
-        # Save nii:
-        strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii')
-        nb.save(niiOut, strTmp)
-    # *************************************************************************
+# Reshape pRF finding results into original image dimensions:
+aryPrfRes = np.reshape(aryPrfRes02,
+                       [vecNiiShp[0],
+                        vecNiiShp[1],
+                        vecNiiShp[2],
+                        6])
 
-else:
-    # Error message:
-    strErrMsg = ('---Error: Dimensions of specified pRF time course models ' +
-                 'do not agree with specified model parameters')
-    print(strErrMsg)
+del(aryPrfRes01)
+del(aryPrfRes02)
+
+# Calculate polar angle map:
+aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
+                                   aryPrfRes[:, :, :, 0])
+
+# Calculate eccentricity map (r = sqrt( x^2 + y^2 ) ):
+aryPrfRes[:, :, :, 5] = np.sqrt(np.add(np.power(aryPrfRes[:, :, :, 0],
+                                                2.0),
+                                       np.power(aryPrfRes[:, :, :, 1],
+                                                2.0)))
+
+# List with name suffices of output images:
+lstNiiNames = ['_x_pos',
+               '_y_pos',
+               '_SD',
+               '_R2',
+               '_polar_angle',
+               '_eccentricity']
+
+print('---------Exporting results')
+
+# Save nii results:
+for idxOut in range(0, 6):
+    # Create nii object for results:
+    niiOut = nb.Nifti1Image(aryPrfRes[:, :, :, idxOut],
+                            affMsk,
+                            header=hdrMsk
+                            )
+    # Save nii:
+    strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii')
+    nb.save(niiOut, strTmp)
+# *****************************************************************************
+
 
 # *****************************************************************************
 # *** Report time
