@@ -20,53 +20,47 @@
 import sys
 import numpy as np
 
+# /////////////////////////////////////////////////////////////////////////////
+"""
+Print memory usage of variables in global namespace.
 
-def fncMemReport(varThr=10.0):
-    """
-    Print memory usage of variables in global namespace.
+The following code needs to be placed in a script in order to test memory
+usage.
+"""
+# Get variables in namespace:
+dicMem = globals()
 
-    Parameters
-    ----------
-    varThr : float
-        Size threshold in MB; variables with a size below this are ignored.
+# Dictionary for variable names & their size in MB:
+dicSze = {}
 
-    Returns
-    -------
-    This function has no return value.
-    """
-    # Get variables in namespace:
-    dicMem = globals()
+# Loop through the dictionary returned by locals():
+for strTmp in dicMem.keys():
 
-    # Dictionary for variable names & their size in MB:
-    dicSze = {}
+    # Get size of current variable in MB:
+    varSze = np.around((sys.getsizeof(dicMem[strTmp]) * 0.000001),
+                       decimals=3)
 
-    # Loop through the dictionary returned by locals():
-    for strTmp in dicMem.keys():
+    # Put size of current variable into the size-dictionary:
+    dicSze[strTmp] = varSze
 
-        # Get size of current variable in MB:
-        varSze = np.around((sys.getsizeof(dicMem[strTmp]) * 0.000001),
-                           decimals=3)
+print('######################################')
+print('############ MEMORY USAGE ############')
 
-        # Put size of current variable into the size-dictionary:
-        dicSze[strTmp] = varSze
+# Sort the size-dictionary:
+for strTmp in sorted(dicSze, key=dicSze.get, reverse=True):
 
-    print('######################################')
-    print('############ MEMORY USAGE ############')
+    # Access size (in MB) of current element:
+    varSze = dicSze[strTmp]
 
-    # Sort the size-dictionary:
-    for strTmp in sorted(dicSze, key=dicSze.get, reverse=True):
+    # Print name of variable and its size if it is larger than threshold:
+    if np.greater(varSze, 10.0):
 
-        # Access size (in MB) of current element:
-        varSze = dicSze[strTmp]
+        strMsg = ('### Object: '
+                  + strTmp
+                  + ' --- Size: '
+                  + str(varSze)
+                  + ' MB')
+        print(strMsg)
 
-        # Print name of variable and its size if it is larger than threshold:
-        if np.greater(varSze, varThr):
-
-            strMsg = ('### Object: '
-                      + strTmp
-                      + ' --- Size: '
-                      + str(varSze)
-                      + ' MB')
-            print(strMsg)
-
-    print('######################################')
+print('######################################')
+# /////////////////////////////////////////////////////////////////////////////
