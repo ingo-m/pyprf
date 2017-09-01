@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import sys
 import numpy as np
 import tensorflow as tf
 import threading
@@ -41,13 +43,21 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         while True:
 
             # Feed example to Tensorflow placeholder
-            aryTmp02 = np.copy(lstPrfTc[idxCnt])
+            # aryTmp02 = np.copy(lstPrfTc[idxCnt])
+            aryTmp02 = lstPrfTc[idxCnt]
             dicIn = {objPlcHld01: aryTmp02}
 
             # Push to the queue:
             objSess.run(objEnQ, feed_dict=dicIn)
 
             idxCnt += 1
+
+            if idxCnt == 0:
+                print('-----------------------------------')
+                print('funcPlcIn')
+                print('print(dir())')
+                print(dir())
+                print('-----------------------------------')
 
             # Stop if coordinator says stop:
             if objCoord.should_stop():
@@ -200,7 +210,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # varL2reg = 0.0
 
     # Reduce logging verbosity:
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
     # -------------------------------------------------------------------------
     # *** Prepare status indicator
@@ -296,7 +306,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             varBuff = 10
 
             # Define & run extra thread with graph that places data on queue:
-            objThrd = threading.Thread(target=funcPlcIn)  # , args=()
+            objThrd = threading.Thread(target=funcPlcIn)
             objThrd.setDaemon(True)
             objThrd.start()
 
@@ -364,6 +374,20 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                 # varTme01 = time.time()
 
                 aryTmpRes[idxMdl, :] = objSess.run(objMatSlve)
+
+                if idxMdl == 0:
+                    # Monitor memory usage. First, get variables in namespace:
+                    lstMem = locals()
+                    for strTmp in lstMem.keys():
+                        print(sys.getsizeof(lstMem[strTmp]))
+
+
+                    print('-----------------------------------')
+                    print('pRF_funcFindPrfGpuQ.py')
+                    print('print(dir())')
+                    print(dir())
+                    print('-----------------------------------')
+
 
                 # print(('---------Time for graph call: '
                 #        + str(time.time() - varTme01)))

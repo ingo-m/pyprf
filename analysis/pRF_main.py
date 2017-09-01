@@ -453,9 +453,15 @@ elif cfg.strVersion == 'gpu':
 for idxPrc in range(0, cfg.varPar):
     lstPrcs[idxPrc].start()
 
-# Delete reference to list with function data (the data exists in child process
-# memory space):
+# Delete reference to list with function data (the data continues to exists in
+# child process memory space):
 del(lstFunc)
+
+print('-----------------------------------')
+print('pRF_main.py')
+print('print(dir())')
+print(dir())
+print('-----------------------------------')
 
 # Collect results from queue:
 for idxPrc in range(0, cfg.varPar):
