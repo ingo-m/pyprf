@@ -199,6 +199,9 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # L2 regularization factor for regression:
     # varL2reg = 0.0
 
+    # Reduce logging verbosity:
+    tf.logging.set_verbosity(tf.logging.ERROR)
+
     # -------------------------------------------------------------------------
     # *** Prepare status indicator
 
@@ -234,7 +237,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     for idxChnk in range(varNumChnk):
 
-        print(('---------Chunk: ' + str(idxChnk)))
+        # print(('---------Chunk: ' + str(idxChnk)))
 
         # Define session:
         # objSess = tf.Session()
@@ -243,7 +246,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             # ------------------------------------------------------------------
             # *** Prepare queue
 
-            print('------Define computational graph, queue & session')
+            # print('------Define computational graph, queue & session')
 
             # Queue capacity:
             varCapQ = 10
@@ -293,7 +296,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             varBuff = 10
 
             # Define & run extra thread with graph that places data on queue:
-            objThrd = threading.Thread(target=funcPlcIn)
+            objThrd = threading.Thread(target=funcPlcIn)  # , args=()
             objThrd.setDaemon(True)
             objThrd.start()
 
@@ -392,7 +395,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         # Get minimum residuals of those models:
         vecResSsMin[varChnkStr:varChnkEnd] = np.min(aryTmpRes, axis=0)
 
-    # --------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # *** Post-process results
 
     print('------Post-processing results')

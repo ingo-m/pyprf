@@ -453,6 +453,10 @@ elif cfg.strVersion == 'gpu':
 for idxPrc in range(0, cfg.varPar):
     lstPrcs[idxPrc].start()
 
+# Delete reference to list with function data (the data exists in child process
+# memory space):
+del(lstFunc)
+
 # Collect results from queue:
 for idxPrc in range(0, cfg.varPar):
     lstPrfRes[idxPrc] = queOut.get(True)
