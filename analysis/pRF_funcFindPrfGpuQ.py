@@ -4,21 +4,21 @@
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
+# import sys
 import numpy as np
 import tensorflow as tf
 import threading
@@ -195,6 +195,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     # We don't need the original array with the functional data anymore (the
     # above seems to have created a hard copy):
+    del(vecFuncDev)
     del(aryFunc)
 
     # -------------------------------------------------------------------------
@@ -372,23 +373,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
                 # Run main computational graph and put results in list:
                 # varTme01 = time.time()
-
                 aryTmpRes[idxMdl, :] = objSess.run(objMatSlve)
-
-                if idxMdl == 0:
-                    # Monitor memory usage. First, get variables in namespace:
-                    lstMem = locals()
-                    for strTmp in lstMem.keys():
-                        print(sys.getsizeof(lstMem[strTmp]))
-
-
-                    print('-----------------------------------')
-                    print('pRF_funcFindPrfGpuQ.py')
-                    print('print(dir())')
-                    print(dir())
-                    print('-----------------------------------')
-
-
                 # print(('---------Time for graph call: '
                 #        + str(time.time() - varTme01)))
 
@@ -418,6 +403,9 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         vecResSsMinIdx[varChnkStr:varChnkEnd] = np.argmin(aryTmpRes, axis=0)
         # Get minimum residuals of those models:
         vecResSsMin[varChnkStr:varChnkEnd] = np.min(aryTmpRes, axis=0)
+
+        # Avoid memory overflow between chunks:
+        del(aryTmpRes)
 
     # -------------------------------------------------------------------------
     # *** Post-process results
