@@ -50,14 +50,14 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             # Push to the queue:
             objSess.run(objEnQ, feed_dict=dicIn)
 
-            idxCnt += 1
-
             if idxCnt == 0:
                 print('-----------------------------------')
                 print('funcPlcIn')
                 print('print(dir())')
                 print(dir())
                 print('-----------------------------------')
+
+            idxCnt += 1
 
             # Stop if coordinator says stop:
             if objCoord.should_stop():
@@ -357,6 +357,10 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             # Variables need to be (re-)initialised:
             objSess.run(tf.global_variables_initializer())
 
+            # Mark graph as read-only (would throw an error in case of memory
+            # leak):
+            objSess.graph.finalize()
+
             # Index of first voxel in current chunk (needed to assign results):
             varChnkStr = int(vecIdxChnks[idxChnk])
 
@@ -398,9 +402,13 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             objCoord.request_stop()
             # objSess.close()
 
+            # Stop queue-filling thread:
+            objThrd.stop()
+
         # Get indices of models with minimum residuals (minimum along
         # model-space) for current chunk:
-        vecResSsMinIdx[varChnkStr:varChnkEnd] = np.argmin(aryTmpRes, axis=0)
+        vecResSsMinIdx[varChnkStr:varChnkEnd] = np.argmin(aryTmpRes, axis=0
+                                                          ).astype(np.int32)
         # Get minimum residuals of those models:
         vecResSsMin[varChnkStr:varChnkEnd] = np.min(aryTmpRes, axis=0)
 
