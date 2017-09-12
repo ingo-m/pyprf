@@ -50,7 +50,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             # Push to the queue:
             objSess.run(objEnQ, feed_dict=dicIn)
 
-            if (idxCnt % 100) == 0:
+            if (idxCnt % 1000) == 0:
                 # /////////////////////////////////////////////////////////////////////////////
                 """
                 Print memory usage of variables in global namespace.
@@ -94,6 +94,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                         print(strMsg)
                 
                 print('######################################')
+                print('')
                 # /////////////////////////////////////////////////////////////////////////////
 
             idxCnt += 1
