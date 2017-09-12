@@ -84,7 +84,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                     varSze = dicSze[strTmp]
                 
                     # Print name of variable and its size if it is larger than threshold:
-                    if np.greater(varSze, 1.0):
+                    if True:  # np.greater(varSze, 1.0):
                 
                         strMsg = ('### Object: '
                                   + strTmp

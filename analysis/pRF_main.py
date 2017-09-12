@@ -142,16 +142,8 @@ if cfg.lgcCrteMdl:  #noqa
                                cfg.tplVslSpcHighSze,
                                cfg.varPar)
 
-    # # Debugging feature:
-    # aryPixConv = np.around(aryPixConv, 3)
-    # for idxVol in range(0, cfg.varNumVol):
-    #     strTmp = ('/home/john/Desktop/png_test/png_vol_' +
-    #               str(idxVol) +
-    #               '.png')
-    #     # imsave(strTmp, (aryPixConv[:, :, idxVol] * 100))
-    #     toimage((aryPixConv[:, :, idxVol] * 100),
-    #                cmin=-5,
-    #                cmax=105).save(strTmp)
+    # Debugging feature:
+    # np.save('/home/john/Desktop/aryPixConv.npy', aryPixConv)
     # *************************************************************************
 
     # *************************************************************************
@@ -173,7 +165,7 @@ if cfg.lgcCrteMdl:  #noqa
                                cfg.varNumPrfSizes,
                                cfg.varPar,
                                cfg.varNumVol,
-                               aryPngData)
+                               aryPixConv)
     # *************************************************************************
 
     # *************************************************************************
