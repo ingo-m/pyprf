@@ -18,7 +18,7 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-# import sys
+import sys
 import numpy as np
 import tensorflow as tf
 import threading
@@ -50,12 +50,51 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             # Push to the queue:
             objSess.run(objEnQ, feed_dict=dicIn)
 
-            if idxCnt == 0:
-                print('-----------------------------------')
-                print('funcPlcIn')
-                print('print(dir())')
-                print(dir())
-                print('-----------------------------------')
+            if (idxCnt % 100) == 0:
+                # /////////////////////////////////////////////////////////////////////////////
+                """
+                Print memory usage of variables in global namespace.
+                
+                The following code needs to be placed in a script in order to test memory
+                usage.
+                """
+                # Get variables in namespace:
+                dicMem = locals()
+                
+                # Dictionary for variable names & their size in MB:
+                dicSze = {}
+                
+                # Loop through the dictionary returned by locals():
+                for strTmp in dicMem.keys():
+                
+                    # Get size of current variable in MB:
+                    varSze = np.around((sys.getsizeof(dicMem[strTmp]) * 0.000001),
+                                       decimals=3)
+                
+                    # Put size of current variable into the size-dictionary:
+                    dicSze[strTmp] = varSze
+                
+                print('######################################')
+                print('############ MEMORY USAGE ############')
+                
+                # Sort the size-dictionary:
+                for strTmp in sorted(dicSze, key=dicSze.get, reverse=True):
+                
+                    # Access size (in MB) of current element:
+                    varSze = dicSze[strTmp]
+                
+                    # Print name of variable and its size if it is larger than threshold:
+                    if np.greater(varSze, 1.0):
+                
+                        strMsg = ('### Object: '
+                                  + strTmp
+                                  + ' --- Size: '
+                                  + str(varSze)
+                                  + ' MB')
+                        print(strMsg)
+                
+                print('######################################')
+                # /////////////////////////////////////////////////////////////////////////////
 
             idxCnt += 1
 
@@ -91,6 +130,10 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     # Boolean array for models with variance greater than zero:
     vecLgcVar = np.greater(vecVarPrfTc, varZero32)
+
+    # Original total number of pRF time course models (before removing models
+    # with zero variance):
+    varNumMdlsTtl = aryPrfTc.shape[0]
 
     # Take models with variance less than zero out of the array:
     aryPrfTc = aryPrfTc[vecLgcVar, :]
@@ -402,9 +445,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             objCoord.request_stop()
             # objSess.close()
 
-            # Stop queue-filling thread:
-            objThrd.stop()
-
         # Get indices of models with minimum residuals (minimum along
         # model-space) for current chunk:
         vecResSsMinIdx[varChnkStr:varChnkEnd] = np.argmin(aryTmpRes, axis=0
@@ -423,7 +463,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # Array for model parameters. At the moment, we have the indices of the
     # best fitting models, so we need an array that tells us what model
     # parameters these indices refer to.
-    aryMdl = np.zeros((varNumMdls, 3), dtype=np.float32)
+    aryMdl = np.zeros((varNumMdlsTtl, 3), dtype=np.float32)
 
     # Model parameter can be represented as float32 as well:
     vecMdlXpos = vecMdlXpos.astype(np.float32)

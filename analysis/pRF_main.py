@@ -27,7 +27,7 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # *****************************************************************************
 # *** Import modules
 
-import sys
+# import sys
 import numpy as np
 import nibabel as nb
 import time
@@ -40,9 +40,10 @@ import pRF_config_motion as cfg
 from pRF_utilities import fncLoadNii, fncLoadLargeNii
 from pRF_crtPixMdl import funcCrtPixMdl
 from pRF_funcFindPrf import funcFindPrf
-from pRF_funcFindPrfGpuQ import funcFindPrfGpu
 from pRF_filtering import funcPrfPrePrc
 from pRF_crtPrfTcMdl import funcCrtPrfTcMdl
+if cfg.strVersion == 'gpu':
+    from pRF_funcFindPrfGpuQ import funcFindPrfGpu
 # *****************************************************************************
 
 

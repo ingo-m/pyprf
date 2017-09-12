@@ -43,11 +43,11 @@ varVoxRes = 0.7
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 0.0 # 2.940
+varSdSmthTmp = 2.940
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.0 # 0.7
+varSdSmthSpt = 0.7
 
 # Number of fMRI volumes and png files to load:
 varNumVol = 400
@@ -70,17 +70,17 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-lstPathNiiFunc = ['/home/john/Documents/20161205/func_regAcrssRuns_cube/func_07.nii.gz']  #noqa
+lstPathNiiFunc = ['/home/john/Desktop/20150930_pRF_test/func_07.nii']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/home/john/Documents/20161205/retinotopy/mask/crudebrainmask.nii.gz'  #noqa
+strPathNiiMask = '/home/john/Desktop/20150930_pRF_test/crudebrainmask.nii.gz'  #noqa
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.
 strVersion = 'gpu'
 
 # Output basename:
-strPathOut = '/home/john/Documents/20161205/retinotopy/pRF_results/pRF_results_{}'.format(strVersion)  #noqa
+strPathOut = '/home/john/Desktop/20150930_pRF_test/results/pRF_results_{}'.format(strVersion)  #noqa
 
 # Create pRF time course models?
 lgcCrteMdl = False
@@ -100,4 +100,4 @@ if lgcCrteMdl:
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '/home/john/Documents/20161205/retinotopy/pRF_results_copy/pRF_model_tc.npy'  #noqa
+    strPathMdl = '/home/john/Desktop/20150930_pRF_test/pRF_model_tc.npy'  #noqa
