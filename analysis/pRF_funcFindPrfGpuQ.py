@@ -50,53 +50,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             # Push to the queue:
             objSess.run(objEnQ, feed_dict=dicIn)
 
-            if (idxCnt % 1000) == 0:
-                # /////////////////////////////////////////////////////////////////////////////
-                """
-                Print memory usage of variables in global namespace.
-                
-                The following code needs to be placed in a script in order to test memory
-                usage.
-                """
-                # Get variables in namespace:
-                dicMem = locals()
-                
-                # Dictionary for variable names & their size in MB:
-                dicSze = {}
-                
-                # Loop through the dictionary returned by locals():
-                for strTmp in dicMem.keys():
-                
-                    # Get size of current variable in MB:
-                    varSze = np.around((sys.getsizeof(dicMem[strTmp]) * 0.000001),
-                                       decimals=3)
-                
-                    # Put size of current variable into the size-dictionary:
-                    dicSze[strTmp] = varSze
-                
-                print('######################################')
-                print('############ MEMORY USAGE ############')
-                
-                # Sort the size-dictionary:
-                for strTmp in sorted(dicSze, key=dicSze.get, reverse=True):
-                
-                    # Access size (in MB) of current element:
-                    varSze = dicSze[strTmp]
-                
-                    # Print name of variable and its size if it is larger than threshold:
-                    if True:  # np.greater(varSze, 1.0):
-                
-                        strMsg = ('### Object: '
-                                  + strTmp
-                                  + ' --- Size: '
-                                  + str(varSze)
-                                  + ' MB')
-                        print(strMsg)
-                
-                print('######################################')
-                print('')
-                # /////////////////////////////////////////////////////////////////////////////
-
             idxCnt += 1
 
             # Stop if coordinator says stop:
@@ -441,6 +394,55 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                         varCntSts01 = varCntSts01 + int(1)
                 # Increment status indicator counter:
                 varCntSts02 = varCntSts02 + 1
+
+
+                if ((idxMdl % 10000) == 0):
+                    # /////////////////////////////////////////////////////////////////////////////
+                    """
+                    Print memory usage of variables in global namespace.
+
+                    The following code needs to be placed in a script in order to test memory
+                    usage.
+                    """
+                    # Get variables in namespace:
+                    dicMem = globals()
+
+                    # Dictionary for variable names & their size in MB:
+                    dicSze = {}
+
+                    # Loop through the dictionary returned by locals():
+                    for strTmp in dicMem.keys():
+
+                        # Get size of current variable in MB:
+                        varSze = np.around((sys.getsizeof(dicMem[strTmp]) * 0.000001),
+                                           decimals=3)
+
+                        # Put size of current variable into the size-dictionary:
+                        dicSze[strTmp] = varSze
+
+                    print('######################################')
+                    print('############ MEMORY USAGE ############')
+
+                    # Sort the size-dictionary:
+                    for strTmp in sorted(dicSze, key=dicSze.get, reverse=True):
+
+                        # Access size (in MB) of current element:
+                        varSze = dicSze[strTmp]
+
+                        # Print name of variable and its size if it is larger than threshold:
+                        if np.greater(varSze, 1.0):
+
+                            strMsg = ('### Object: '
+                                      + strTmp
+                                      + ' --- Size: '
+                                      + str(varSze)
+                                      + ' MB')
+                            print(strMsg)
+
+                    print('######################################')
+                    print('')
+                    # /////////////////////////////////////////////////////////////////////////////
+
 
             # Stop threads.
             objCoord.request_stop()

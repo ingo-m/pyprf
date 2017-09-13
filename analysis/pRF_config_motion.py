@@ -21,7 +21,7 @@ varNumX = 40
 # Number of y-positions to model:
 varNumY = 40
 # Number of pRF sizes to model:
-varNumPrfSizes = 60
+varNumPrfSizes = 50
 
 # Extend of visual space from centre of the screen (i.e. from the fixation
 # point) [degrees of visual angle]:
@@ -33,7 +33,7 @@ varExtYmax = 5.19
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
 varPrfStdMin = 0.1
-varPrfStdMax = 10.0
+varPrfStdMax = 7.0
 
 # Volume TR of input data [s]:
 varTr = 2.832
@@ -76,7 +76,7 @@ lstPathNiiFunc = ['/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_di
                   '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_10_up_aniso_smth.nii']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/mp2rage/04_seg/02_up/20161221_mp2rage_seg_v26.nii.gz'  #noqa
+strPathNiiMask = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/tmp_gm_evc.nii.gz'  # '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/mp2rage/04_seg/02_up/20161221_mp2rage_seg_v26.nii.gz'  #noqa
 
 # Output basename:
 strPathOut = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_results'  #noqa
