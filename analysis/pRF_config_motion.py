@@ -70,16 +70,16 @@ tplVslSpcHighSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
-lstPathNiiFunc = ['/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_07_up_aniso_smth.nii',
-                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_08_up_aniso_smth.nii',
-                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_09_up_aniso_smth.nii',
-                  '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/func_regAcrssRuns_cube_up/func_10_up_aniso_smth.nii']  #noqa
+lstPathNiiFunc = ['/home/john/Desktop/tmp/func_regAcrssRuns_cube_up/func_07_up_aniso_smth.nii',
+                  '/home/john/Desktop/tmp/func_regAcrssRuns_cube_up/func_08_up_aniso_smth.nii',
+                  '/home/john/Desktop/tmp/func_regAcrssRuns_cube_up/func_09_up_aniso_smth.nii',
+                  '/home/john/Desktop/tmp/func_regAcrssRuns_cube_up/func_10_up_aniso_smth.nii']  #noqa
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/mask/tmp_gm_evc.nii.gz'  # '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/mp2rage/04_seg/02_up/20161221_mp2rage_seg_v26.nii.gz'  #noqa
+strPathNiiMask = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/mp2rage/04_seg/02_up/20161221_mp2rage_seg_v26.nii.gz'  #noqa
 
 # Output basename:
-strPathOut = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_results'  #noqa
+strPathOut = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/aniso_gamma_0p02_n_3/pRF_results'  #noqa
 
 # List with paths of pickles with information about experimental design (order
 # of stimuli). Only needed for pRF_motionLog.py (in order to create PNGs for
@@ -97,10 +97,10 @@ strShpe = '~/mskBar.npz'
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.
-strVersion = 'gpu'
+strVersion = 'cython'
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
 if lgcCrteMdl:
     # If we create new pRF time course models, the following parameters have to
@@ -109,12 +109,12 @@ if lgcCrteMdl:
     # Basename of the 'binary stimulus files'. The files need to be in png
     # format and number in the order of their presentation during the
     # experiment.
-    strPathPng = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_stimuli/frame_'  #noqa
+    strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_stimuli/frame_'  #noqa
 
     # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/media/john/DATADRIVE1/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_model_tc'  #noqa
+    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_model_tc'  #noqa
 
 else:
     # If we use existing pRF time course models, the path to the respective
     # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = '.npy'  #noqa
+    strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_model_tc.npy'  #noqa
