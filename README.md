@@ -28,7 +28,8 @@ The analysis can be carried out in three different ways: using numpy, cython, or
 | [Cython](http://cython.org/) (optional¹)              | 0.26           |
 | [Tensorflow](https://www.tensorflow.org/) (optional²) | 1.13.1         |
 
-¹: For considerably faster performance 
+¹: For considerably faster performance
+
 ²: Can yield fast performance, depending on hardware. However, requires  tensorflow to be configured for GPU usage (additional tensorflow specific dependencies, including GPU drivers).
 
 ## How to use
