@@ -33,7 +33,7 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     ----------
     aryPixConv : np.array
         3D numpy array containing the pixel-wise, HRF-convolved design matrix,
-        with the following structure: `aryPngData[x-pixel-index, y-pixel-index,
+        with the following structure: `aryPixConv[x-pixel-index, y-pixel-index,
         PngNumber]`
     tplVslSpcSze : tuple
         Pixel size of visual space model in which the pRF models are created

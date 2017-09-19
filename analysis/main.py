@@ -27,7 +27,7 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # *****************************************************************************
 # *** Import modules
 
-import pRF_config_motion as cfg
+import config as cfg
 
 import time
 import numpy as np

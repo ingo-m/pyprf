@@ -31,16 +31,29 @@ def conv_par(idxPrc, aryPngData, vecHrf, queOut):
         index can be used to identify which return value belongs to which
         process).
     aryPngData : np.array
-        3D numpy array with the following structure:
-        aryPngData[x-pixel-index, y-pixel-index, PngNumber]
+        2D numpy array with the following structure:
+        `aryPngData[(x-pixel-index * y-pixel-index), PngNumber]`
     vecHrf : np.array
         1D numpy array with HRF time course model.
+    queOut : multiprocessing.queues.Queue
+        Queue to put the results on.
 
     Returns
     -------
-    aryPixConv : np.array
-        Numpy array with same dimensions as input (`aryPngData`), with
-        convolved design matrix.
+    lstOut : list
+        List containing the following objects:
+        idxPrc : int
+            Process ID of the process calling this function (for CPU
+            multi-threading). In GPU version, this parameter is 0.
+        aryPixConv : np.array
+            Numpy array containing convolved design matrix. Dimensionality:
+            `aryPixConv[(x-pixel-index * y-pixel-index), PngNumber`. Same shape
+            as input (`aryPngData`).
+
+    Notes
+    -----
+    The list with results is not returned directly, but placed on a
+    multiprocessing queue.
 
     Notes
     ---
@@ -50,7 +63,7 @@ def conv_par(idxPrc, aryPngData, vecHrf, queOut):
     aryPixConv = np.zeros(np.shape(aryPngData))
 
     # Number of volumes:
-    varNumVol = aryPngData.shape[2]
+    varNumVol = aryPngData.shape[1]
 
     # Each pixel time course is convolved with the HRF separately, because the
     # numpy convolution function can only be used on one-dimensional data.

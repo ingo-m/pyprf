@@ -18,12 +18,12 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nibael as nb
+import nibabel as nb
 from model_creation_load_png import load_png
 from model_creation_pixelwise import conv_dsgn_mat
 from model_creation_timecourses import crt_prf_tcmdl
 
-import pRF_config_motion as cfg
+import config as cfg
 
 
 def model_creation():
@@ -51,7 +51,7 @@ def model_creation():
                               cfg.strPathPng,
                               cfg.tplVslSpcSze,
                               varStrtIdx=cfg.varStrtIdx,
-                              varZfill=3)
+                              varZfill=cfg.varZfill)
         # *********************************************************************
 
         # *********************************************************************

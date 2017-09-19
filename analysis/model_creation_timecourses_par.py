@@ -17,13 +17,48 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import numpy as np
+from utilities import crt_gauss
 
-def prf_par(aryMdlParamsChnk, tplVslSpcHighSze, varNumVol, aryPngDataHigh,
-                  queOut):
+
+def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     """
     Create pRF time course models.
 
+    Parameters
+    ----------
+    aryMdlParamsChnk : np.array
+        2D numpy array containing the parameters for the pRF models to be
+        created. Dimensionality: `aryMdlParamsChnk[model-ID, parameter-value]`.
+        For each model there are four values: (0) an index starting from zero,
+        (1) the x-position, (2) the y-position, and (3) the standard deviation.
+        Parameters 1, 2 , and 3 are in units of the upsampled visual space.
+    tplVslSpcSze : tuple
+        Pixel size of visual space model in which the pRF models are created
+        (x- and y-dimension).
+    varNumVol : int
+        Number of time points (volumes).
+    aryPixConv : np.array
+        3D numpy array containing the pixel-wise, HRF-convolved design matrix,
+        with the following structure: `aryPixConv[x-pixel-index, y-pixel-index,
+        PngNumber]`
+    queOut : multiprocessing.queues.Queue
+        Queue to put the results on.
 
+    Returns
+    -------
+    lstOut : list
+        List containing the following object:
+        aryOut : np.array
+            2D numpy array, where each row corresponds to one model time
+            course, the first column corresponds to the index number of the
+            model time course, and the remaining columns correspond to time
+            points).
+
+    Notes
+    -----
+    The list with results is not returned directly, but placed on a
+    multiprocessing queue.
     """
     # Number of combinations of model parameters in the current chunk:
     varChnkSze = np.size(aryMdlParamsChnk, axis=0)
@@ -42,14 +77,14 @@ def prf_par(aryMdlParamsChnk, tplVslSpcHighSze, varNumVol, aryPngDataHigh,
         varTmpSd = np.around(aryMdlParamsChnk[idxMdl, 3], 0)
 
         # Create pRF model (2D):
-        aryGauss = funcGauss(tplVslSpcHighSze[0],
-                             tplVslSpcHighSze[1],
+        aryGauss = crt_gauss(tplVslSpcSze[0],
+                             tplVslSpcSze[1],
                              varTmpX,
                              varTmpY,
                              varTmpSd)
 
         # Multiply super-sampled pixel-time courses with Gaussian pRF models:
-        aryPrfTcTmp = np.multiply(aryPngDataHigh, aryGauss[:, :, None])
+        aryPrfTcTmp = np.multiply(aryPixConv, aryGauss[:, :, None])
 
         # Calculate sum across x- and y-dimensions - the 'area under the
         # Gaussian surface'. This is essentially an unscaled version of the pRF

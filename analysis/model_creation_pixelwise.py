@@ -68,7 +68,8 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
     # Number of pixels:
     varNumPix = aryPngData.shape[0] * aryPngData.shape[1]
 
-    # Reshape png data:
+    # Reshape png data (so that dimension are
+    # `aryPngData[(x-pixel-index * y-pixel-index), PngNumber]`):
     aryPngData = np.reshape(aryPngData,
                             ((aryPngData.shape[0] * aryPngData.shape[1]),
                              aryPngData.shape[2]))
@@ -110,7 +111,6 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
                                      args=(idxPrc,
                                            lstParData[idxPrc],
                                            vecHrf,
-                                           varNumVol,
                                            queOut)
                                      )
 
