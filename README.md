@@ -1,4 +1,4 @@
-# py_pRF_mapping (...work in progress...)
+# py_pRF_mapping
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.835162.svg)](https://doi.org/10.5281/zenodo.835162)
 
 A free & open source *python tool for population receptive field analysis* consisting of two main parts:
@@ -7,7 +7,9 @@ A free & open source *python tool for population receptive field analysis* consi
 A tool for presentation of visual stimuli during a retinotopic mapping fMRI experiment. The stimuli consist of bars at different locations and orientation, filled with flickering black and white chequerboards. There is a central fixation dot. It is important that the participant maintain fixation throughout the experiment. Therefore, we included a central fixation task. The fixation dot sometimes changes its colour, and the participant's task is to press a button (number '1') in response. At the end of the presentation, feedback is provided as to how many targets the participant detected.
 
 ### 2. Data analysis  
-Analysis tools for fMRI data from retinotopic mapping experiment. A population receptive field (pRF) is estimated for each voxel (see [1]). The pRF model used here is a 2D Gaussian; the free parameters are the Gaussian's x- and y-position, and its width. This rather simple pRF model is best suited for early visual cortex (higher cortical areas may require more complex models).
+Analysis tools for fMRI data from retinotopic mapping experiment. A population receptive field (pRF) is estimated for each voxel (see [1]). The pRF model used here is a 2D Gaussian; the free parameters are the Gaussian's x- and y-position, and its width (SD). This rather simple pRF model is best suited for early visual cortex (higher cortical areas may require more complex models).
+
+The analysis can be carried out in three different ways: using numpy, cython, or tensorflow. All three approaches yield the same results, but differ in their dependencies and computational time. The numpy approach does not require any dependencies other than standard packages (see below table for details). With cython, a considerable speedup can be expected; cython needs to be available, and the respective cython code needs to be compiled (see below for instructions). The cython approach is recommended for most users. Finally, depending on the available hardware, the tensorflow approach may outperform the other options in terms of speed by running the GLM model fitting on the GPU. However, tensorflow needs to be installed and configured to use the GPU (including respective drivers).
 
 ## Dependencies
 [**Python 2.7**](https://www.python.org/download/releases/2.7/)
@@ -15,20 +17,19 @@ Analysis tools for fMRI data from retinotopic mapping experiment. A population r
 | Stimulus presentation                    | Tested version |
 |------------------------------------------|----------------|
 | [Psychopy](http://www.Psychopy.org/)     | 1.83.04        |
-| [NumPy](http://www.numpy.org/)           | 1.11.3         |
-| [SciPy](http://www.scipy.org/)           | 0.18.1         |
+| [NumPy](http://www.numpy.org/)           | 1.13.1         |
+| [SciPy](http://www.scipy.org/)           | 0.19.1         |
 
-| Data analysis                            | Tested version |
-|------------------------------------------|----------------|
-| [NumPy](http://www.numpy.org/)           | 1.11.3         |
-| [SciPy](http://www.scipy.org/)           | 0.18.1         |
-| [NiBabel](http://nipy.org/nibabel/)      | 2.1.0          |
-| [Cython](http://cython.org/) (optional¹) | 0.25.2         |
+| Data analysis                                         | Tested version |
+|-------------------------------------------------------|----------------|
+| [NumPy](http://www.numpy.org/)                        | 1.13.1         |
+| [SciPy](http://www.scipy.org/)                        | 0.19.1         |
+| [NiBabel](http://nipy.org/nibabel/)                   | 2.1.0          |
+| [Cython](http://cython.org/) (optional¹)              | 0.26           |
+| [Tensorflow](https://www.tensorflow.org/) (optional²) | 1.13.1         |
 
 ¹: For considerably faster performance
-
-### Hardware specifications
-...TODO...
+²: Can yield fast performance, depending on hardware. However, requires  tensorflow to be configured for GPU usage (additional tensorflow specific dependencies, including GPU drivers).
 
 ## How to use
 
@@ -51,27 +52,27 @@ You can interrupt the presentation by pressing ```ESC```.
 
 3. Data analysis:
 
-In order to prepare the analysis, you need to run the stimulus presentation script with in *logging mode* in order to create a log of the stimulus presentation. Open ```~/py_pRF_mapping/stimulus_presentation/Main/prfStim_Bars.py``` in a text editor and set ```lgcLogMde = True```.
+In order to prepare the analysis, you need to run the stimulus presentation script in *logging mode* in order to create a log of the stimulus presentation. Open ```~/py_pRF_mapping/stimulus_presentation/Main/prfStim_Bars.py``` in a text editor and set ```lgcLogMde = True```.
 
 Now run the script either from command line or through the Psychoy GUI.
 
 The stimulus presentation log is created in the folder ```~/py_pRF_mapping/stimulus_presentation/Log_<participant_ID>/pRF_mapping_log/Frames/```.
 
-If you would like to use the cython functionality (much faster performance), you need to run the cython setup script first (in order to compile the cython functions). Change directory to the analysis folder:
-```
+If you would like to use the cython functionality (for considerably faster performance), you need to run the cython setup script first (in order to compile the cython functions). Change directory to the analysis folder:
+``` bash
 cd ~/py_pRF_mapping/analysis
 ```
 
 Compile the cython function:
-```
-python pRF_setup.py build_ext --inplace
+``` bash
+python cython_leastsquares_setup.py build_ext --inplace
 ```
 
-Use the config file ```~/py_pRF_mapping/analysis/pRF_config.py``` in order to set up the analysis parameters. See comments therein for more information (TODO: more detailed documentation).
+Use the config file ```~/py_pRF_mapping/analysis/config.py``` in order to set up the analysis parameters. See comments therein for more information.
 
 Run the analysis:
-```
-python ~/py_pRF_mapping/analysis/pRF_main.py
+``` bash
+python ~/py_pRF_mapping/analysis/main.py
 ```
 
 ## Contributions
