@@ -23,7 +23,7 @@ import nibabel as nb
 from scipy.stats import gamma
 
 
-def fncLoadNii(strPathIn):
+def load_nii(strPathIn):
     """
     Load nii file.
 
@@ -54,7 +54,7 @@ def fncLoadNii(strPathIn):
     return aryNii, objHdr, aryAff
 
 
-def fncLoadLargeNii(strPathIn):
+def load_nii_large(strPathIn):
     """
     Load large nii file volume by volume, at float32 precision.
 
@@ -93,7 +93,7 @@ def fncLoadLargeNii(strPathIn):
     return aryNii, objHdr, aryAff
 
 
-def funcGauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
+def crt_gauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
     """
     Create 2D Gaussian kernel.
 
@@ -134,7 +134,7 @@ def funcGauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
     return aryGauss
 
 
-def funcHrf(varNumVol, varTr):
+def crt_hrf(varNumVol, varTr):
     """Create double gamma function.
 
     Source:
@@ -160,95 +160,3 @@ def funcHrf(varNumVol, varTr):
     vecHrf = np.divide(vecHrf, np.max(vecHrf))
 
     return vecHrf
-
-
-def funcConvPar(idxPrc, aryPngData, vecHrf, varNumVol, queOut):
-    """
-    Parallelised convolution of pixel-wise 'design matrix'.
-
-    The pixel-wise 'design matrices' are convolved with an HRF model.
-    """
-    # Array for function output (convolved pixel-wise time courses):
-    aryPixConv = np.zeros(np.shape(aryPngData))
-
-    # Each pixel time course is convolved with the HRF separately, because the
-    # numpy convolution function can only be used on one-dimensional data.
-    # Thus, we have to loop through pixels:
-    for idxPix in range(0, aryPngData.shape[0]):
-
-        # Extract the current pixel time course:
-        vecDm = aryPngData[idxPix, :]
-
-        # In order to avoid an artefact at the end of the time series, we have
-        # to concatenate an empty array to both the design matrix and the HRF
-        # model before convolution.
-        vecZeros = np.zeros([100, 1]).flatten()
-        vecDm = np.concatenate((vecDm, vecZeros))
-        vecHrf = np.concatenate((vecHrf, vecZeros))
-
-        # Convolve design matrix with HRF model:
-        aryPixConv[idxPix, :] = np.convolve(vecDm,
-                                            vecHrf,
-                                            mode='full')[0:varNumVol]
-
-    # Create list containing the convolved pixel-wise timecourses, and the
-    # process ID:
-    lstOut = [idxPrc, aryPixConv]
-
-    # Put output to queue:
-    queOut.put(lstOut)
-
-
-def funcPrfTc(aryMdlParamsChnk, tplVslSpcHighSze, varNumVol, aryPngDataHigh,
-              queOut):
-    """Create pRF time course models."""
-    # Number of combinations of model parameters in the current chunk:
-    varChnkSze = np.size(aryMdlParamsChnk, axis=0)
-
-    # Output array with pRF model time courses:
-    aryOut = np.zeros([varChnkSze, varNumVol])
-
-    # Loop through combinations of model parameters:
-    for idxMdl in range(0, varChnkSze):
-
-        # Depending on the relation between the number of x- and y-positions
-        # at which to create pRF models and the size of the super-sampled
-        # visual space, the indicies need to be rounded:
-        varTmpX = np.around(aryMdlParamsChnk[idxMdl, 1], 0)
-        varTmpY = np.around(aryMdlParamsChnk[idxMdl, 2], 0)
-        varTmpSd = np.around(aryMdlParamsChnk[idxMdl, 3], 0)
-
-        # Create pRF model (2D):
-        aryGauss = funcGauss(tplVslSpcHighSze[0],
-                             tplVslSpcHighSze[1],
-                             varTmpX,
-                             varTmpY,
-                             varTmpSd)
-
-        # Multiply super-sampled pixel-time courses with Gaussian pRF models:
-        aryPrfTcTmp = np.multiply(aryPngDataHigh, aryGauss[:, :, None])
-
-        # Calculate sum across x- and y-dimensions - the 'area under the
-        # Gaussian surface'. This is essentially an unscaled version of the pRF
-        # time course model (i.e. not yet scaled for the size of the pRF).
-        aryPrfTcTmp = np.sum(aryPrfTcTmp, axis=(0, 1))
-
-        # Normalise the pRF time course model to the size of the pRF. This
-        # gives us the ratio of 'activation' of the pRF at each time point, or,
-        # in other words, the pRF time course model. REMOVED - normalisation
-        # has been moved to funcGauss(); pRF models are normalised when to have
-        # an area under the curve of one when they are created.
-        # aryPrfTcTmp = np.divide(aryPrfTcTmp,
-        #                         np.sum(aryGauss, axis=(0, 1)))
-
-        # Put model time courses into the function's output array:
-        aryOut[idxMdl, :] = aryPrfTcTmp
-
-    # Put column with the indicies of model-parameter-combinations into the
-    # output array (in order to be able to put the pRF model time courses into
-    # the correct order after the parallelised function):
-    aryOut = np.hstack((np.array(aryMdlParamsChnk[:, 0], ndmin=2).T,
-                        aryOut))
-
-    # Put output to queue:
-    queOut.put(aryOut)

@@ -4,34 +4,80 @@
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation, either version 3 of the License, or (at your option) any later
-# version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with
-# this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
 import numpy as np
-import tensorflow as tf
 import threading
-# import time
+import tensorflow as tf
 
 
-def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
-                   vecMdlYpos, vecMdlSd, aryFunc, aryPrfTc, queOut):
+def funcFindPrfGpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  # noqa
+                   aryPrfTc, varL2reg, queOut):
     """
     Find best pRF model for voxel time course.
 
-    This version uses a queue that runs in a separate thread to put model time
-    courses on the computational graph.
+    Parameters
+    ----------
+    idxPrc : int
+        Process ID of the process calling this function (for CPU
+        multi-threading). In GPU version, this parameter is 0 (just one thread
+        on CPU).
+    vecMdlXpos : np.array
+        1D array with pRF model x positions.
+    vecMdlYpos : np.array
+        1D array with pRF model y positions.
+    vecMdlSd : np.array
+        1D array with pRF model sizes (SD of Gaussian).
+    aryFunc : np.array
+        2D array with functional MRI data, with shape aryFunc[voxel, time].
+    aryPrfTc : np.array
+        Array with pRF model time courses, with shape
+        aryPrfTc[x-pos, y-pos, SD, motion-direction, time]
+    varL2reg : float
+        L2 regularisation factor for ridge regression.
+    queOut : multiprocessing.queues.Queue
+        Queue to put the results on.
+
+    Returns
+    -------
+    lstOut : list
+        List containing the following objects:
+        idxPrc : int
+            Process ID of the process calling this function (for CPU
+            multi-threading). In GPU version, this parameter is 0.
+        vecBstXpos : np.array
+            1D array with best fitting x-position for each voxel, with shape
+            vecBstXpos[voxel].
+        vecBstYpos : np.array
+            1D array with best fitting y-position for each voxel, with shape
+            vecBstYpos[voxel].
+        vecBstSd : np.array
+            1D array with best fitting pRF size for each voxel, with shape
+            vecBstSd[voxel].
+        vecBstR2 : np.array
+            1D array with R2 value of 'winning' pRF model for each voxel, with
+            shape vecBstR2[voxel].
+        dummy : np.array
+            2D array that is supposed to contain the beta values of 'winning'
+            pRF models for each voxel, with shape aryBeta[voxel, beta]. AT THE
+            MOMENT, CONTAINS EMPTY DUMMY ARRAY (np.zeros).
+
+    Notes
+    -----
+    Uses a queue that runs in a separate thread to put model time courses on
+    the computational graph.
     """
     # -------------------------------------------------------------------------
     # *** Queue-feeding-function that will run in extra thread
@@ -43,7 +89,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
         while True:
 
             # Feed example to Tensorflow placeholder
-            # aryTmp02 = np.copy(lstPrfTc[idxCnt])
             aryTmp02 = lstPrfTc[idxCnt]
             dicIn = {objPlcHld01: aryTmp02}
 
@@ -65,40 +110,63 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     print('------Prepare pRF model time courses for graph')
 
+    # Information about pRF model parameters:
+    varNumX = np.shape(vecMdlXpos)[0]
+    varNumY = np.shape(vecMdlYpos)[0]
+    varNumPrfSizes = np.shape(vecMdlSd)[0]
+
+    # Number of predictors (betas):
+    varNumBeta = aryPrfTc.shape[3]
+
+    # At this point, aryPrfTc has the following dimensions:
+    # aryPrfTc[x-pos, y-pos, SD, motion-direction, time]
+
     # Reshape pRF model time courses:
     aryPrfTc = np.reshape(aryPrfTc,
                           ((aryPrfTc.shape[0]
                             * aryPrfTc.shape[1]
                             * aryPrfTc.shape[2]),
-                           aryPrfTc.shape[3]))
+                           aryPrfTc.shape[3],
+                           aryPrfTc.shape[4]))
+
+    # Now, aryPrfTc has the following dimensions:
+    # aryPrfTc[(x-pos * y-pos * SD), motion-direction, time]
+
+    # Original total number of pRF time course models (before removing models
+    # with zero variance):
+    varNumMdlsTtl = aryPrfTc.shape[0]
 
     # Change type to float 32:
     aryPrfTc = aryPrfTc.astype(np.float32)
 
     # The pRF model is fitted only if variance along time dimension is not
     # zero. Get variance along time dimension:
-    vecVarPrfTc = np.var(aryPrfTc, axis=1)
+    vecVarPrfTc = np.var(aryPrfTc, axis=2)
 
     # Zero with float32 precision for comparison:
     varZero32 = np.array(([0.0])).astype(np.float32)[0]
 
-    # Boolean array for models with variance greater than zero:
-    vecLgcVar = np.greater(vecVarPrfTc, varZero32)
-
-    # Original total number of pRF time course models (before removing models
-    # with zero variance):
-    varNumMdlsTtl = aryPrfTc.shape[0]
+    # Boolean array for models with variance greater than zero for at least
+    # one motion direction:
+    vecLgcVar = np.max(
+                       np.greater(vecVarPrfTc,
+                                  varZero32),
+                       axis=1
+                       )
 
     # Take models with variance less than zero out of the array:
-    aryPrfTc = aryPrfTc[vecLgcVar, :]
+    aryPrfTc = aryPrfTc[vecLgcVar, :, :]
 
-    # Add extra dimension for constant term:
-    aryPrfTc = np.reshape(aryPrfTc, (aryPrfTc.shape[0], aryPrfTc.shape[1], 1))
+    # Swap axes, so that
+    # aryPrfTc[(x-pos * y-pos * SD), time, motion-direction]
+    aryPrfTc = np.swapaxes(aryPrfTc, 1, 2)
 
     # Add constant term (ones):
-    aryPrfTc = np.concatenate((aryPrfTc,
-                               np.ones(aryPrfTc.shape).astype(np.float32)),
-                              axis=2)
+    # aryPrfTc = np.concatenate((aryPrfTc,
+    #                            np.ones((aryPrfTc.shape[0],
+    #                                     aryPrfTc.shape[1],
+    #                                     1)).astype(np.float32)),
+    #                           axis=2)
 
     # Size of pRF time courses in MB:
     varSzePrf = np.divide(float(aryPrfTc.nbytes),
@@ -126,7 +194,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     varNumVox = aryFunc.shape[0]
 
     # Number of volumes:
-    # varNumVol = aryFunc.shape[1]
+    varNumVol = aryFunc.shape[1]
 
     # We reshape the voxel time courses, so that time goes down the column,
     # i.e. from top to bottom.
@@ -137,7 +205,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     # We cannot commit the entire functional data to GPU memory, we need to
     # create chunks. Establish the limit (maximum size) of one chunk (in MB):
-    varSzeMax = 50.0
+    varSzeMax = 50.0  # 20.0
 
     # Size of functional data in MB:
     varSzeFunc = np.divide(float(aryFunc.nbytes),
@@ -182,18 +250,20 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # calculate the coefficient of determination (R-squared) for each voxel. We
     # start by calculating the total sum of squares (i.e. the deviation of the
     # data from the mean). The mean of each time course:
-    vecFuncMean = np.mean(aryFunc, axis=0)
+    vecFuncMean = np.mean(aryFunc, axis=0, dtype=np.float32)
     # Deviation from the mean for each datapoint:
-    vecFuncDev = np.subtract(aryFunc, vecFuncMean[None, :])
+    vecFuncDev = np.subtract(aryFunc, vecFuncMean[None, :], dtype=np.float32)
+
+    # We don't need the original array with the functional data anymore (the
+    # above seems to have created a hard copy):
+    del(aryFunc)
+
     # Sum of squares:
     vecSsTot = np.sum(np.power(vecFuncDev,
                                2.0),
                       axis=0)
 
-    # We don't need the original array with the functional data anymore (the
-    # above seems to have created a hard copy):
     del(vecFuncDev)
-    del(aryFunc)
 
     # -------------------------------------------------------------------------
     # *** Miscellaneous preparations
@@ -204,8 +274,9 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # Vector for indices of models with minimum residuals:
     vecResSsMinIdx = np.zeros((varNumVox), dtype=np.int32)
 
-    # L2 regularization factor for regression:
-    # varL2reg = 0.0
+    # Multiply L2 regularization factor with identity matrix:
+    aryL2reg = np.multiply(np.eye(varNumBeta),
+                           varL2reg).astype(np.float32)
 
     # Reduce logging verbosity:
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -245,16 +316,14 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
     for idxChnk in range(varNumChnk):
 
-        # print(('---------Chunk: ' + str(idxChnk)))
-
         # Define session:
         # objSess = tf.Session()
         with tf.Graph().as_default(), tf.Session() as objSess:
 
-            # ------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # *** Prepare queue
 
-            # print('------Define computational graph, queue & session')
+            print('------Define computational graph, queue & session')
 
             # Queue capacity:
             varCapQ = 10
@@ -296,7 +365,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             # Coordinator needs to be initialised:
             objCoord = tf.train.Coordinator()
 
-            # ------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # *** Fill queue
 
             # Buffer size (number of samples to put on queue before starting
@@ -314,7 +383,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             while varTmpSzeQ < varBuff:
                 varTmpSzeQ = objSess.run(objSzeQ)
 
-            # ------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # *** Prepare & run the graph
 
             # Chunk of functional data:
@@ -322,34 +391,78 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
             with tf.device('/gpu:0'):
                 objFunc = tf.Variable(aryTmp01)
 
+            # Regularisation factor matrix:
+            with tf.device('/gpu:0'):
+                objL2reg = tf.Variable(aryL2reg)
+
             # The computational graph. Operation that solves matrix (in the
             # least squares sense), and calculates residuals along time
-            # dimension:
-            objMatSlve = tf.reduce_sum(
-                                       tf.squared_difference(
-                                                             objFunc,
-                                                             tf.matmul(
-                                                                       objDsng,
-                                                                       tf.matmul(
-                                                                                 tf.matmul(
-                                                                                           tf.matrix_inverse(
-                                                                                                             tf.matmul(
-                                                                                                                       objDsng,
-                                                                                                                       objDsng,
-                                                                                                                       transpose_a=True,
-                                                                                                                       transpose_b=False
-                                                                                                                       )
-                                                                                                             ),
-                                                                                           objDsng,
-                                                                                           transpose_a=False,
-                                                                                           transpose_b=True
-                                                                                           ),
-                                                                                 objFunc
-                                                                                 )
-                                                                       ),
-                                                             ),
-                                       axis=0
-                                       )
+            # dimension. There are two versions: (1) The number of measurements
+            # (e.g. volumes) is greater than or equal to the number of
+            # predictors (betas). (2) The number of measurements is less than
+            # the number of predictors.
+
+            # (1) Number of measurements greater/equal to number of predictors:
+            if np.greater_equal(varNumVol, varNumBeta):
+                objMatSlve = tf.reduce_sum(
+                                           tf.squared_difference(
+                                                                 objFunc,
+                                                                 tf.matmul(
+                                                                           objDsng,
+                                                                           tf.matmul(
+                                                                                     tf.matmul(
+                                                                                               tf.matrix_inverse(
+                                                                                                                 tf.add(
+                                                                                                                        tf.matmul(
+                                                                                                                                   objDsng,
+                                                                                                                                   objDsng,
+                                                                                                                                   transpose_a=True,
+                                                                                                                                   transpose_b=False
+                                                                                                                                   ),
+                                                                                                                        objL2reg
+                                                                                                                        )
+                                                                                                                 ),
+                                                                                               objDsng,
+                                                                                               transpose_a=False,
+                                                                                               transpose_b=True
+                                                                                               ),
+                                                                                     objFunc
+                                                                                     )
+                                                                           ),
+                                                                 ),
+                                           axis=0
+                                           )
+
+            # (2) Number of measurements less than number of predictors:
+            else:
+                objMatSlve = tf.reduce_sum(
+                                           tf.squared_difference(
+                                                                 objFunc,
+                                                                 tf.matmul(
+                                                                           objDsng,
+                                                                           tf.matmul(
+                                                                                     tf.matmul(
+                                                                                               objDsng,
+                                                                                               tf.matrix_inverse(
+                                                                                                                 tf.add(
+                                                                                                                        tf.matmul(
+                                                                                                                                   objDsng,
+                                                                                                                                   objDsng,
+                                                                                                                                   transpose_a=False,
+                                                                                                                                   transpose_b=True
+                                                                                                                                   ),
+                                                                                                                        objL2reg
+                                                                                                                        )
+                                                                                                                 ),
+                                                                                               transpose_a=True,
+                                                                                               transpose_b=False
+                                                                                               ),
+                                                                                     objFunc
+                                                                                     )
+                                                                           ),
+                                                                 ),
+                                           axis=0
+                                           )
 
             # Variables need to be (re-)initialised:
             objSess.run(tf.global_variables_initializer())
@@ -374,7 +487,9 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
                 # Run main computational graph and put results in list:
                 # varTme01 = time.time()
+
                 aryTmpRes[idxMdl, :] = objSess.run(objMatSlve)
+
                 # print(('---------Time for graph call: '
                 #        + str(time.time() - varTme01)))
 
@@ -395,68 +510,15 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
                 # Increment status indicator counter:
                 varCntSts02 = varCntSts02 + 1
 
-
-                if ((idxMdl % 10000) == 0):
-                    # /////////////////////////////////////////////////////////////////////////////
-                    """
-                    Print memory usage of variables in global namespace.
-
-                    The following code needs to be placed in a script in order to test memory
-                    usage.
-                    """
-                    # Get variables in namespace:
-                    dicMem = globals()
-
-                    # Dictionary for variable names & their size in MB:
-                    dicSze = {}
-
-                    # Loop through the dictionary returned by locals():
-                    for strTmp in dicMem.keys():
-
-                        # Get size of current variable in MB:
-                        varSze = np.around((sys.getsizeof(dicMem[strTmp]) * 0.000001),
-                                           decimals=3)
-
-                        # Put size of current variable into the size-dictionary:
-                        dicSze[strTmp] = varSze
-
-                    print('######################################')
-                    print('############ MEMORY USAGE ############')
-
-                    # Sort the size-dictionary:
-                    for strTmp in sorted(dicSze, key=dicSze.get, reverse=True):
-
-                        # Access size (in MB) of current element:
-                        varSze = dicSze[strTmp]
-
-                        # Print name of variable and its size if it is larger than threshold:
-                        if np.greater(varSze, 1.0):
-
-                            strMsg = ('### Object: '
-                                      + strTmp
-                                      + ' --- Size: '
-                                      + str(varSze)
-                                      + ' MB')
-                            print(strMsg)
-
-                    print('######################################')
-                    print('')
-                    # /////////////////////////////////////////////////////////////////////////////
-
-
             # Stop threads.
             objCoord.request_stop()
             # objSess.close()
 
         # Get indices of models with minimum residuals (minimum along
         # model-space) for current chunk:
-        vecResSsMinIdx[varChnkStr:varChnkEnd] = np.argmin(aryTmpRes, axis=0
-                                                          ).astype(np.int32)
+        vecResSsMinIdx[varChnkStr:varChnkEnd] = np.argmin(aryTmpRes, axis=0)
         # Get minimum residuals of those models:
         vecResSsMin[varChnkStr:varChnkEnd] = np.min(aryTmpRes, axis=0)
-
-        # Avoid memory overflow between chunks:
-        del(aryTmpRes)
 
     # -------------------------------------------------------------------------
     # *** Post-process results
@@ -486,18 +548,6 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     # The third column is to contain model pRF sizes:
     aryMdl[:, 2] = np.tile(vecMdlSd, int(varNumX * varNumY))
 
-    # The above code has the same result as the below (for better readability):
-    # aryMdl = np.zeros((varNumMdls, 3), dtype=np.float32)
-    # varCount = 0
-    # # Loop through pRF models:
-    # for idxX in range(0, varNumX):
-    #     for idxY in range(0, varNumY):
-    #         for idxSd in range(0, varNumPrfSizes):
-    #             aryMdl[varCount, 0] = vecMdlXpos[idxX]
-    #             aryMdl[varCount, 1] = vecMdlYpos[idxY]
-    #             aryMdl[varCount, 2] = vecMdlSd[idxSd]
-    #             varCount += 1
-
     # Earlier, we had removed models with a variance of zero. Thus, those
     # models were ignored and are not present in the results. We remove them
     # from the model-parameter-array:
@@ -509,7 +559,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
     vecBstSd = aryMdl[:, 2][vecResSsMinIdx]
 
     # Coefficient of determination (1 - ratio of (residual sum of squares by
-    #  total sum of squares)):
+    # total sum of squares)):
     vecBstR2 = np.subtract(1.0,
                            np.divide(vecResSsMin,
                                      vecSsTot)
@@ -520,6 +570,7 @@ def funcFindPrfGpu(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
               vecBstXpos,
               vecBstYpos,
               vecBstSd,
-              vecBstR2]
+              vecBstR2,
+              np.zeros((varNumVox, (varNumBeta))).astype(np.float32)]
 
     queOut.put(lstOut)

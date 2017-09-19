@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Cythonised least squares solution for GLM model fitting between pRF time
-   course models and voxel time courses.
-"""
+"""Cythonised least squares GLM model fitting."""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Omer Faruk Gulban & Ingo Marquardt
@@ -21,7 +19,7 @@
 
 
 # *****************************************************************************
-# *** Import modules & cython settings for speedup
+# *** Import modules & adjust cython settings for speedup
 
 import numpy as np
 cimport numpy as np
@@ -37,12 +35,34 @@ from libc.math cimport pow, sqrt
 # *****************************************************************************
 # *** Main function for least squares solution
 
-cpdef np.ndarray[np.float32_t, ndim=1] funcCyLsq(
+cpdef np.ndarray[np.float32_t, ndim=1] cy_lst_sq(
     np.ndarray[np.float32_t, ndim=1] vecPrfTc,
     np.ndarray[np.float32_t, ndim=2] aryFuncChnk):
+    """
+    Cythonised least squares GLM model fitting.
 
-    """ Computes the least-squares solution to a linear matrix equation.
-        Assumes removal of the mean from the data and the model.
+    Parameters
+    ----------
+    vecPrfTc : np.array
+        1D numpy array, at float32 precision, containing a single pRF model
+        time course (along time dimension).
+    aryFuncChnk : np.array
+        2D numpy array, at float32 precision, containing a chunk of functional
+        data (i.e. voxel time courses). Dimensionality: aryFuncChnk[time,
+        voxel].
+
+    Returns
+    -------
+    vecRes : np.array
+        1D numpy array with model residuals for all voxels in the chunk of
+        functional data. Dimensionality: vecRes[voxel]
+
+    Notes
+    -----
+    Computes the least-squares solution for the model fit between the pRF time
+    course model, and all voxel time courses. Assumes removal of the mean from
+    the functional data and the model. Needs to be compiled before execution
+    (see `cython_leastsquares_setup.py`).
     """
 
     cdef float varVarY = 0
@@ -81,7 +101,7 @@ cpdef np.ndarray[np.float32_t, ndim=1] funcCyLsq(
 
     # Convert memory view to numpy array before returning it:
     vecRes = np.asarray(vecRes_view)
-    
+
     return vecRes
 # *****************************************************************************
 
@@ -100,21 +120,21 @@ cdef float[:] funcCyRes(float[:] vecPrfTc_view,
     cdef unsigned int idxVol
     cdef unsigned long idxVox
 
-
     # Loop through voxels:
     for idxVox in range(varNumVoxChnk):
 
         # Covariance and residuals of current voxel:
         varCovXy = 0
-        varRes = 0        
-    
+        varRes = 0
+
         # Loop through volumes and calculate covariance between the model and
         # the current voxel:
         for idxVol in range(varNumVols):
-            varCovXy += aryFuncChnk_view[idxVol, idxVox] * vecPrfTc_view[idxVol]
+            varCovXy += (aryFuncChnk_view[idxVol, idxVox]
+                         * vecPrfTc_view[idxVol])
         # Obtain the slope of the regression of the model on the data:
         varSlope = varCovXy / varVarY
-    
+
         # Loop through volumes again in order to calculate the error in the
         # prediction:
         for idxVol in range(varNumVols):

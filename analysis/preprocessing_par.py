@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Main function for preprocessing of data & models."""
+"""Parallelisation function for pre_pro_func & pre_pro_models."""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -24,9 +24,9 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.filters import gaussian_filter1d
 
 
-def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
-                  lgcLinTrnd=False, varSdSmthTmp=0.0, varSdSmthSpt=0.0,
-                  varIntCtf=0.0, varPar=1):
+def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
+                lgcLinTrnd=False, varSdSmthTmp=0.0, varSdSmthSpt=0.0,
+                varPar=1):
     """
     Preprocess fMRI data or pRF time course models for a pRF analysis.
 
@@ -46,9 +46,6 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     varSdSmthSpt : float
         Extent of spatial smoothing (FWHM) in units of input data (number of
         voxels). No spatial smoothing is applied if varSdSmthSpt = 0.0.
-    varIntCtf : float
-        Intensity cutoff value for fMRI time series. Voxels with a mean
-        intensity lower than the value specified here are ignored.
     varPar : int
         Number of processes to run in parallel.
 
@@ -71,7 +68,7 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     # *************************************************************************
     # *** Generic function for parallelisation over voxel time courses
 
-    def funcParVox(funcIn, aryData, aryMask, varSdSmthTmp, varIntCtf, varPar):
+    def funcParVox(funcIn, aryData, aryMask, varSdSmthTmp, varPar):
         """
         Parallelize over another function.
 
@@ -98,23 +95,22 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         # Reshape data:
         aryData = np.reshape(aryData, [varNumEleTlt, varNumVol])
 
-        # The exclusion of voxels based on the mask and the intensity cutoff
-        # value is only used for the fMRI data, not for the pRF time course
-        # models. For the pRF time course models, an empty array is passed into
-        # this function instead of an actual mask.
+        # The exclusion of voxels based on the mask is only used for the fMRI
+        # data, not for the pRF time course models. For the pRF time course
+        # models, an empty array is passed into this function instead of an
+        # actual mask.
         if 0 < aryMask.size:
 
             # Reshape mask:
             aryMask = np.reshape(aryMask, varNumEleTlt)
 
             # Take mean over time:
-            aryDataMean = np.mean(aryData, axis=1)
+            # aryDataMean = np.mean(aryData, axis=1)
 
             # Logical test for voxel inclusion: is the voxel value greater than
             # zero in the mask, and is the mean of the functional time series
             # above the cutoff value?
-            aryLgc = np.multiply(np.greater(aryMask, 0),
-                                 np.greater(aryDataMean, varIntCtf))
+            aryLgc = np.greater(aryMask, 0)
 
             # Array with functional data for which conditions (mask inclusion
             # and cutoff value) are fullfilled:
@@ -334,7 +330,7 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     # *************************************************************************
 
     # *************************************************************************
-    # *** Linear trend removal from fMRI data
+    # *** Linear trend removal for fMRI data
 
     def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
         """
@@ -466,6 +462,7 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
                   aryFuncChnk.astype(np.float32, copy=False)]
 
         queOut.put(lstOut)
+    # *************************************************************************
 
     # *************************************************************************
     # *** Apply functions:
@@ -480,7 +477,6 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
                              aryFunc,
                              aryMask,
                              0,
-                             varIntCtf,
                              varPar)
 
     # Perform spatial smoothing on fMRI data (reduced parallelisation over
@@ -526,7 +522,6 @@ def funcPrfPrePrc(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
                              aryFunc,
                              aryMask,
                              varSdSmthTmp,
-                             varIntCtf,
                              varPar)
     # *************************************************************************
 

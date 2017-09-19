@@ -18,15 +18,71 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import pRF_config as cfg
-if cfg.strVersion:
-    from pRF_cython_leastsquares import funcCyLsq
+import config as cfg
+if cfg.strVersion == 'cython':
+    from cython_leastsquares import cy_lst_sq
 
 
-def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
-                vecMdlYpos, vecMdlSd, aryFuncChnk, aryPrfTc, strVersion,
-                queOut):
-    """Find the best pRF model for voxel time course."""
+def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,  #noqa
+                 aryPrfTc, strVersion, queOut):
+    """
+    Find best fitting pRF model for voxel time course, using the CPU.
+
+    Parameters
+    ----------
+    idxPrc : int
+        Process ID of the process calling this function (for CPU
+        multi-threading). In GPU version, this parameter is 0 (just one thread
+        on CPU).
+    vecMdlXpos : np.array
+        1D array with pRF model x positions.
+    vecMdlYpos : np.array
+        1D array with pRF model y positions.
+    vecMdlSd : np.array
+        1D array with pRF model sizes (SD of Gaussian).
+    aryFunc : np.array
+        2D array with functional MRI data, with shape aryFunc[voxel, time].
+    aryPrfTc : np.array
+        Array with pRF model time courses, with shape
+        aryPrfTc[x-pos, y-pos, SD, motion-direction, time]
+    strVersion : str
+        Which version to use for pRF finding; 'numpy' or 'cython'.
+    queOut : multiprocessing.queues.Queue
+        Queue to put the results on.
+
+    Returns
+    -------
+    lstOut : list
+        List containing the following objects:
+        idxPrc : int
+            Process ID of the process calling this function (for CPU
+            multi-threading). In GPU version, this parameter is 0.
+        vecBstXpos : np.array
+            1D array with best fitting x-position for each voxel, with shape
+            vecBstXpos[voxel].
+        vecBstYpos : np.array
+            1D array with best fitting y-position for each voxel, with shape
+            vecBstYpos[voxel].
+        vecBstSd : np.array
+            1D array with best fitting pRF size for each voxel, with shape
+            vecBstSd[voxel].
+        vecBstR2 : np.array
+            1D array with R2 value of 'winning' pRF model for each voxel, with
+            shape vecBstR2[voxel].
+
+    Notes
+    -----
+    The list with results is not returned directly, but placed on a
+    multiprocessing queue. This version performs the model finding on the CPU,
+    using numpy or cython (depending on the value of `strVersion`).
+    """
+    # Number of modelled x-positions in the visual space:
+    varNumX = aryPrfTc.shape[0]
+    # Number of modelled y-positions in the visual space:
+    varNumY = aryPrfTc.shape[1]
+    # Number of modelled pRF sizes:
+    varNumPrfSizes = aryPrfTc.shape[2]
+
     # Number of voxels to be fitted in this chunk:
     varNumVoxChnk = aryFuncChnk.shape[0]
 
@@ -152,7 +208,7 @@ def funcFindPrf(idxPrc, varNumX, varNumY, varNumPrfSizes, vecMdlXpos,  #noqa
 
                         # A cython function is used to calculate the residuals
                         # of the current model:
-                        vecTmpRes = funcCyLsq(
+                        vecTmpRes = cy_lst_sq(
                             aryPrfTc[idxX, idxY, idxSd, :].flatten(),
                             aryFuncChnk)
 

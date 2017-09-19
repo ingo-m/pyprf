@@ -23,11 +23,21 @@ varNumY = 40
 # Number of pRF sizes to model:
 varNumPrfSizes = 50
 
-# Extend of visual space from centre of the screen (i.e. from the fixation
-# point) [degrees of visual angle]:
+# Extent of visual space from centre of the screen in negative x-direction
+# (i.e. from the fixation point to the left end of the screen) in degrees of
+# visual angle.
 varExtXmin = -5.19
+# Extent of visual space from centre of the screen in positive x-direction
+# (i.e. from the fixation point to the right end of the screen) in degrees of
+# visual angle.
 varExtXmax = 5.19
+# Extent of visual space from centre of the screen in negative y-direction
+# (i.e. from the fixation point to the lower end of the screen) in degrees of
+# visual angle.
 varExtYmin = -5.19
+# Extent of visual space from centre of the screen in positive y-direction
+# (i.e. from the fixation point to the upper end of the screen) in degrees of
+# visual angle.
 varExtYmax = 5.19
 
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
@@ -49,13 +59,11 @@ varSdSmthTmp = 2.832
 # kernel, in mm]
 varSdSmthSpt = 0.0
 
+# Perform linear trend removal on fMRI data?
+lgcLinTrnd = True
+
 # Number of fMRI volumes and png files to load:
 varNumVol = 4 * 172
-
-# Intensity cutoff value of fMRI time series for preprocessing. Voxels with a
-# mean intensity lower than the value specified here are ignored (this speeds
-# up the computation, and, more importatnly, avoids division by zero):
-varIntCtf = 50.0
 
 # Number of processes to run in parallel:
 varPar = 11
@@ -66,7 +74,7 @@ varPar = 11
 # specified above. In other words, if the the resolution in x-direction of the
 # visual space model is ten times that of varNumX, the resolution in
 # y-direction also has to be ten times varNumY. The order is: first x, then y.
-tplVslSpcHighSze = (300, 300)
+tplVslSpcSze = (300, 300)
 
 # Path of functional data (needs to have same number of volumes as there are
 # PNGs):
@@ -110,6 +118,16 @@ if lgcCrteMdl:
     # format and number in the order of their presentation during the
     # experiment.
     strPathPng = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_stimuli/frame_'  #noqa
+
+    # Start index of PNG files. For instance, `varStrtIdx = 0` if the name of
+    # the first PNG file is `file_000.png`, or `varStrtIdx = 1` if it is
+    # `file_001.png`.
+    varStrtIdx = 1
+
+    # Zero padding of PNG file names. For instance, `varStrtIdx = 3` if the
+    # name of PNG files is `file_007.png`, or `varStrtIdx = 4` if it is
+    # `file_0007.png`.
+    varZfill = 3
 
     # Output path for pRF time course models file (without file extension):
     strPathMdl = '/media/sf_D_DRIVE/MRI_Data_PhD/05_PacMan/20161221/nii_distcor/retinotopy/pRF_results_up/pRF_model_tc'  #noqa

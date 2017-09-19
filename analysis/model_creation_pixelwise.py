@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Create pixel-wise HRF model time courses."""
+"""Convolve pixel-wise design matrix."""
 
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
@@ -19,32 +19,54 @@
 
 import numpy as np
 import multiprocessing as mp
-from pRF_utilities import funcHrf, funcConvPar
+from model_creation_pixelwise_par import conv_par
+from utilities import crt_hrf
 
 
-def funcCrtPixMdl(aryPngData,
-                  varNumVol,
-                  varTr,
-                  tplPngSize,
-                  varPar):
+def conv_dsgn_mat(aryPngData, varTr, varPar=10):
     """
-    Create pixel-wise HRF model time courses.
+    Convolve pixel-wise design matrix.
 
+    Parameters
+    ----------
+    aryPngData : np.array
+        3D numpy array with the following structure:
+        aryPngData[x-pixel-index, y-pixel-index, PngNumber]
+    varTr : float
+        Volume TR of functional data (needed for convolution of timecourses
+        with haemodynamic response function).
+    varPar : int
+        Number of processes to run in parallel (multiprocessing).
+
+    Returns
+    -------
+    aryPixConv : np.array
+        Numpy array with same dimensions as input (`aryPngData`), with
+        convolved design matrix.
+
+    Notes
+    -----
     After concatenating all stimulus frames (png files) into an array, this
-    stimulus array is effectively a boxcar design matrix with zeros if no
-    stimulus was present at that pixel at that frame, and ones if a stimulus
-    was present. In this function, we convolve this boxcar design matrix with
-    an HRF model.
+    stimulus array is effectively a boxcar design matrix with value `zero` if
+    no stimulus was present at that pixel at that frame, and `one` if a
+    stimulus was present. In this function, this boxcar design matrix is
+    convolved with an HRF model.
     """
+    # Get number of volumes from input array:
+    varNumVol = aryPngData.shape[2]
+
+    # Remember original size of PNGs:
+    tplPngSize = (aryPngData.shape[0], aryPngData.shape[1])
+
     # Create 'canonical' HRF time course model:
-    vecHrf = funcHrf(varNumVol, varTr)
+    vecHrf = crt_hrf(varNumVol, varTr)
 
     # List into which the chunks of input data for the parallel processes will
     # be put:
     lstParData = [None] * varPar
 
     # Number of pixels:
-    varNumPix = tplPngSize[0] * tplPngSize[1]
+    varNumPix = aryPngData.shape[0] * aryPngData.shape[1]
 
     # Reshape png data:
     aryPngData = np.reshape(aryPngData,
@@ -69,7 +91,7 @@ def funcCrtPixMdl(aryPngData,
         lstParData[idxChnk] = aryPngData[varTmpChnkSrt:varTmpChnkEnd, :]
 
     # We don't need the original array with the input data anymore:
-    # del(aryPngData)
+    del(aryPngData)
 
     # Create a queue to put the results in:
     queOut = mp.Queue()
@@ -80,17 +102,18 @@ def funcCrtPixMdl(aryPngData,
     # Empty list for results of parallel processes:
     lstRes = [None] * varPar
 
-    print('---------Creating parallel processes')
+    # print('---------Creating parallel processes')
 
     # Create processes:
     for idxPrc in range(0, varPar):
-        lstPrcs[idxPrc] = mp.Process(target=funcConvPar,
+        lstPrcs[idxPrc] = mp.Process(target=conv_par,
                                      args=(idxPrc,
                                            lstParData[idxPrc],
                                            vecHrf,
                                            varNumVol,
                                            queOut)
                                      )
+
         # Daemon (kills processes when exiting):
         lstPrcs[idxPrc].Daemon = True
 
@@ -106,7 +129,7 @@ def funcCrtPixMdl(aryPngData,
     for idxPrc in range(0, varPar):
         lstPrcs[idxPrc].join()
 
-    print('---------Collecting results from parallel processes')
+    # print('---------Collecting results from parallel processes')
 
     # Create list for vectors with results from parallel processes, in order to
     # put the results into the correct order:
