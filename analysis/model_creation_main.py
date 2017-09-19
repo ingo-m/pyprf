@@ -107,10 +107,10 @@ def model_creation():
         # *********************************************************************
         # *** Load existing pRF time course models
 
-        print('------Save pRF time course models from disk')
+        print('------Load pRF time course models from disk')
 
         # Load the file:
-        aryPrfTc = np.load(cfg.strPathMdl)
+        aryPrfTc = np.load((cfg.strPathMdl + '.npy'))
 
         # Check whether pRF time course model matrix has the expected
         # dimensions:

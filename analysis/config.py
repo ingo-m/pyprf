@@ -91,31 +91,26 @@ strPathOut = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_dist
 strVersion = 'cython'
 
 # Create pRF time course models?
-lgcCrteMdl = True
+lgcCrteMdl = False
 
-if lgcCrteMdl:
-    # If we create new pRF time course models, the following parameters have to
-    # be provided:
+# If we create new pRF time course models, the following parameters have to
+# be provided:
 
-    # Basename of the 'binary stimulus files'. The files need to be in png
-    # format and number in the order of their presentation during the
-    # experiment.
-    strPathPng = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/retinotopy/pRF_stimuli/frame'  #noqa
+# Basename of the 'binary stimulus files'. The files need to be in png
+# format and number in the order of their presentation during the
+# experiment.
+strPathPng = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/retinotopy/pRF_stimuli/frame'  #noqa
 
-    # Start index of PNG files. For instance, `varStrtIdx = 0` if the name of
-    # the first PNG file is `file_000.png`, or `varStrtIdx = 1` if it is
-    # `file_001.png`.
-    varStrtIdx = 1
+# Start index of PNG files. For instance, `varStrtIdx = 0` if the name of
+# the first PNG file is `file_000.png`, or `varStrtIdx = 1` if it is
+# `file_001.png`.
+varStrtIdx = 1
 
-    # Zero padding of PNG file names. For instance, `varStrtIdx = 3` if the
-    # name of PNG files is `file_007.png`, or `varStrtIdx = 4` if it is
-    # `file_0007.png`.
-    varZfill = 3
+# Zero padding of PNG file names. For instance, `varStrtIdx = 3` if the
+# name of PNG files is `file_007.png`, or `varStrtIdx = 4` if it is
+# `file_0007.png`.
+varZfill = 3
 
-    # Output path for pRF time course models file (without file extension):
-    strPathMdl = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa
-
-else:
-    # If we use existing pRF time course models, the path to the respective
-    # file has to be provided (including file extension, i.e. '*.npy'):
-    strPathMdl = ''  #noqa
+# Path to npy file with pRF time course models (to save or laod). Without file
+# extension.
+strPathMdl = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa

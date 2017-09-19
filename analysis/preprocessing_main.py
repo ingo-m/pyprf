@@ -19,7 +19,6 @@
 
 import numpy as np
 from utilities import load_nii
-from utilities import load_nii_large
 from preprocessing_par import pre_pro_par
 
 
@@ -115,7 +114,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         print(('---------Preprocess run ' + str(idxRun + 1)))
 
         # Load 4D nii data:
-        aryTmpFunc, _, _ = load_nii_large(lstPathNiiFunc[idxRun])
+        aryTmpFunc, _, _ = load_nii(lstPathNiiFunc[idxRun])
 
         # Dimensions of nii data (including temporal dimension; spatial
         # dimensions need to be the same for mask & functional data):
@@ -223,3 +222,5 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
                            varSdSmthTmp=varSdSmthTmp,
                            varSdSmthSpt=0.0,
                            varPar=varPar)
+
+    return aryPrfTc

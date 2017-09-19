@@ -46,7 +46,7 @@ if ((cfg.strVersion == 'cython') or (cfg.strVersion == 'numpy')):
 
 # *****************************************************************************
 # *** Check time
-print('-pRF analysis')
+print('---pRF analysis')
 varTme01 = time.time()
 # *****************************************************************************
 
@@ -67,6 +67,7 @@ cfg.varSdSmthSpt = np.divide(cfg.varSdSmthSpt, cfg.varVoxRes)
 aryPrfTc = model_creation()
 # *****************************************************************************
 
+
 # *****************************************************************************
 # *** Preprocessing
 
@@ -78,7 +79,7 @@ aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
 aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp = pre_pro_func(
     cfg.strPathNiiMask, cfg.lstPathNiiFunc, lgcLinTrnd=cfg.lgcLinTrnd,
     varSdSmthTmp=cfg.varSdSmthTmp, varSdSmthSpt=cfg.varSdSmthSpt,
-    varIntCtf=cfg.varIntCtf, varPar=cfg.varPar)
+    varPar=cfg.varPar)
 # *****************************************************************************
 
 
@@ -199,7 +200,7 @@ for idxPrc in range(0, cfg.varPar):
     lstPrcs[idxPrc].start()
 
 # Delete reference to list with function data (the data continues to exists in
-# child process memory space):
+# child process):
 del(lstFunc)
 
 # Collect results from queue:
@@ -328,6 +329,6 @@ for idxOut in range(0, 6):
 
 varTme02 = time.time()
 varTme03 = varTme02 - varTme01
-print('-Elapsed time: ' + str(varTme03) + ' s')
-print('-Done.')
+print('---Elapsed time: ' + str(varTme03) + ' s')
+print('---Done.')
 # *****************************************************************************
