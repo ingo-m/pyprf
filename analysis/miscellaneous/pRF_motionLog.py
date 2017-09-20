@@ -20,7 +20,8 @@
 import numpy as np
 import pickle
 from PIL import Image
-import pRF_config_motion as config
+import config
+
 
 class MotionLog:
     """
