@@ -327,7 +327,7 @@ if lgcLogMde:
 
     print(('Stimulus log will be cropped by '
            + str(varCrpY)
-           + 'in y-direction (screen height).'
+           + ' in y-direction (screen height).'
            ))
 
     # Calculate area to crop in x-dimension, at left and right (would be zero
@@ -336,8 +336,12 @@ if lgcLogMde:
 
     print(('Stimulus log will be cropped by '
            + str(varCrpX)
-           + 'in x-direction (screen width).'
+           + ' in x-direction (screen width).'
            ))
+
+    # Temporary array for screenshots, at full screen size and containing RGB
+    # values (needed to obtain buffer content from psychopy):
+    aryBuff = np.zeros((PixH, PixW, 3), dtype=np.int16)
 
     # Prepare array for screenshots. One value per pixel per volume; since the
     # stimuli are greyscale we discard 2nd and 3rd RGB dimension. Also, there
@@ -345,6 +349,9 @@ if lgcLogMde:
     # that is actually stimulated (this is typically a square at the centre of
     # the screen, flanked by unstimulated areas on the left and right side).
     aryFrames = np.zeros((pixCover, pixCover, NrOfVols), dtype=np.int16)
+
+    # Make sure that pixCover is of interger type:
+    pixCover = int(np.around(pixCover))
 
     # Counter for screenshots:
     idxFrame = 0
@@ -462,15 +469,21 @@ while clock.getTime() < totalTime:  # noqa
               + str(int(NrOfVols))))
 
         # Temporary array for single frame (3 values per pixel - RGB):
-        aryRgb = myWin.getMovieFrame(buffer='front')
+        aryBuff[:, :, :] = myWin.getMovieFrame(buffer='front')
+
+        print(type(aryBuff))
+        print('type(aryBuff)')
+        print('aryBuff.shape')
+        print(aryBuff.shape)
 
         # We only save one value per pixel per volume (because the stimuli are
         # greyscale we discard 2nd and 3rd RGB dimension):
-        aryRgb = aryRgb[:, :, 0]
+        aryRgb = aryBuff[:, :, 0]
 
         # We only save the central square area that contains the stimulus:
-        aryFrames[:, :, idxFrame] = np.copy(aryRgb[varCrpX:(varCrpX + PixW),
-                                                   varCrpY:(varCrpY + PixH)])
+        aryFrames[:, :, idxFrame] = \
+            np.copy(aryRgb[varCrpY:(varCrpY + pixCover),
+                           varCrpX:(varCrpX + pixCover)])
         idxFrame = idxFrame + 1
 
 logging.data('EndOfRun' + unicode(expInfo['run']) + '\n')
