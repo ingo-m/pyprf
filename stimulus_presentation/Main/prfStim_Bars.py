@@ -318,11 +318,34 @@ def squFlicker():
 
 # %% Logging mode preparations
 if lgcLogMde:
-    # Prepare array for screenshots (one value per pixel per volume; since the
-    # stimuli are greyscale we discard 2nd and 3rd RGB dimension):
-    aryFrames = np.zeros((PixH, PixW, NrOfVols), dtype=np.int16)
-    # Temporary array for single frames (3 values per pixel - RGB):
-    aryRgb = np.zeros((PixH, PixW, 3), dtype=np.int16)
+
+    print('Logging mode')
+
+    # Calculate area to crop in y-dimension, at top and bottom (should be zero
+    # is # full extend of screeen height is used):
+    varCrpY = int(np.around((float(PixH) - float(pixCover)) * 0.5))
+
+    print(('Stimulus log will be cropped by '
+           + str(varCrpY)
+           + 'in y-direction (screen height).'
+           ))
+
+    # Calculate area to crop in x-dimension, at left and right (would be zero
+    # is full extend of screeen width was used):
+    varCrpX = int(np.around((float(PixW) - float(pixCover)) * 0.5))
+
+    print(('Stimulus log will be cropped by '
+           + str(varCrpX)
+           + 'in x-direction (screen width).'
+           ))
+
+    # Prepare array for screenshots. One value per pixel per volume; since the
+    # stimuli are greyscale we discard 2nd and 3rd RGB dimension. Also, there
+    # is no need to represent the entire screen, just the part of the screen
+    # that is actually stimulated (this is typically a square at the centre of
+    # the screen, flanked by unstimulated areas on the left and right side).
+    aryFrames = np.zeros((pixCover, pixCover, NrOfVols), dtype=np.int16)
+
     # Counter for screenshots:
     idxFrame = 0
 
@@ -432,14 +455,22 @@ while clock.getTime() < totalTime:  # noqa
 
     # %% Save screenshots to array
     if lgcLogMde:
+
         print(('---Frame '
               + str(idxFrame)
               + ' out of '
               + str(int(NrOfVols))))
+
+        # Temporary array for single frame (3 values per pixel - RGB):
+        aryRgb = myWin.getMovieFrame(buffer='front')
+
         # We only save one value per pixel per volume (because the stimuli are
         # greyscale we discard 2nd and 3rd RGB dimension):
-        aryRgb[:, :, :] = myWin.getMovieFrame(buffer='front')
-        aryFrames[:, :, idxFrame] = np.copy(aryRgb[:, :, 0])
+        aryRgb = aryRgb[:, :, 0]
+
+        # We only save the central square area that contains the stimulus:
+        aryFrames[:, :, idxFrame] = np.copy(aryRgb[varCrpX:(varCrpX + PixW),
+                                                   varCrpY:(varCrpY + PixH)])
         idxFrame = idxFrame + 1
 
 logging.data('EndOfRun' + unicode(expInfo['run']) + '\n')
