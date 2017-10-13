@@ -234,3 +234,5 @@ def load_config(strCsvCnfg):  #noqa
         if lgcPrint:
             print('---Zero padding of PNG file names: '
                   + str(dicCnfg['varZfill']))
+
+    return dicCnfg

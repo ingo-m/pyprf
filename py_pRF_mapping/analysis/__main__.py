@@ -13,7 +13,6 @@ Use config.py to set analysis parameters.
 import argparse
 
 
-# def main(lstArgs=None):
 def main():
     """py_pRF_mapping entry point."""
     # Get list of input arguments (without first one, which is the path to the
