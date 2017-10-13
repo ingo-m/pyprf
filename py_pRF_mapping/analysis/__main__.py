@@ -11,6 +11,7 @@ Use config.py to set analysis parameters.
 """
 
 import argparse
+from py_pRF_mapping import py_prf
 
 
 def main():
@@ -24,34 +25,24 @@ def main():
     objParser = argparse.ArgumentParser()
 
     # Add argument to namespace:
-    objParser.add_argument('-yeah', metavar='yolo', default='tutu',
-                           help='Have a nice day.')
+    objParser.add_argument('-config',
+                           metavar='config.csv',
+                           default='./testing/config_testing.csv',
+                           help='Absolute file path of config file with \
+                                 parameters for pRF analysis.'
+                           )
 
     # Namespace object containign arguments and values:
     objNspc = objParser.parse_args()
 
-    print('type(objNspc)')
-    print(type(objNspc))
+    # Get path of config file from argument parser:
+    strCsvCnfg = objNspc.config
 
-    print('objNspc')
-    print(objNspc)
+    print(strCsvCnfg)
 
-    # objParser.add_argument(
-    #     'config', metavar='analysis/config.py',
-    #     help=('Path to config file (if not using config file in standard \
-    #            location, i.e. ~/analysis/config.py.')
-    #            )
+    # Call to main function, to invoke pRF analysis:
+    # py_prf(strCsvCnfg)
 
-    # print(lstArgs)
-
-    # lstArgs = objParser.parse_lstArgs()
-
-    # print(lstArgs)
-
-#...
-
-    # Close file:
-    # fleConfig.close()
 
 if __name__ == "__main__":
     main()

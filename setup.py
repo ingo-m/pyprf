@@ -20,12 +20,12 @@ setup(name='py_pRF_mapping',
       url='https://github.com/ingo-m/py_pRF_mapping',
       author='Ingo Marquardt',
       license='GNU General Public License Version 3',
-      packages=['analysis'],
+      packages=['py_pRF_mapping.analysis'],
       install_requires=['numpy', 'scipy', 'nibabel'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
       entry_points={
           'console_scripts': [
-              'py_pRF_mapping = analysis.__main__:main',
+              'py_pRF_mapping = py_pRF_mapping.analysis.__main__:main',
               ]},
       )
