@@ -1,27 +1,27 @@
-"""Parameter definitions for testing."""
+# PyPRF config file for pytest.
 
-# Part of py_pRF_mapping library
+# Part of pyprf library
 # Copyright (C) 2017  Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Number of x-positions to model:
-varNumX = 10
+varNumX = 15
 # Number of y-positions to model:
-varNumY = 10
+varNumY = 15
 # Number of pRF sizes to model:
-varNumPrfSizes = 12
+varNumPrfSizes = 20
 
 # Extent of visual space from centre of the screen in negative x-direction
 # (i.e. from the fixation point to the left end of the screen) in degrees of
@@ -42,22 +42,22 @@ varExtYmax = 5.19
 
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
-varPrfStdMin = 0.2
-varPrfStdMax = 3.0
+varPrfStdMin = 0.1
+varPrfStdMax = 5.0
 
 # Volume TR of input data [s]:
-varTr = 2.832
+varTr = 2.83
 
 # Voxel resolution of the fMRI data [mm]:
 varVoxRes = 0.7
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 2.832
+varSdSmthTmp = 3.0
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.5
+varSdSmthSpt = 1.0
 
 # Perform linear trend removal on fMRI data?
 lgcLinTrnd = True
@@ -66,7 +66,7 @@ lgcLinTrnd = True
 varNumVol = 400
 
 # Number of processes to run in parallel:
-varPar = 4
+varPar = 3
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
@@ -74,17 +74,20 @@ varPar = 4
 # specified above. In other words, if the the resolution in x-direction of the
 # visual space model is ten times that of varNumX, the resolution in
 # y-direction also has to be ten times varNumY. The order is: first x, then y.
-tplVslSpcSze = (200, 200)
+varVslSpcSzeX = 100
+varVslSpcSzeY = 100
 
-# Path of functional data (needs to have same number of volumes as there are
-# PNGs):
-lstPathNiiFunc = ['/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/func_regAcrssRuns_cube/func_07.nii.gz']  #noqa
+# Path(s) of functional data. List of strings with paths of one or more
+# functional runs. The order of functional volumes, and their number, has to
+# correspond to the order and number of PNG files containing the stimulus
+# information. Note: Do not insert a line break.
+lstPathNiiFunc = ['/testing/func_exmpl_data.nii.gz']
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/retinotopy/mask/func_07_mean_brainmask.nii.gz'  #noqa
+strPathNiiMask = '/testing/exmpl_data_mask.nii.gz'
 
 # Output basename:
-strPathOut = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/retinotopy/pRF_results/pRF_results'  #noqa
+strPathOut = '/testing/result/pRF_test_results'
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.
@@ -99,7 +102,7 @@ lgcCrteMdl = True
 # Basename of the 'binary stimulus files'. The files need to be in png
 # format and number in the order of their presentation during the
 # experiment.
-strPathPng = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/retinotopy/pRF_stimuli/frame'  #noqa
+strPathPng = '/testing/stimuli/Frame_'
 
 # Start index of PNG files. For instance, `varStrtIdx = 0` if the name of
 # the first PNG file is `file_000.png`, or `varStrtIdx = 1` if it is
@@ -113,4 +116,4 @@ varZfill = 3
 
 # Path to npy file with pRF time course models (to save or laod). Without file
 # extension.
-strPathMdl = '/media/john/DATADRIVE1/MRI_Data_PhD/04_ParCon/20161212_02/nii_distcor/retinotopy/pRF_results/pRF_model_tc'  #noqa
+strPathMdl = '/testing/result/pRF_test_model_tc'

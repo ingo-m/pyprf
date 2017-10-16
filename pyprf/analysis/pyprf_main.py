@@ -26,7 +26,7 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 
 def pyprf(strCsvCnfg):  #noqa
     """
-    Main function of py_pRF_mapping.
+    Main function for pRF mapping.
 
     Parameters
     ----------
@@ -59,7 +59,7 @@ def pyprf(strCsvCnfg):  #noqa
     # *** Preparations
 
     # Load config parameters from csv file into dictionary:
-    dicCnfg = load_config('/home/john/Desktop/test/config.csv')
+    dicCnfg = load_config(strCsvCnfg)
 
     # Load config parameters from dictionary into namespace:
     cfg = cls_set_config(dicCnfg)

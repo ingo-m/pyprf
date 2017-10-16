@@ -1,10 +1,17 @@
 """Load py_pRF_mapping config file."""
 
+import os
 import csv
 import ast
 
 
-def load_config(strCsvCnfg):  #noqa
+# Get path of this file:
+strDir = os.path.dirname(os.path.abspath(__file__))
+
+print('strDir')
+print(strDir)
+
+def load_config(strCsvCnfg, lgcTest=False):  #noqa
     """
     Load py_pRF_mapping config file.
 
@@ -12,6 +19,9 @@ def load_config(strCsvCnfg):  #noqa
     ----------
     strCsvCnfg : string
         Absolute file path of config file.
+    lgcTest : Boolean
+        Whether this is a test (pytest). If yes, absolute path of this function
+        will be prepended to config file paths.
 
     Returns
     -------
@@ -234,5 +244,15 @@ def load_config(strCsvCnfg):  #noqa
         if lgcPrint:
             print('---Zero padding of PNG file names: '
                   + str(dicCnfg['varZfill']))
+
+    # Is this a test?
+    if lgcTest:
+
+        # Prepend absolute path of this file to config file paths:
+        dicCnfg['lstPathNiiFunc'] = (strDir + dicCnfg['lstPathNiiFunc'])
+        dicCnfg['strPathNiiMask'] = (strDir + dicCnfg['strPathNiiMask'])
+        dicCnfg['strPathOut'] = (strDir + dicCnfg['strPathOut'])
+        dicCnfg['strPathPng'] = (strDir + dicCnfg['strPathPng'])
+        dicCnfg['strPathMdl'] = (strDir + dicCnfg['strPathMdl'])
 
     return dicCnfg

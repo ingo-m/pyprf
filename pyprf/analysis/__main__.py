@@ -38,10 +38,10 @@ def main():
     # Get path of config file from argument parser:
     strCsvCnfg = objNspc.config
 
-    print(strCsvCnfg)
+    # print(strCsvCnfg)
 
     # Call to main function, to invoke pRF analysis:
-    # py_prf(strCsvCnfg)
+    pyprf(strCsvCnfg)
 
 
 if __name__ == "__main__":
