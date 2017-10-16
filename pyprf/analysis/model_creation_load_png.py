@@ -80,8 +80,8 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
         objIm = objIm.resize((tplVslSpcSze[0],
                               tplVslSpcSze[1]),
                              resample=Image.NEAREST)
-        aryPngData[:, :, idx01] = np.array(objIm.getdata()).reshape(
-            objIm.size[0], objIm.size[1])
+        aryPngData[:, :, idx01] = np.array(objIm.resize(
+            (objIm.size[0], objIm.size[1]), Image.ANTIALIAS))[:, :, 0]
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
     aryPngData = (aryPngData > 200).astype(np.int8)
