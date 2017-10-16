@@ -606,7 +606,7 @@ if lgcLogMde:
               + ' out of '
               + str(int(NrOfVols))))
 
-        # Create image:
+        # Create image: TODO: compatibility with new Pillow version?
         im = Image.fromarray(aryFrames[:, :, idxVol])
 
         # File name (with leading zeros, e.g. '*_004' or '*_042'). For

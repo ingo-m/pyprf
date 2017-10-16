@@ -81,7 +81,7 @@ varVslSpcSzeY = 100
 # functional runs. The order of functional volumes, and their number, has to
 # correspond to the order and number of PNG files containing the stimulus
 # information. Note: Do not insert a line break.
-lstPathNiiFunc = ['/testing/func_exmpl_data.nii.gz']
+lstPathNiiFunc = ['/testing/exmpl_data_func.nii.gz']
 
 # Path of mask (to restrict pRF model finding):
 strPathNiiMask = '/testing/exmpl_data_mask.nii.gz'
