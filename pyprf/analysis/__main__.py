@@ -11,7 +11,7 @@ Use config.py to set analysis parameters.
 """
 
 import argparse
-from py_pRF_mapping import py_prf
+from pyprf_main import pyprf
 
 
 def main():

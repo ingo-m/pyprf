@@ -24,7 +24,7 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-def py_prf(strCsvCnfg):  #noqa
+def pyprf(strCsvCnfg):  #noqa
     """
     Main function of py_pRF_mapping.
 
