@@ -4,12 +4,9 @@ import os
 import csv
 import ast
 
-
 # Get path of this file:
 strDir = os.path.dirname(os.path.abspath(__file__))
 
-print('strDir')
-print(strDir)
 
 def load_config(strCsvCnfg, lgcTest=False):  #noqa
     """
@@ -249,10 +246,17 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
     if lgcTest:
 
         # Prepend absolute path of this file to config file paths:
-        dicCnfg['lstPathNiiFunc'] = (strDir + dicCnfg['lstPathNiiFunc'])
         dicCnfg['strPathNiiMask'] = (strDir + dicCnfg['strPathNiiMask'])
         dicCnfg['strPathOut'] = (strDir + dicCnfg['strPathOut'])
         dicCnfg['strPathPng'] = (strDir + dicCnfg['strPathPng'])
         dicCnfg['strPathMdl'] = (strDir + dicCnfg['strPathMdl'])
+
+        # Loop through functional runs:
+        varNumRun = len(dicCnfg['lstPathNiiFunc'])
+        for idxRun in range(varNumRun):
+            dicCnfg['lstPathNiiFunc'][idxRun] = (
+                strDir
+                + dicCnfg['lstPathNiiFunc'][idxRun]
+                )
 
     return dicCnfg

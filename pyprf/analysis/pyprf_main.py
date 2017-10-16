@@ -23,32 +23,31 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import time
+import numpy as np
+import nibabel as nb
+import multiprocessing as mp
 
-def pyprf(strCsvCnfg):  #noqa
+from load_config import load_config
+from utilities import cls_set_config
+
+from model_creation_main import model_creation
+from preprocessing_main import pre_pro_models
+from preprocessing_main import pre_pro_func
+
+
+def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     """
     Main function for pRF mapping.
 
     Parameters
     ----------
-    strCsvCnfg : string
+    strCsvCnfg : str
         Absolute file path of config file.
+    lgcTest : Boolean
+        Whether this is a test (pytest). If yes, absolute path of pyprf libary
+        will be prepended to config file paths.
     """
-    # *************************************************************************
-    # *** Import modules
-
-    import time
-    import numpy as np
-    import nibabel as nb
-    import multiprocessing as mp
-
-    from load_config import load_config
-    from utilities import cls_set_config
-
-    from model_creation_main import model_creation
-    from preprocessing_main import pre_pro_models
-    from preprocessing_main import pre_pro_func
-    # *************************************************************************
-
     # *************************************************************************
     # *** Check time
     print('---pRF analysis')
@@ -59,7 +58,7 @@ def pyprf(strCsvCnfg):  #noqa
     # *** Preparations
 
     # Load config parameters from csv file into dictionary:
-    dicCnfg = load_config(strCsvCnfg)
+    dicCnfg = load_config(strCsvCnfg, lgcTest=lgcTest)
 
     # Load config parameters from dictionary into namespace:
     cfg = cls_set_config(dicCnfg)
@@ -80,7 +79,7 @@ def pyprf(strCsvCnfg):  #noqa
     # *************************************************************************
     # *** Create or load pRF time course models
 
-    aryPrfTc = model_creation()
+    aryPrfTc = model_creation(dicCnfg)
     # *************************************************************************
 
     # *************************************************************************
@@ -179,6 +178,7 @@ def pyprf(strCsvCnfg):  #noqa
         for idxPrc in range(0, cfg.varPar):
             lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu,
                                          args=(idxPrc,
+                                               dicCnfg,
                                                vecMdlXpos,
                                                vecMdlYpos,
                                                vecMdlSd,

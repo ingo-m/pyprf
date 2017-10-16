@@ -14,11 +14,12 @@ The analysis can be carried out in three different ways: using numpy, cython, or
 ## Dependencies
 [**Python 2.7**](https://www.python.org/download/releases/2.7/)
 
-| Stimulus presentation                    | Tested version |
-|------------------------------------------|----------------|
-| [Psychopy](http://www.Psychopy.org/)     | 1.83.04        |
-| [NumPy](http://www.numpy.org/)           | 1.13.1         |
-| [SciPy](http://www.scipy.org/)           | 0.19.1         |
+| Stimulus presentation                                 | Tested version |
+|-------------------------------------------------------|----------------|
+| [Psychopy](http://www.Psychopy.org/)                  | 1.83.04        |
+| [NumPy](http://www.numpy.org/)                        | 1.13.1         |
+| [SciPy](http://www.scipy.org/)                        | 0.19.1         |
+| [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 4.3.0          |
 
 | Data analysis                                         | Tested version |
 |-------------------------------------------------------|----------------|
@@ -26,6 +27,7 @@ The analysis can be carried out in three different ways: using numpy, cython, or
 | [SciPy](http://www.scipy.org/)                        | 0.19.1         |
 | [NiBabel](http://nipy.org/nibabel/)                   | 2.1.0          |
 | [Cython](http://cython.org/) (optional¹)              | 0.26           |
+| [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 4.3.0          |
 | [Tensorflow](https://www.tensorflow.org/) (optional²) | 1.13.1         |
 
 ¹: For considerably faster performance

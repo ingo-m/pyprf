@@ -22,17 +22,17 @@ import nibabel as nb
 from model_creation_load_png import load_png
 from model_creation_pixelwise import conv_dsgn_mat
 from model_creation_timecourses import crt_prf_tcmdl
+from utilities import cls_set_config
 
-import config as cfg
 
-
-def model_creation():
+def model_creation(dicCnfg):
     """
     Create or load pRF model time courses.
 
     Parameters
     ----------
-    Parameters for pRF model creation are imported from config.py file.
+    dicCnfg : dict
+        Dictionary containing config parameters.
 
     Returns
     -------
@@ -40,6 +40,13 @@ def model_creation():
         4D numpy array with pRF time course models, with following dimensions:
         `aryPrfTc[x-position, y-position, SD, volume]`.
     """
+    # *************************************************************************
+    # *** Load parameters from config file
+
+    # Load config parameters from dictionary into namespace:
+    cfg = cls_set_config(dicCnfg)
+    # *************************************************************************
+
     if cfg.lgcCrteMdl:  #noqa
 
         # *********************************************************************
