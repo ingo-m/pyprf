@@ -41,44 +41,46 @@ def main():
                                  testing mode.'
                            )
 
-    # Add argument to namespace - test flag:
-    objParser.add_argument('-test',
-                           action='store_true',
-                           help='Whether to run a test with pytest.'
-                           )
+    # # Add argument to namespace - test flag:
+    # objParser.add_argument('-test',
+    #                        action='store_true',
+    #                        help='Whether to run a test with pytest.'
+    #                        )
 
     # Namespace object containign arguments and values:
     objNspc = objParser.parse_args()
 
-    # Get test flag from argument parser ('True' if the '-test' flag is
-    # provided, otherwise 'False'):
-    lgcTest = objNspc.test
+    # # Get test flag from argument parser ('True' if the '-test' flag is
+    # # provided, otherwise 'False'):
+    # lgcTest = objNspc.test
 
-    if lgcTest:
+    # if lgcTest:
 
-        print('Test mode initiated...')
+    #     print('Test mode initiated...')
 
-        # Path of config file for tests:
-        strCsvCnfg = (strDir + '/testing/config_testing.csv')
+    #     # Path of config file for tests:
+    #     strCsvCnfg = (strDir + '/testing/config_testing.csv')
 
-        # Signal test mode to lower functions:
-        lgcTest = True
+    #     # Signal test mode to lower functions:
+    #     lgcTest = True
+
+    # else:
+
+    # Get path of config file from argument parser:
+    strCsvCnfg = objNspc.config
+
+    # Print info if no config argument is provided.
+    if strCsvCnfg is None:
+        print('Please provide the file path to a config file, e.g.:')
+        print('   pyprf -config /home/john/my_config_file.csv')
 
     else:
 
-        # Signal non-test mode to lower functions:
+        # Signal non-test mode to lower functions (needed for pytest):
         lgcTest = False
 
-        # Get path of config file from argument parser:
-        strCsvCnfg = objNspc.config
-
-        # Print info if no config argument is provided.
-        if strCsvCnfg is None:
-            print('Please provide the file path to a config file, e.g.:')
-            print('   pyprf -config /home/john/my_config_file.csv')
-
-    # Call to main function, to invoke pRF analysis:
-    pyprf(strCsvCnfg, lgcTest)
+        # Call to main function, to invoke pRF analysis:
+        pyprf(strCsvCnfg, lgcTest)
 
 
 if __name__ == "__main__":

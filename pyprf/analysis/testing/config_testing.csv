@@ -17,33 +17,33 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Number of x-positions to model:
-varNumX = 15
+varNumX = 20
 # Number of y-positions to model:
-varNumY = 15
+varNumY = 20
 # Number of pRF sizes to model:
-varNumPrfSizes = 20
+varNumPrfSizes = 10
 
 # Extent of visual space from centre of the screen in negative x-direction
 # (i.e. from the fixation point to the left end of the screen) in degrees of
 # visual angle.
-varExtXmin = -5.19
+varExtXmin = 1.2
 # Extent of visual space from centre of the screen in positive x-direction
 # (i.e. from the fixation point to the right end of the screen) in degrees of
 # visual angle.
-varExtXmax = 5.19
+varExtXmax = 1.4
 # Extent of visual space from centre of the screen in negative y-direction
 # (i.e. from the fixation point to the lower end of the screen) in degrees of
 # visual angle.
-varExtYmin = -5.19
+varExtYmin = 1.2
 # Extent of visual space from centre of the screen in positive y-direction
 # (i.e. from the fixation point to the upper end of the screen) in degrees of
 # visual angle.
-varExtYmax = 5.19
+varExtYmax = 1.4
 
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
 varPrfStdMin = 0.1
-varPrfStdMax = 5.0
+varPrfStdMax = 0.2
 
 # Volume TR of input data [s]:
 varTr = 2.83
@@ -74,8 +74,8 @@ varPar = 3
 # specified above. In other words, if the the resolution in x-direction of the
 # visual space model is ten times that of varNumX, the resolution in
 # y-direction also has to be ten times varNumY. The order is: first x, then y.
-varVslSpcSzeX = 100
-varVslSpcSzeY = 100
+varVslSpcSzeX = 50
+varVslSpcSzeY = 50
 
 # Path(s) of functional data. List of strings with paths of one or more
 # functional runs. The order of functional volumes, and their number, has to
