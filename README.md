@@ -23,7 +23,7 @@ The analysis can be carried out in three different ways: using numpy, cython, or
 
 | Data analysis                                         | Tested version |
 |-------------------------------------------------------|----------------|
-| [NumPy](http://www.numpy.org/)                        | 1.13.1         |
+| [NumPy](http://www.numpy.org/)                        | 1.13.3         |
 | [SciPy](http://www.scipy.org/)                        | 0.19.1         |
 | [NiBabel](http://nipy.org/nibabel/)                   | 2.1.0          |
 | [Cython](http://cython.org/) (optional¹)              | 0.26           |
