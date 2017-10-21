@@ -62,8 +62,9 @@ def conv_par(idxPrc, aryPngData, vecHrf, queOut):
     # Array for function output (convolved pixel-wise time courses):
     aryPixConv = np.zeros(np.shape(aryPngData), dtype=np.float32)
 
-    # Explicity typing:
-    vecHrf = vecHrf.astype(np.float32)
+    # Explicity typing. NOTE: input to `np.convolve` function needs to be
+    # float64 to avoid errors.
+    vecHrf = vecHrf.astype(np.float64)
 
     # Number of volumes:
     varNumVol = aryPngData.shape[1]
@@ -74,16 +75,18 @@ def conv_par(idxPrc, aryPngData, vecHrf, queOut):
     for idxPix in range(0, aryPngData.shape[0]):
 
         # Extract the current pixel time course:
-        vecDm = aryPngData[idxPix, :].astype(np.float32)
+        vecDm = aryPngData[idxPix, :].astype(np.float64)
 
         # In order to avoid an artefact at the end of the time series, we have
         # to concatenate an empty array to both the design matrix and the HRF
-        # model before convolution.
-        vecZeros = np.zeros([100, 1], dtype=np.float32).flatten()
+        # model before convolution. NOTE: input to `np.convolve` function needs
+        # to be float64 to avoid errors.
+        vecZeros = np.zeros([100, 1], dtype=np.float64).flatten()
         vecDm = np.concatenate((vecDm, vecZeros))
         vecHrf = np.concatenate((vecHrf, vecZeros))
 
-        # Convolve design matrix with HRF model:
+        # Convolve design matrix with HRF model. NOTE: input to `np.convolve`
+        # function needs to be float64 to avoid errors.
         aryPixConv[idxPix, :] = np.convolve(vecDm,
                                             vecHrf,
                                             mode='full'
