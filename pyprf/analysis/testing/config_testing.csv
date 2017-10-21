@@ -26,24 +26,24 @@ varNumPrfSizes = 10
 # Extent of visual space from centre of the screen in negative x-direction
 # (i.e. from the fixation point to the left end of the screen) in degrees of
 # visual angle.
-varExtXmin = 1.2
+varExtXmin = -5.14
 # Extent of visual space from centre of the screen in positive x-direction
 # (i.e. from the fixation point to the right end of the screen) in degrees of
 # visual angle.
-varExtXmax = 1.4
+varExtXmax = 5.14
 # Extent of visual space from centre of the screen in negative y-direction
 # (i.e. from the fixation point to the lower end of the screen) in degrees of
 # visual angle.
-varExtYmin = 1.2
+varExtYmin = -5.14
 # Extent of visual space from centre of the screen in positive y-direction
 # (i.e. from the fixation point to the upper end of the screen) in degrees of
 # visual angle.
-varExtYmax = 1.4
+varExtYmax = 5.14
 
 # Maximum and minimum pRF model size (standard deviation of 2D Gaussian)
 # [degrees of visual angle]:
 varPrfStdMin = 0.1
-varPrfStdMax = 0.2
+varPrfStdMax = 2.0
 
 # Volume TR of input data [s]:
 varTr = 2.83

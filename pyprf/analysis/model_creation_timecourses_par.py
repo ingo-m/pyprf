@@ -72,9 +72,9 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
         # Depending on the relation between the number of x- and y-positions
         # at which to create pRF models and the size of the super-sampled
         # visual space, the indicies need to be rounded:
-        varTmpX = np.around(aryMdlParamsChnk[idxMdl, 1], 0)
-        varTmpY = np.around(aryMdlParamsChnk[idxMdl, 2], 0)
-        varTmpSd = np.around(aryMdlParamsChnk[idxMdl, 3], 0)
+        varTmpX = aryMdlParamsChnk[idxMdl, 1]
+        varTmpY = aryMdlParamsChnk[idxMdl, 2]
+        varTmpSd = aryMdlParamsChnk[idxMdl, 3]
 
         # Create pRF model (2D):
         aryGauss = crt_gauss(tplVslSpcSze[0],
