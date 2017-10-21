@@ -4,12 +4,3 @@ source = pyprf
 omit =
     *__init__*
     *__main__*
-    *config*
-    *tests/*
-    pyprf/analysis/legacy/*
-    pyprf/analysis/miscellaneous/*
-    pyprf/analysis/testing/*
-    pyprf/pyprf/analysis/*
-    pyprf/analysis/cython_leastsquares_setup.py
-    pyprf/analysis/cython_leastsquares.pyx
-    pyprf/stimulus_presentation/*
