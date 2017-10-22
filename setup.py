@@ -19,7 +19,8 @@ setup(name='pyprf',
       author='Ingo Marquardt',
       license='GNU General Public License Version 3',
       packages=['pyprf.analysis'],
-      install_requires=['numpy', 'scipy', 'nibabel', 'pillow', 'cython'],
+      install_requires=['numpy', 'scipy', 'nibabel', 'pillow', 'cython',
+                        'tensorflow'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
       entry_points={
@@ -29,6 +30,8 @@ setup(name='pyprf',
       )
 
 
-from cython_leastsquares_setup_call import setup_cython
+# Load module to setup python:
+from cython_leastsquares_setup_call import setup_cython  #noqa
 
+# Compile cython code:
 setup_cython()
