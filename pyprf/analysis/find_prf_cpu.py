@@ -19,6 +19,7 @@
 
 import numpy as np
 from utilities import cls_set_config
+from cython_leastsquares import cy_lst_sq
 
 
 def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
@@ -80,8 +81,8 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     cfg = cls_set_config(dicCnfg)
 
     # Conditional imports:
-    if cfg.strVersion == 'cython':
-        from cython_leastsquares import cy_lst_sq
+    #if cfg.strVersion == 'cython':
+    #    from cython_leastsquares import cy_lst_sq
 
     # Number of modelled x-positions in the visual space:
     varNumX = aryPrfTc.shape[0]

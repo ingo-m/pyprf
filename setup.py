@@ -5,8 +5,6 @@ For development installation:
     pip install -e /path/to/pRF_mapping
 """
 
-import os
-import subprocess
 from setuptools import setup
 
 
@@ -30,18 +28,7 @@ setup(name='pyprf',
               ]},
       )
 
-# Cython setup
 
-# Directory of this file:
-strDir = os.path.dirname(os.path.abspath(__file__))
+from cython_leastsquares_setup_call import setup_cython
 
-# Path of cython setup script:
-strDirCy = (strDir + '/pyprf/analysis')
-
-# Call the script that compiles the cython code:
-subprocess.call([('python cython_leastsquares_compile.py build_ext '
-                  + '--inplace')],
-                cwd=strDirCy,
-                shell=True)
-
-# print('Cython code could not be compiled. You can still use numpy version.')
+setup_cython()

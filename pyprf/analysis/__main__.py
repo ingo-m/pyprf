@@ -72,7 +72,7 @@ def main():
     # Print info if no config argument is provided.
     if strCsvCnfg is None:
         print('Please provide the file path to a config file, e.g.:')
-        print('   pyprf -config /home/john/my_config_file.csv')
+        print('   pyprf -config /path/to/my_config_file.csv')
 
     else:
 

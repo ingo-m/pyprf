@@ -12,11 +12,14 @@ strDir = os.path.dirname(os.path.abspath(__file__))
 
 def test_main():
     """Run main pyprf function and compare results with template."""
+    # --------------------------------------------------------------------------
+    # *** Test numpy version
+
     # Path of config file for tests:
-    strCsvCnfg = (strDir + '/config_testing.csv')
+    strCsvCnfgNp = (strDir + '/config_testing_numpy.csv')
 
     # Call main pyprf function:
-    pyprf_main.pyprf(strCsvCnfg, lgcTest=True)
+    pyprf_main.pyprf(strCsvCnfgNp, lgcTest=True)
 
     # Load result:
     aryTestR2, _, _ = utilities.load_nii((strDir
@@ -27,11 +30,40 @@ def test_main():
                                           + '/exmpl_data_results_R2.nii.gz'))
 
     # Round template and test results:
-    aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=5)
-    aryTestR2 = np.around(aryTestR2.astype(np.float32), decimals=5)
+    aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=4)
+    aryTestR2 = np.around(aryTestR2.astype(np.float32), decimals=4)
 
     # Test whether the template and test results correspond:
-    lgcTest = np.all(np.equal(aryTmplR2, aryTestR2))
+    lgcTestNp = np.all(np.equal(aryTmplR2, aryTestR2))
+    # --------------------------------------------------------------------------
+
+    # --------------------------------------------------------------------------
+    # *** Test cython version
+
+    # Path of config file for tests:
+    strCsvCnfgCy = (strDir + '/config_testing_cython.csv')
+
+    # Call main pyprf function:
+    pyprf_main.pyprf(strCsvCnfgCy, lgcTest=True)
+
+    # Load result:
+    aryTestR2, _, _ = utilities.load_nii((strDir
+                                          + '/result/pRF_test_results_R2.nii'))
+
+    # Load result templates:
+    aryTmplR2, _, _ = utilities.load_nii((strDir
+                                          + '/exmpl_data_results_R2.nii.gz'))
+
+    # Round template and test results:
+    aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=3)
+    aryTestR2 = np.around(aryTestR2.astype(np.float32), decimals=3)
+
+    # Test whether the template and test results correspond:
+    lgcTestCy = np.all(np.equal(aryTmplR2, aryTestR2))
+    # --------------------------------------------------------------------------
+
+    # --------------------------------------------------------------------------
+    # *** Clean up
 
     # Path of directory with results:
     strDirRes = strDir + '/result/'
@@ -42,10 +74,11 @@ def test_main():
     # Delete results of test:
     for strTmp in lstFls:
         if '.nii' in strTmp:
-            print(strTmp)
+            # print(strTmp)
             os.remove((strDirRes + '/' + strTmp))
         elif '.npy' in strTmp:
-            print(strTmp)
+            # print(strTmp)
             os.remove((strDirRes + '/' + strTmp))
+    # --------------------------------------------------------------------------
 
-    assert lgcTest
+    assert (lgcTestNp and lgcTestCy)

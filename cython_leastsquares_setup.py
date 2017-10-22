@@ -26,8 +26,8 @@ import numpy as np
 from distutils.core import setup
 from Cython.Build import cythonize
 
-print('-Compiling cython function')
+# print('-Compiling cython function')
 
 # Compile the code:
-setup(ext_modules=cythonize('cython_leastsquares.pyx'),
+setup(ext_modules=cythonize('./pyprf/analysis/cython_leastsquares.pyx'),
       include_dirs=[np.get_include()])
