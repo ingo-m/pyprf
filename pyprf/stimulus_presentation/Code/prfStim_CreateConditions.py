@@ -17,7 +17,7 @@ OutFolderPath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 OutFolderPath = os.path.join(OutFolderPath, 'Conditions')
 
 # set the TR
-TR = 1.20
+TR = 2.079
 # set the target duration in [s]
 TargetDuration = 0.3
 
@@ -33,7 +33,7 @@ NrNullFixStart = 8
 # number of TRs of rest at end of experiment
 NrNullFixEnd = 8
 # number of TRs of rest during the experiment (if not desired set to zero)
-NrNullFixBetween = 50
+NrNullFixBetween = 0
 if NrNullFixBetween > 0:
     # avoid that two rest periods can occur immdetialey after each other?
     lgcRep = True
