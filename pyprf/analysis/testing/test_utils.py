@@ -4,7 +4,7 @@ import os
 from os.path import isfile, join
 import numpy as np
 from .. import pyprf_main
-from .. import utilities
+from .. import utilities as util
 from cython_leastsquares_setup_call import setup_cython
 
 
@@ -17,6 +17,20 @@ strDir = os.path.dirname(os.path.abspath(__file__))
 def test_main():
     """Run main pyprf function and compare results with template."""
     # --------------------------------------------------------------------------
+    # *** Preparations
+
+    # Decimal places to round before comparing template and test results:
+    varRnd = 3
+
+    # Load template result:
+    aryTmplR2, _, _ = util.load_nii((strDir
+                                     + '/exmpl_data_results_R2.nii.gz'))
+
+    # Round template reults:
+    aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=varRnd)
+    # --------------------------------------------------------------------------
+
+    # --------------------------------------------------------------------------
     # *** Test numpy version
 
     # Path of config file for tests:
@@ -26,19 +40,14 @@ def test_main():
     pyprf_main.pyprf(strCsvCnfgNp, lgcTest=True)
 
     # Load result:
-    aryTestR2, _, _ = utilities.load_nii((strDir
-                                          + '/result/pRF_test_results_R2.nii'))
+    aryTestNpR2, _, _ = util.load_nii((strDir
+                                       + '/result/pRF_test_results_np_R2.nii'))
 
-    # Load result templates:
-    aryTmplR2, _, _ = utilities.load_nii((strDir
-                                          + '/exmpl_data_results_R2.nii.gz'))
-
-    # Round template and test results:
-    aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=4)
-    aryTestR2 = np.around(aryTestR2.astype(np.float32), decimals=4)
+    # Round test results:
+    aryTestNpR2 = np.around(aryTestNpR2.astype(np.float32), decimals=varRnd)
 
     # Test whether the template and test results correspond:
-    lgcTestNp = np.all(np.equal(aryTmplR2, aryTestR2))
+    lgcTestNp = np.all(np.equal(aryTmplR2, aryTestNpR2))
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
@@ -51,19 +60,34 @@ def test_main():
     pyprf_main.pyprf(strCsvCnfgCy, lgcTest=True)
 
     # Load result:
-    aryTestR2, _, _ = utilities.load_nii((strDir
-                                          + '/result/pRF_test_results_R2.nii'))
+    aryTestCyR2, _, _ = util.load_nii((strDir
+                                       + '/result/pRF_test_results_cy_R2.nii'))
 
-    # Load result templates:
-    aryTmplR2, _, _ = utilities.load_nii((strDir
-                                          + '/exmpl_data_results_R2.nii.gz'))
-
-    # Round template and test results:
-    aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=3)
-    aryTestR2 = np.around(aryTestR2.astype(np.float32), decimals=3)
+    # Round test results:
+    aryTestCyR2 = np.around(aryTestCyR2.astype(np.float32), decimals=varRnd)
 
     # Test whether the template and test results correspond:
-    lgcTestCy = np.all(np.equal(aryTmplR2, aryTestR2))
+    lgcTestCy = np.all(np.equal(aryTmplR2, aryTestCyR2))
+    # --------------------------------------------------------------------------
+
+    # --------------------------------------------------------------------------
+    # *** Test tensorflow version
+
+    # Path of config file for tests:
+    strCsvCnfgTf = (strDir + '/config_testing_tensorflow.csv')
+
+    # Call main pyprf function:
+    pyprf_main.pyprf(strCsvCnfgTf, lgcTest=True)
+
+    # Load result:
+    aryTestTfR2, _, _ = util.load_nii((strDir
+                                       + '/result/pRF_test_results_tf_R2.nii'))
+
+    # Round test results:
+    aryTestTfR2 = np.around(aryTestTfR2.astype(np.float32), decimals=varRnd)
+
+    # Test whether the template and test results correspond:
+    lgcTestTf = np.all(np.equal(aryTmplR2, aryTestTfR2))
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
@@ -85,4 +109,4 @@ def test_main():
             os.remove((strDirRes + '/' + strTmp))
     # --------------------------------------------------------------------------
 
-    assert (lgcTestNp and lgcTestCy)
+    assert (lgcTestNp and lgcTestCy and lgcTestTf)

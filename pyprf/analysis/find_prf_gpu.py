@@ -259,6 +259,18 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
     # Reduce logging verbosity:
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+    # Check whether GPU is available. Otherwise, CPU will be used. Whether the
+    # GPU availability is inferred from an environmental variable:
+    strDevice = os.environ.get('CUDA_VISIBLE_DEVICES')
+    if strDevice is None:
+        lgcGpu = False
+        strTmp = ('---WARNING: Environmental variable CUDA_VISIBLE_DEVICES \n'
+                  + '   is not defined, assuming GPU is not available. \n'
+                  + '   Will use CPU instead.')
+        print(strTmp)
+    else:
+        lgcGpu = True
+
     # -------------------------------------------------------------------------
     # *** Prepare status indicator
 
@@ -368,8 +380,15 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
 
             # Chunk of functional data:
             aryTmp01 = np.copy(lstFunc[idxChnk])
-            with tf.device('/gpu:0'):
-                objFunc = tf.Variable(aryTmp01)
+
+            # Place functional data on GPU, if available:
+            if lgcGpu:
+                with tf.device('/gpu:0'):
+                    objFunc = tf.Variable(aryTmp01)
+            else:
+                # Otherwise, use CPU:
+                with tf.device('/cpu:0'):
+                    objFunc = tf.Variable(aryTmp01)
 
             # The computational graph. Operation that solves matrix (in the
             # least squares sense), and calculates residuals along time
@@ -400,8 +419,16 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
                                        axis=0
                                        )
 
-            # Variables need to be (re-)initialised:
-            objSess.run(tf.global_variables_initializer())
+            # Use GPU, if available:
+            if lgcGpu:
+                with tf.device('/gpu:0'):
+                    # Variables need to be (re-)initialised:
+                    objSess.run(tf.global_variables_initializer())
+            else:
+                # If GPU is not available, use CPU:
+                with tf.device('/cpu:0'):
+                    # Variables need to be (re-)initialised:
+                    objSess.run(tf.global_variables_initializer())
 
             # Mark graph as read-only (would throw an error in case of memory
             # leak):
