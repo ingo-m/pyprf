@@ -19,8 +19,8 @@
 
 import os
 import numpy as np
-import tensorflow as tf
 import threading
+import tensorflow as tf
 
 
 def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
