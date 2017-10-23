@@ -1,4 +1,4 @@
-# pyprf
+# PyPRF
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.835162.svg)](https://doi.org/10.5281/zenodo.835162)
 [![Build Status](https://travis-ci.org/ingo-m/pyprf.svg?branch=master)](https://travis-ci.org/ingo-m/pyprf)
 [![codecov](https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg)](https://codecov.io/gh/ingo-m/pyprf)
