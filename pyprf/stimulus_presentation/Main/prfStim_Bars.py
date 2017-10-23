@@ -113,8 +113,8 @@ logging.console.setLevel(logging.WARNING)  # set console to receive warnings
 # set monitor information:
 distanceMon = 99  # [99] in scanner
 widthMon = 30  # [30] in scanner
-PixW = 1920.0  # [1920.0] in scanner
-PixH = 1200.0  # [1200.0] in scanner
+PixW = 1920  # [1920.0] in scanner
+PixH = 1200  # [1200.0] in scanner
 
 moni = monitors.Monitor('testMonitor', width=widthMon, distance=distanceMon)
 moni.setSizePix([PixW, PixH])  # [1920.0, 1080.0] in psychoph lab
@@ -293,7 +293,7 @@ durations = np.arange(ExpectedTR, ExpectedTR*NrOfVols + ExpectedTR, ExpectedTR)
 totalTime = ExpectedTR*NrOfVols
 
 # how many frames b or w? derive from reversal frequency
-numFrame = round((1/(tempCyc*2))/frameDur)
+numFrame = int(round((1/(tempCyc*2))/frameDur))
 
 # create clock and Landolt clock
 clock = core.Clock()
