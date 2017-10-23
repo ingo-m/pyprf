@@ -6,7 +6,7 @@
 
 <img src="logo/logo.png" width=200 align="right" />
 
-A free & open source *python tool for population receptive field (PRF) analysis* consisting of two main parts:
+A free & open source *python package* for *population receptive field (PRF) analysis* consisting of two main parts:
 
 ### 1. Stimulus presentation 
 Present visual stimuli during retinotopic mapping functional magnetic resonance imaging (fMRI) experiments. The stimuli consist of bars at different locations and orientations, filled with flickering black and white checkerboards. It is important that the participant stays fixated throughout the experiment. Therefore, we included a central fixation task. The fixation dot occasionally changes its colour, and the task is to press a button (number ```1```) in response. At the end of the presentation, the participant's hit rate is provided as feedback.
