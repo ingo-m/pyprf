@@ -3,7 +3,6 @@
 [![codecov](https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg)](https://codecov.io/gh/ingo-m/pyprf)
 
 # PyPRF
-
 <img src="logo/logo.png" width=200 align="right" />
 
 A free & open source *python package* for *population receptive field (PRF) analysis*. This package is mainly developed for functional magnetic resonance imaging (fMRI) experiments. There are two main parts:
