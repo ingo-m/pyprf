@@ -1,14 +1,15 @@
-# PyPRF
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.835162.svg)](https://doi.org/10.5281/zenodo.835162)
 [![Build Status](https://travis-ci.org/ingo-m/pyprf.svg?branch=master)](https://travis-ci.org/ingo-m/pyprf)
 [![codecov](https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg)](https://codecov.io/gh/ingo-m/pyprf)
+
+# PyPRF
 
 <img src="logo/logo.png" width=200 align="right" />
 
 A free & open source *python tool for population receptive field (PRF) analysis* consisting of two main parts:
 
-### 1. Stimulus presentation  
-A tool for presentation of visual stimuli during a retinotopic mapping functional magnetic resonance imaging (fMRI) experiment. The stimuli consist of bars at different locations and orientation, filled with flickering black and white checkerboards. It is important that the participant stays fixated at the central fixation dot throughout the experiment. Therefore, we included a fixation task. The fixation dot sometimes changes its colour, and the participant's task is to press a button (number '1') in response. At the end of the presentation, feedback is provided as to how many targets the participant detected.
+### 1. Stimulus presentation 
+Present visual stimuli during retinotopic mapping functional magnetic resonance imaging (fMRI) experiments. The stimuli consist of bars at different locations and orientations, filled with flickering black and white checkerboards. It is important that the participant stays fixated throughout the experiment. Therefore, we included a central fixation task. The fixation dot occasionally changes its colour, and the task is to press a button (number ```1```) in response. At the end of the presentation, the participant's hit rate is provided as feedback.
 
 ### 2. Data analysis  
 Analysis tools for fMRI data from retinotopic mapping experiment. A PRF is estimated for each voxel (see [1]). The pRF model used here is a 2D Gaussian; the free parameters are the Gaussian's x- and y-position, and its width (SD). This rather simple pRF model is best suited for early visual cortex (higher cortical areas may require more complex models).
