@@ -395,33 +395,38 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     # *************************************************************************
     # ***  Spatial smoothing of fMRI data
 
-    def funcSmthSpt(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
-        """
-        Apply spatial smoothing to the input data.
+    # NOTE: This function is not used; because of memory limitations the
+    # spatial smoothing should not be parallelised over volumes. The spatial
+    # smoothing is performed below without a parallelisation wrapper, using a
+    # direct call to the respective numpy function.
 
-        The extent of smoothing needs to be specified as an input parameter.
-        """
-        # Number of time points in this chunk:
-        varNumVol = aryFuncChnk.shape[3]
+    # def funcSmthSpt(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
+    #     """
+    #     Apply spatial smoothing to the input data.
 
-        # Input data should already be float32. Just to be sure:
-        aryFuncChnk = aryFuncChnk.astype(np.float32, copy=False)
+    #     The extent of smoothing needs to be specified as an input parameter.
+    #     """
+    #     # Number of time points in this chunk:
+    #     varNumVol = aryFuncChnk.shape[3]
 
-        # Loop through volumes:
-        for idxVol in range(0, varNumVol):
+    #     # Input data should already be float32. Just to be sure:
+    #     aryFuncChnk = aryFuncChnk.astype(np.float32, copy=False)
 
-            aryFuncChnk[:, :, :, idxVol] = gaussian_filter(
-                aryFuncChnk[:, :, :, idxVol],
-                varSdSmthSpt,
-                order=0,
-                mode='nearest',
-                truncate=4.0).astype(np.float32, copy=False)
+    #     # Loop through volumes:
+    #     for idxVol in range(0, varNumVol):
 
-        # Output list:
-        lstOut = [idxPrc,
-                  aryFuncChnk]
+    #         aryFuncChnk[:, :, :, idxVol] = gaussian_filter(
+    #             aryFuncChnk[:, :, :, idxVol],
+    #             varSdSmthSpt,
+    #             order=0,
+    #             mode='nearest',
+    #             truncate=4.0).astype(np.float32, copy=False)
 
-        queOut.put(lstOut)
+    #     # Output list:
+    #     lstOut = [idxPrc,
+    #               aryFuncChnk]
+
+    #     queOut.put(lstOut)
     # *************************************************************************
 
     # *************************************************************************
