@@ -228,105 +228,105 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     # *************************************************************************
     # *** Generic function for parallelisation over volumes
 
-    def funcParVol(funcIn, aryData, varSdSmthSpt, varPar):
-        """
-        Parallelize over another function.
+    # def funcParVol(funcIn, aryData, varSdSmthSpt, varPar):
+    #     """
+    #     Parallelize over another function.
 
-        Data is chunked into separate volumes.
-        """
-        # Shape of input data:
-        vecInShp = aryData.shape
+    #     Data is chunked into separate volumes.
+    #     """
+    #     # Shape of input data:
+    #     vecInShp = aryData.shape
 
-        # Number of volumes:
-        varNumVol = vecInShp[3]
+    #     # Number of volumes:
+    #     varNumVol = vecInShp[3]
 
-        # Empty list for results:
-        lstResPar = [None] * varPar
+    #     # Empty list for results:
+    #     lstResPar = [None] * varPar
 
-        # Empty list for processes:
-        lstPrcs = [None] * varPar
+    #     # Empty list for processes:
+    #     lstPrcs = [None] * varPar
 
-        # Create a queue to put the results in:
-        queOut = mp.Queue()
+    #     # Create a queue to put the results in:
+    #     queOut = mp.Queue()
 
-        # List into which the chunks of data for the parallel processes will be
-        # put:
-        lstFunc = [None] * varPar
+    #     # List into which the chunks of data for the parallel processes will
+    #     # be put:
+    #     lstFunc = [None] * varPar
 
-        # Vector with the indicies at which the data will be separated in order
-        # to be chunked up for the parallel processes:
-        vecIdxChnks = np.linspace(0,
-                                  varNumVol,
-                                  num=varPar,
-                                  endpoint=False)
-        vecIdxChnks = np.hstack((vecIdxChnks, varNumVol))
+    #     # Vector with the indicies at which the data will be separated in
+    #     # order to be chunked up for the parallel processes:
+    #     vecIdxChnks = np.linspace(0,
+    #                               varNumVol,
+    #                               num=varPar,
+    #                               endpoint=False)
+    #     vecIdxChnks = np.hstack((vecIdxChnks, varNumVol))
 
-        # Put data into chunks:
-        for idxChnk in range(0, varPar):
-            # Index of first element to be included in current chunk:
-            varTmpChnkSrt = int(vecIdxChnks[idxChnk])
-            # Index of last element to be included in current chunk:
-            varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-            # Put array chunk into list:
-            lstFunc[idxChnk] = aryData[:, :, :, varTmpChnkSrt:varTmpChnkEnd]
+    #     # Put data into chunks:
+    #     for idxChnk in range(0, varPar):
+    #         # Index of first element to be included in current chunk:
+    #         varTmpChnkSrt = int(vecIdxChnks[idxChnk])
+    #         # Index of last element to be included in current chunk:
+    #         varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
+    #         # Put array chunk into list:
+    #         lstFunc[idxChnk] = aryData[:, :, :, varTmpChnkSrt:varTmpChnkEnd]
 
-        # We don't need the original array with the functional data anymore:
-        del(aryData)
+    #     # We don't need the original array with the functional data anymore:
+    #     del(aryData)
 
-        print('------------Creating parallel processes')
+    #     print('------------Creating parallel processes')
 
-        # Create processes:
-        for idxPrc in range(0, varPar):
-            lstPrcs[idxPrc] = mp.Process(target=funcIn,
-                                         args=(idxPrc,
-                                               lstFunc[idxPrc],
-                                               varSdSmthSpt,
-                                               queOut))
-            # Daemon (kills processes when exiting):
-            lstPrcs[idxPrc].Daemon = True
+    #     # Create processes:
+    #     for idxPrc in range(0, varPar):
+    #         lstPrcs[idxPrc] = mp.Process(target=funcIn,
+    #                                      args=(idxPrc,
+    #                                            lstFunc[idxPrc],
+    #                                            varSdSmthSpt,
+    #                                            queOut))
+    #         # Daemon (kills processes when exiting):
+    #         lstPrcs[idxPrc].Daemon = True
 
-        # Start processes:
-        for idxPrc in range(0, varPar):
-            lstPrcs[idxPrc].start()
+    #     # Start processes:
+    #     for idxPrc in range(0, varPar):
+    #         lstPrcs[idxPrc].start()
 
-        # Collect results from queue:
-        for idxPrc in range(0, varPar):
-            lstResPar[idxPrc] = queOut.get(True)
+    #     # Collect results from queue:
+    #     for idxPrc in range(0, varPar):
+    #         lstResPar[idxPrc] = queOut.get(True)
 
-        # Join processes:
-        for idxPrc in range(0, varPar):
-            lstPrcs[idxPrc].join()
+    #     # Join processes:
+    #     for idxPrc in range(0, varPar):
+    #         lstPrcs[idxPrc].join()
 
-        print('------------Post-process data from parallel function')
+    #     print('------------Post-process data from parallel function')
 
-        # Create list for vectors with results, in order to put the results
-        # into the correct order:
-        lstRes = [None] * varPar
+    #     # Create list for vectors with results, in order to put the results
+    #     # into the correct order:
+    #     lstRes = [None] * varPar
 
-        # Put output into correct order:
-        for idxRes in range(0, varPar):
+    #     # Put output into correct order:
+    #     for idxRes in range(0, varPar):
 
-            # Index of results (first item in output list):
-            varTmpIdx = lstResPar[idxRes][0]
+    #         # Index of results (first item in output list):
+    #         varTmpIdx = lstResPar[idxRes][0]
 
-            # Put results into list, in correct order:
-            lstRes[varTmpIdx] = lstResPar[idxRes][1]
+    #         # Put results into list, in correct order:
+    #         lstRes[varTmpIdx] = lstResPar[idxRes][1]
 
-        # Merge output vectors (into the same order with which they were put
-        # into this function):
-        aryRes = np.array([], dtype=np.float32).reshape(vecInShp[0],
-                                                        vecInShp[1],
-                                                        vecInShp[2],
-                                                        0)
-        for idxRes in range(0, varPar):
-            aryRes = np.append(aryRes, lstRes[idxRes], axis=3)
+    #     # Merge output vectors (into the same order with which they were put
+    #     # into this function):
+    #     aryRes = np.array([], dtype=np.float32).reshape(vecInShp[0],
+    #                                                     vecInShp[1],
+    #                                                     vecInShp[2],
+    #                                                     0)
+    #     for idxRes in range(0, varPar):
+    #         aryRes = np.append(aryRes, lstRes[idxRes], axis=3)
 
-        # Delete unneeded large objects:
-        del(lstRes)
-        del(lstResPar)
+    #     # Delete unneeded large objects:
+    #     del(lstRes)
+    #     del(lstResPar)
 
-        # And... done.
-        return aryRes
+    #     # And... done.
+    #     return aryRes
     # *************************************************************************
 
     # *************************************************************************
