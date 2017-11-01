@@ -68,6 +68,14 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
                            tplVslSpcSze[1],
                            varNumVol))
 
+    # Open first image in order to check dimensions (greyscale or RGB, i.e. 2D
+    # or 3D).
+    objIm = Image.open(lstPngPaths[0])
+    aryTest = np.array(objIm.resize((objIm.size[0], objIm.size[1]),
+                                    Image.ANTIALIAS))
+    varNumDim = aryTest.ndim
+    del(aryTest)
+
     # Loop trough PNG files:
     for idx01 in range(0, varNumVol):
 
@@ -80,8 +88,20 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
         objIm = objIm.resize((tplVslSpcSze[0],
                               tplVslSpcSze[1]),
                              resample=Image.NEAREST)
-        aryPngData[:, :, idx01] = np.array(objIm.resize(
-            (objIm.size[0], objIm.size[1]), Image.ANTIALIAS))[:, :, 0]
+
+        # Casting of array depends on dimensionality (greyscale or RGB, i.e. 2D
+        # or 3D):
+        if varNumDim == 2:
+            aryPngData[:, :, idx01] = np.array(objIm.resize(
+                (objIm.size[0], objIm.size[1]), Image.ANTIALIAS))[:, :]
+        elif varNumDim == 3:
+            aryPngData[:, :, idx01] = np.array(objIm.resize(
+                (objIm.size[0], objIm.size[1]), Image.ANTIALIAS))[:, :, 0]
+        else:
+            # Error message:
+            strErrMsg = ('ERROR: PNG files for model creation need to be RGB '
+                         + 'or greyscale.')
+            raise ValueError(strErrMsg)
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
     aryPngData = (aryPngData > 200).astype(np.int8)
