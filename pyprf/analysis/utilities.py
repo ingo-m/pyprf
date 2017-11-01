@@ -69,7 +69,7 @@ def load_nii(strPathIn, varSzeThr=1000.0):
         # Load large nii file
 
         print(('---------Large file size ('
-              + str(varNiiSze)
+              + str(np.around(varNiiSze))
               + ' MB), reading volume-by-volume'))
 
         # Get image dimensions:
