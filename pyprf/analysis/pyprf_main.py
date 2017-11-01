@@ -335,7 +335,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                                 header=hdrMsk
                                 )
         # Save nii:
-        strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii')
+        strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii.gz')
         nb.save(niiOut, strTmp)
     # *************************************************************************
 

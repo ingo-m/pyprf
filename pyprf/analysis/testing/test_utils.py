@@ -41,7 +41,8 @@ def test_main():
 
     # Load result:
     aryTestNpR2, _, _ = util.load_nii((strDir
-                                       + '/result/pRF_test_results_np_R2.nii'))
+                                       + '/result/'
+                                       + 'pRF_test_results_np_R2.nii.gz'))
 
     # Round test results:
     aryTestNpR2 = np.around(aryTestNpR2.astype(np.float32), decimals=varRnd)
@@ -61,7 +62,8 @@ def test_main():
 
     # Load result:
     aryTestCyR2, _, _ = util.load_nii((strDir
-                                       + '/result/pRF_test_results_cy_R2.nii'))
+                                       + '/result/'
+                                       + 'pRF_test_results_cy_R2.nii.gz'))
 
     # Round test results:
     aryTestCyR2 = np.around(aryTestCyR2.astype(np.float32), decimals=varRnd)
@@ -81,7 +83,8 @@ def test_main():
 
     # Load result:
     aryTestTfR2, _, _ = util.load_nii((strDir
-                                       + '/result/pRF_test_results_tf_R2.nii'))
+                                       + '/result/'
+                                       + 'pRF_test_results_tf_R2.nii.gz'))
 
     # Round test results:
     aryTestTfR2 = np.around(aryTestTfR2.astype(np.float32), decimals=varRnd)
