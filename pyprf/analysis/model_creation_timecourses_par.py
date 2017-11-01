@@ -69,9 +69,7 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     # Loop through combinations of model parameters:
     for idxMdl in range(0, varChnkSze):
 
-        # Depending on the relation between the number of x- and y-positions
-        # at which to create pRF models and the size of the super-sampled
-        # visual space, the indicies need to be rounded:
+        # Spatial parameters of current model:
         varTmpX = aryMdlParamsChnk[idxMdl, 1]
         varTmpY = aryMdlParamsChnk[idxMdl, 2]
         varTmpSd = aryMdlParamsChnk[idxMdl, 3]
