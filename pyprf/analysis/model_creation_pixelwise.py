@@ -19,8 +19,8 @@
 
 import numpy as np
 import multiprocessing as mp
-from model_creation_pixelwise_par import conv_par
-from utilities import crt_hrf
+from pyprf.analysis.model_creation_pixelwise_par import conv_par
+from pyprf.analysis.utilities import crt_hrf
 
 
 def conv_dsgn_mat(aryPngData, varTr, varPar=10):
