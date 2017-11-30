@@ -7,7 +7,8 @@ python:
   - 2.7
 install:  # install dependencies
   - pip install -r requirements.txt
-  - pip install .
+  - python setup.py build_ext
+  - python setup.py install
 script:  # actual test
   - py.test --cov=pyprf
 after_success:
