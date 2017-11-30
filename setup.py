@@ -6,7 +6,7 @@ For development installation:
 """
 
 from setuptools import setup
-
+from Cython.Build import cythonize
 
 with open('README.md') as f:
     long_description = f.read()
@@ -23,6 +23,7 @@ setup(name='pyprf',
                         'tensorflow'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
+      ext_modules=cythonize("pyprf/analysis/cython_leastsquares.pyx"),
       entry_points={
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
