@@ -7,19 +7,21 @@
 
 A free & open source *python package* for *population receptive field (PRF) analysis*. This package is mainly developed for functional magnetic resonance imaging (fMRI) experiments. There are two main parts:
 
-### 1. Stimulus presentation 
+### 1. Stimulus presentation
 Present visual stimuli during retinotopic mapping experiments. The stimuli consist of bars at different locations and orientations, filled with flickering black and white checkerboards. It is important that the participant stays fixated throughout the experiment. Therefore, we included a central fixation task. The fixation dot occasionally changes its colour, and the task is to press a button (number ```1```) in response. At the end of the presentation, the participant's hit rate is provided as feedback.
 
 ### 2. Data analysis  
 Analysis tools for fMRI data from retinotopic mapping experiment. A PRF is estimated for each voxel (see [1]). The pRF model used here is a 2D Gaussian; the free parameters are the Gaussian's x- and y-position, and its width (SD). This rather simple pRF model is best suited for early visual cortex (higher cortical areas may require more complex models).
 
-The analysis can be carried out in three different ways: using [numpy](http://www.numpy.org/), [cython](http://cython.org/), or [tensorflow](https://www.tensorflow.org/). All three approaches yield the same results, but differ in their dependencies and computational time: 
-- **Numpy** does not require any dependencies other than standard packages (see below table for details).
-- **Cython** offers a considerable speedup. Cython package needs to be installed and the respective cython code needs to be compiled (see below for instructions). _This approach is recommended for most users_.
-- **Tensorflow** may outperform the other options in terms of speed (depending on the available hardware) by running the GLM model fitting on the graphics processing unit (GPU). However, tensorflow needs to be installed and configured to use the GPU (including respective drivers).
+The analysis can be carried out in three different ways: using [numpy](http://www.numpy.org/), [cython](http://cython.org/), or [tensorflow](https://www.tensorflow.org/). All three approaches yield the same results, but differ in their dependencies and computational time:
+- **Numpy** uses numpy for the model fitting. Should work out of the box.
+- **Cython** offers a considerable speedup by using compiled cython code for model fitting. Should work out of the box. _This approach is recommended for most users_.
+- **Tensorflow** may outperform the other options in terms of speed (depending on the available hardware) by running the GLM model fitting on the graphics processing unit (GPU). However, in order for this to work, tensorflow needs to be configured to use the GPU (including respective drivers). See the [tensorflow](https://www.tensorflow.org/) website for information on how to configure your system to use the GPU. If you do not configure tensorflow to use the GPU, the analysis should still run without error on the CPU. Because this analysis may run single-threaded, it would be slow.
 
 ## Dependencies
 [**Python 2.7**](https://www.python.org/download/releases/2.7/)
+
+If you install `pyprf` using `pip` (as described below), the following dependencies are installed automatically - you do not have to take care of this yourself.
 
 | Stimulus presentation                                 | Tested version |
 |-------------------------------------------------------|----------------|
@@ -33,9 +35,9 @@ The analysis can be carried out in three different ways: using [numpy](http://ww
 | [NumPy](http://www.numpy.org/)                        | 1.13.3         |
 | [SciPy](http://www.scipy.org/)                        | 0.19.1         |
 | [NiBabel](http://nipy.org/nibabel/)                   | 2.1.0          |
-| [Cython](http://cython.org/) (optional¹)              | 0.27.1         |
+| [Cython](http://cython.org/)¹                         | 0.27.1         |
 | [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 4.3.0          |
-| [Tensorflow](https://www.tensorflow.org/) (optional²) | 1.2.0          |
+| [Tensorflow](https://www.tensorflow.org/)²            | 1.2.0          |
 
 ¹: For considerably faster performance
 
@@ -48,7 +50,7 @@ The analysis can be carried out in three different ways: using [numpy](http://ww
 2. Run the installer:
 
 ```bash
-pip install /path/to/pyprf
+pip install -e /path/to/pyprf
 ```
 
 3. Stimulus presentation:
@@ -73,16 +75,6 @@ In order to prepare the analysis, you need to run the stimulus presentation scri
 Now run the script either from command line or through the Psychoy GUI.
 
 The stimulus presentation log is created in the folder ```~/pyprf/pyprf/stimulus_presentation/Log_<participant_ID>/pRF_mapping_log/Frames/```.
-
-If you would like to use the cython functionality (for considerably faster performance), you need to run the cython setup script first (in order to compile the cython functions). Change directory to the analysis folder:
-``` bash
-cd ~/pyprf/pyprf/analysis
-```
-
-Compile the cython function:
-``` bash
-python cython_leastsquares_setup.py build_ext --inplace
-```
 
 The analysis parameters are set in a config file. An example file can be found at `~/pyprf/pyprf/analysis/config_default.csv`. See comments therein for more information.
 
