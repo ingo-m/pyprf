@@ -24,8 +24,8 @@ setup(name='pyprf',
                         'tensorflow'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
-      ext_modules=cythonize("pyprf/analysis/cython_leastsquares.pyx"),
-      include_dirs=[numpy.get_include()],
+      ext_modules=cythonize("prf/analysis/*.pyx",
+                            include_path=[numpy.get_include()]),
       entry_points={
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
