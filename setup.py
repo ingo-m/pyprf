@@ -36,10 +36,3 @@ setup(name='pyprf',
               'pyprf = pyprf.analysis.__main__:main',
               ]},
       )
-
-
-# Load module to setup python:
-from cython_leastsquares_setup_call import setup_cython  #noqa
-
-# Compile cython code:
-setup_cython()
