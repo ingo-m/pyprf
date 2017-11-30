@@ -6,8 +6,13 @@ For development installation:
 """
 
 from setuptools import setup
+from setuptools.extension import Extension
 from Cython.Build import cythonize
 import numpy
+
+extensions = [Extension("pyprf.analysis.cython_leastsquares",
+                        ["pyprf/analysis/cython_leastsquares.pyx"],
+                        include_dirs=[numpy.get_include()])]
 
 with open('README.md') as f:
     long_description = f.read()
@@ -24,8 +29,8 @@ setup(name='pyprf',
                         'tensorflow'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
-      ext_modules=cythonize("pyprf/analysis/*.pyx",
-                            include_path=[numpy.get_include()]),
+      setup_requires=['numpy', 'cython'],
+      ext_modules=cythonize(extensions),
       entry_points={
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
