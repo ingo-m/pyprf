@@ -10,7 +10,7 @@ A free & open source *python package* for *population receptive field (PRF) anal
 ### 1. Stimulus presentation
 Present visual stimuli during retinotopic mapping experiments. The stimuli consist of bars at different locations and orientations, filled with flickering black and white checkerboards. It is important that the participant stays fixated throughout the experiment. Therefore, we included a central fixation task. The fixation dot occasionally changes its colour, and the task is to press a button (number ```1```) in response. At the end of the presentation, the participant's hit rate is provided as feedback.
 
-### 2. Data analysis  
+### 2. Data analysis
 Analysis tools for fMRI data from retinotopic mapping experiment. A PRF is estimated for each voxel (see [1]). The pRF model used here is a 2D Gaussian; the free parameters are the Gaussian's x- and y-position, and its width (SD). This rather simple pRF model is best suited for early visual cortex (higher cortical areas may require more complex models).
 
 The analysis can be carried out in three different ways: using [numpy](http://www.numpy.org/), [cython](http://cython.org/), or [tensorflow](https://www.tensorflow.org/). All three approaches yield the same results, but differ in their dependencies and computational time:
@@ -50,7 +50,9 @@ If you install `pyprf` using `pip` (as described below), the following dependenc
 2. Run the installer:
 
 ```bash
-pip install -e /path/to/pyprf
+cd /path/to/pyprf
+pip install -r requirements.txt
+pip install .
 ```
 
 3. Stimulus presentation:
@@ -61,7 +63,7 @@ You can call the presentation script from command line:
 python ~/pyprf/pyprf/stimulus_presentation/Main/prfStim_Bars.py
 ```
 
-Alternatively, you could start the Psychopy GUI and run the script form there (see [Psychopy documentation](http://www.Psychopy.org/documentation.html) for futher details).  
+Alternatively, you could start the Psychopy GUI and run the script form there (see [Psychopy documentation](http://www.Psychopy.org/documentation.html) for futher details).
 After starting the script you can enter *Participant ID* and *run number* in the general user interface (GUI). By default, the folder ```~/pyprf/pyprf/stimulus_presentation/Conditions/``` contains pseudo-randomised design matrices for 3 runs. In order to use these, enter '01', '02', or '03' in the respective field in the GUI. *If you would like to simply run the presentation one time, you can leave this setting at its default value ('01').*
 
 After starting the script, it will wait for a trigger signal from the fMRI scanner (default: keyboard button number ```5```).
