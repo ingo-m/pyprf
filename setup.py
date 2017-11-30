@@ -7,6 +7,7 @@ For development installation:
 
 from setuptools import setup
 from Cython.Build import cythonize
+import numpy
 
 with open('README.md') as f:
     long_description = f.read()
@@ -24,6 +25,7 @@ setup(name='pyprf',
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
       ext_modules=cythonize("pyprf/analysis/cython_leastsquares.pyx"),
+      include_dirs=[numpy.get_include()],
       entry_points={
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
