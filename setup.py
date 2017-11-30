@@ -18,7 +18,7 @@ with open('README.md') as f:
     long_description = f.read()
 
 setup(name='pyprf',
-      version='1.1.0',
+      version='1.1.1',
       description=('A free & open source python tool for population receptive \
                     field analysis of fMRI data.'),
       url='https://github.com/ingo-m/pyprf',
