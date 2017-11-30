@@ -24,7 +24,7 @@ setup(name='pyprf',
                         'tensorflow'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
-      ext_modules=cythonize("prf/analysis/*.pyx",
+      ext_modules=cythonize("pyprf/analysis/*.pyx",
                             include_path=[numpy.get_include()]),
       entry_points={
           'console_scripts': [
