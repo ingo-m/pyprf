@@ -52,8 +52,7 @@ If you install `pyprf` using `pip` (as described below), the following dependenc
 ```bash
 cd /path/to/pyprf
 pip install -r requirements.txt
-python setup.py build_ext
-python setup.py install
+pip install .
 ```
 
 3. Stimulus presentation:
