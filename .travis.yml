@@ -7,6 +7,7 @@ python:
   - 2.7
 install:  # install dependencies
   - pip install -r requirements.txt
+  - pip install -e pyprf
 script:  # actual test
   - py.test --cov=pyprf
 after_success:
