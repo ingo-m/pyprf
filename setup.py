@@ -5,13 +5,12 @@ For development installation:
     pip install -e /path/to/pRF_mapping
 """
 
-from setuptools import setup
-from setuptools.extension import Extension
-from Cython.Build import cythonize, build_ext
+from setuptools import setup, Extension
+from Cython.Build import cythonize
 import numpy
 
-extensions = [Extension("pyprf.analysis.*",
-                        ["./pyprf/analysis/*.pyx"],
+extensions = [Extension("pyprf.analysis.cython_leastsquares",
+                        ["pyprf/analysis/cython_leastsquares.pyx"],
                         include_dirs=[numpy.get_include()])]
 
 with open('README.md') as f:
@@ -31,7 +30,6 @@ setup(name='pyprf',
       long_description=long_description,
       setup_requires=['cython', 'numpy'],
       ext_modules=cythonize(extensions),
-      cmdclass={'build_ext': build_ext},
       entry_points={
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
