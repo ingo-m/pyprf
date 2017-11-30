@@ -19,10 +19,10 @@
 
 import numpy as np
 import nibabel as nb
-from model_creation_load_png import load_png
-from model_creation_pixelwise import conv_dsgn_mat
-from model_creation_timecourses import crt_prf_tcmdl
-from utilities import cls_set_config
+from pyprf.analysis.model_creation_load_png import load_png
+from pyprf.analysis.model_creation_pixelwise import conv_dsgn_mat
+from pyprf.analysis.model_creation_timecourses import crt_prf_tcmdl
+from pyprf.analysis.utilities import cls_set_config
 
 
 def model_creation(dicCnfg):

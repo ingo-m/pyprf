@@ -19,7 +19,7 @@
 
 import numpy as np
 import multiprocessing as mp
-from model_creation_timecourses_par import prf_par
+from pyprf.analysis.model_creation_timecourses_par import prf_par
 
 
 def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  #noqa

@@ -18,8 +18,8 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-from utilities import load_nii
-from preprocessing_par import pre_pro_par
+from pyprf.analysis.utilities import load_nii
+from pyprf.analysis.preprocessing_par import pre_pro_par
 
 
 def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,

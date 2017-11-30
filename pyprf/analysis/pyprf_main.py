@@ -28,12 +28,12 @@ import numpy as np
 import nibabel as nb
 import multiprocessing as mp
 
-from load_config import load_config
-from utilities import cls_set_config
+from pyprf.analysis.load_config import load_config
+from pyprf.analysis.utilities import cls_set_config
 
-from model_creation_main import model_creation
-from preprocessing_main import pre_pro_models
-from preprocessing_main import pre_pro_func
+from pyprf.analysis.model_creation_main import model_creation
+from pyprf.analysis.preprocessing_main import pre_pro_models
+from pyprf.analysis.preprocessing_main import pre_pro_func
 
 
 def pyprf(strCsvCnfg, lgcTest=False):  #noqa
