@@ -1,4 +1,4 @@
-nump>==1.13.3
+numpy>=1.13.3
 scipy>=0.19.1
 nibabel>=2.1.0
 pytest-cov>=2.5.1
