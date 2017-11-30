@@ -24,7 +24,7 @@ import nibabel as nb
 from scipy.stats import gamma
 
 
-def load_nii(strPathIn, varSzeThr=1000.0):
+def load_nii(strPathIn, varSzeThr=5000.0):
     """
     Load nii file.
 
