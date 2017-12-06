@@ -18,8 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-from utilities import cls_set_config
-from cython_leastsquares import cy_lst_sq
+from pyprf.analysis.utilities import cls_set_config
+from pyprf.analysis.cython_leastsquares import cy_lst_sq
 
 
 def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
