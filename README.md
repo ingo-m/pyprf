@@ -18,10 +18,62 @@ The analysis can be carried out in three different ways: using [numpy](http://ww
 - **Cython** offers a considerable speedup by using compiled cython code for model fitting. Should work out of the box. _This approach is recommended for most users_.
 - **Tensorflow** may outperform the other options in terms of speed (depending on the available hardware) by running the GLM model fitting on the graphics processing unit (GPU). However, in order for this to work, tensorflow needs to be configured to use the GPU (including respective drivers). See the [tensorflow](https://www.tensorflow.org/) website for information on how to configure your system to use the GPU. If you do not configure tensorflow to use the GPU, the analysis should still run without error on the CPU. Because this analysis may run single-threaded, it would be slow.
 
+## How to use
+
+1. Install `numpy`. For instance:
+
+```bash
+pip install numpy
+```
+ (Or, alternatively, if you're using conda, `conda install -c conda-forge numpy`.)
+
+
+2. Clone or download the repository:
+
+```bash
+git clone https://github.com/ingo-m/pyprf.git
+```
+
+3. Run the installer:
+
+```bash
+pip install /path/to/pyprf
+```
+
+4. Stimulus presentation:
+
+You can call the presentation script from command line:
+
+``` bash
+python ~/pyprf/pyprf/stimulus_presentation/Main/prfStim_Bars.py
+```
+
+Alternatively, you could start the Psychopy GUI and run the script form there (see [Psychopy documentation](http://www.Psychopy.org/documentation.html) for futher details).  
+After starting the script you can enter *Participant ID* and *run number* in the general user interface (GUI). By default, the folder ```~/pyprf/pyprf/stimulus_presentation/Conditions/``` contains pseudo-randomised design matrices for 3 runs. In order to use these, enter '01', '02', or '03' in the respective field in the GUI. *If you would like to simply run the presentation one time, you can leave this setting at its default value ('01').*
+
+After starting the script, it will wait for a trigger signal from the fMRI scanner (default: keyboard button number ```5```).
+
+You can interrupt the presentation by pressing ```ESC```.
+
+5. Data analysis:
+
+In order to prepare the analysis, you need to run the stimulus presentation script in *logging mode* in order to create a log of the stimulus presentation. Open ```~/pyprf/pyprf/stimulus_presentation/Main/prfStim_Bars.py``` in a text editor and set ```lgcLogMde = True```.
+
+Now run the script either from command line or through the Psychoy GUI.
+
+The stimulus presentation log is created in the folder ```~/pyprf/pyprf/stimulus_presentation/Log_<participant_ID>/pRF_mapping_log/Frames/```.
+
+The analysis parameters are set in a config file. An example file can be found at `~/pyprf/pyprf/analysis/config_default.csv`. See comments therein for more information.
+
+Run the analysis:
+``` bash
+pyprf -config /path/to/config.csv
+```
+
 ## Dependencies
 [**Python 2.7**](https://www.python.org/download/releases/2.7/)
 
-If you install `pyprf` using `pip` (as described below), the following dependencies are installed automatically - you do not have to take care of this yourself.
+If you install `pyprf` using `pip` (as described above), all of the following dependencies except for `numpy` are installed automatically - you do not have to take care of this yourself. Simply follow the above installation instructions.
 
 | Stimulus presentation                                 | Tested version |
 |-------------------------------------------------------|----------------|
@@ -42,46 +94,6 @@ If you install `pyprf` using `pip` (as described below), the following dependenc
 ¹: For considerably faster performance
 
 ²: Can yield fast performance, depending on hardware. However, requires  tensorflow to be configured for GPU usage (additional tensorflow specific dependencies, including GPU drivers).
-
-## How to use
-
-1. Clone or download the repository.
-
-2. Run the installer:
-
-```bash
-pip install -e /path/to/pyprf
-```
-
-3. Stimulus presentation:
-
-You can call the presentation script from command line:
-
-``` bash
-python ~/pyprf/pyprf/stimulus_presentation/Main/prfStim_Bars.py
-```
-
-Alternatively, you could start the Psychopy GUI and run the script form there (see [Psychopy documentation](http://www.Psychopy.org/documentation.html) for futher details).  
-After starting the script you can enter *Participant ID* and *run number* in the general user interface (GUI). By default, the folder ```~/pyprf/pyprf/stimulus_presentation/Conditions/``` contains pseudo-randomised design matrices for 3 runs. In order to use these, enter '01', '02', or '03' in the respective field in the GUI. *If you would like to simply run the presentation one time, you can leave this setting at its default value ('01').*
-
-After starting the script, it will wait for a trigger signal from the fMRI scanner (default: keyboard button number ```5```).
-
-You can interrupt the presentation by pressing ```ESC```.
-
-4. Data analysis:
-
-In order to prepare the analysis, you need to run the stimulus presentation script in *logging mode* in order to create a log of the stimulus presentation. Open ```~/pyprf/pyprf/stimulus_presentation/Main/prfStim_Bars.py``` in a text editor and set ```lgcLogMde = True```.
-
-Now run the script either from command line or through the Psychoy GUI.
-
-The stimulus presentation log is created in the folder ```~/pyprf/pyprf/stimulus_presentation/Log_<participant_ID>/pRF_mapping_log/Frames/```.
-
-The analysis parameters are set in a config file. An example file can be found at `~/pyprf/pyprf/analysis/config_default.csv`. See comments therein for more information.
-
-Run the analysis:
-``` bash
-pyprf -config /path/to/config.csv
-```
 
 ## Contributions
 
