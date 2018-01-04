@@ -98,3 +98,13 @@
         # Put super-sampled pixel time courses into array:
         aryPngDataHigh[:, :, idxVol] = aryResampled
     # *************************************************************************
+
+
+    # Check whether cython code has been compiled:
+    strPwd = os.path.dirname(os.path.abspath(__file__))
+    strCy = os.path.join(strPwd, 'cython_leastsquares.so')
+    if not os.path.isfile(strCy):
+        # Compile cython code:
+        from pyprf.analysis.cython_leastsquares_setup_call import setup_cython
+        setup_cython()
+
