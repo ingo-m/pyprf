@@ -13,11 +13,6 @@ Present visual stimuli during retinotopic mapping experiments. The stimuli consi
 ### 2. Data analysis  
 Analysis tools for fMRI data from retinotopic mapping experiment. A PRF is estimated for each voxel (see [1]). The pRF model used here is a 2D Gaussian; the free parameters are the Gaussian's x- and y-position, and its width (SD). This rather simple pRF model is best suited for early visual cortex (higher cortical areas may require more complex models).
 
-The analysis can be carried out in three different ways: using [numpy](http://www.numpy.org/), [cython](http://cython.org/), or [tensorflow](https://www.tensorflow.org/). All three approaches yield the same results, but differ in their dependencies and computational time:
-- **Numpy** uses numpy for the model fitting. Should work out of the box.
-- **Cython** offers a considerable speedup by using compiled cython code for model fitting. Should work out of the box. _This approach is recommended for most users_.
-- **Tensorflow** may outperform the other options in terms of speed (depending on the available hardware) by running the GLM model fitting on the graphics processing unit (GPU). However, in order for this to work, tensorflow needs to be configured to use the GPU (including respective drivers). See the [tensorflow](https://www.tensorflow.org/) website for information on how to configure your system to use the GPU. If you do not configure tensorflow to use the GPU, the analysis should still run without error on the CPU. Because this analysis may run single-threaded, it would be slow.
-
 ## How to use
 
 1. Install `numpy`. For instance:
@@ -94,6 +89,12 @@ If you install `pyprf` using `pip` (as described above), all of the following de
 ¹: For considerably faster performance
 
 ²: Can yield fast performance, depending on hardware. However, requires  tensorflow to be configured for GPU usage (additional tensorflow specific dependencies, including GPU drivers).
+
+The analysis can be carried out in three different ways: using [numpy](http://www.numpy.org/), [cython](http://cython.org/), or [tensorflow](https://www.tensorflow.org/). You can set this option in the `config.csv` file. All three approaches yield the same results, but differ in their dependencies and computational time:
+- **Numpy** uses numpy for the model fitting. Should work out of the box.
+- **Cython** offers a considerable speedup by using compiled cython code for model fitting. Should work out of the box. _This approach is recommended for most users_.
+- **Tensorflow** may outperform the other options in terms of speed (depending on the available hardware) by running the GLM model fitting on the graphics processing unit (GPU). However, in order for this to work, tensorflow needs to be configured to use the GPU (including respective drivers). See the [tensorflow](https://www.tensorflow.org/) website for information on how to configure your system to use the GPU. If you do not configure tensorflow to use the GPU, the analysis should still run without error on the CPU. Because this analysis may run single-threaded, it would be slow.
+Numpy is always required, no matter which option you choose.
 
 ## Contributions
 
