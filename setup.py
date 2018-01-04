@@ -5,8 +5,9 @@ For development installation:
     pip install -e /path/to/pRF_mapping
 """
 
-from setuptools import setup
+from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+
 
 class clssBldNmp(build_ext):
     """
@@ -29,12 +30,15 @@ class clssBldNmp(build_ext):
     https://stackoverflow.com/a/21621689
     https://seasonofcode.com/posts/how-to-add-custom-build-steps-and-commands-to-setuppy.html
     """
+
     def finalize_options(self):
+        """Workaround for numpy dependency of cython setup."""
         build_ext.finalize_options(self)
         # Prevent numpy from thinking it is still in its setup process:
         __builtins__.__NUMPY_SETUP__ = False
         import numpy
         self.include_dirs.append(numpy.get_include())
+
 
 with open('README.md') as f:
     long_description = f.read()
@@ -49,17 +53,22 @@ setup(name='pyprf',
       packages=['pyprf.analysis'],
       install_requires=['numpy', 'scipy', 'nibabel', 'pillow', 'cython',
                         'tensorflow'],
+      setup_requires=['numpy', 'cython'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
       entry_points={
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
               ]},
+      ext_modules=[Extension('pyprf.analysis.cython_leastsquares',
+                             ['pyprf/analysis/cython_leastsquares.pyx'],
+                             include_dirs=[numpy.get_include()]
+                             )],
       cmdclass={'build_ext': clssBldNmp},
       )
 
 # Load module to setup python:
-from cython_leastsquares_setup_call import setup_cython  #noqa
+# from cython_leastsquares_setup_call import setup_cython  #noqa
 
 # Compile cython code:
-setup_cython()
+# setup_cython()
