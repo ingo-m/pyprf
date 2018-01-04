@@ -23,6 +23,7 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import time
 import numpy as np
 import nibabel as nb
@@ -62,6 +63,14 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     # Load config parameters from dictionary into namespace:
     cfg = cls_set_config(dicCnfg)
+
+    # Check whether cython code has been compiled:
+    strPwd = os.path.dirname(os.path.abspath(__file__))
+    strCy = os.path.join(strPwd, 'cython_leastsquares.so')
+    if not os.path.isfile(strCy):
+        # Compile cython code:
+        from pyprf.analysis.cython_leastsquares_setup_call import setup_cython
+        setup_cython()
 
     # Conditional imports:
     if cfg.strVersion == 'gpu':

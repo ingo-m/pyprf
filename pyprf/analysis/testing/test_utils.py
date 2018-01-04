@@ -5,10 +5,10 @@ from os.path import isfile, join
 import numpy as np
 from pyprf.analysis import pyprf_main
 from pyprf.analysis import utilities as util
-from cython_leastsquares_setup_call import setup_cython
+from pyprf.analysis.cython_leastsquares_setup_call import setup_cython
 
-
-# setup_cython()
+# Compile cython code:
+setup_cython()
 
 # Get directory of this file:
 strDir = os.path.dirname(os.path.abspath(__file__))
