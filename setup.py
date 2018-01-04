@@ -53,18 +53,18 @@ setup(name='pyprf',
       packages=['pyprf.analysis'],
       install_requires=['numpy', 'scipy', 'nibabel', 'pillow', 'cython',
                         'tensorflow'],
-      setup_requires=['numpy', 'cython'],
+      setup_requires=['numpy'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
       entry_points={
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
               ]},
+      cmdclass={'build_ext': clssBldNmp},
       ext_modules=[Extension('pyprf.analysis.cython_leastsquares',
                              ['pyprf/analysis/cython_leastsquares.pyx'],
                              include_dirs=[numpy.get_include()]
                              )],
-      cmdclass={'build_ext': clssBldNmp},
       )
 
 # Load module to setup python:
