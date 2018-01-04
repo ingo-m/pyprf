@@ -12,7 +12,7 @@ Use config.py to set analysis parameters.
 
 import os
 import argparse
-from pyprf.pyprf_main import pyprf
+from pyprf.analysis.pyprf_main import pyprf
 from pyprf import __version__
 
 
