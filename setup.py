@@ -17,6 +17,7 @@ setup(name='pyprf',
       description=('A free & open source python tool for population receptive \
                     field analysis of fMRI data.'),
       url='https://github.com/ingo-m/pyprf',
+      download_url='https://github.com/ingo-m/pyprf/archive/v1.2.0.tar.gz',
       author='Ingo Marquardt',
       license='GNU General Public License Version 3',
       install_requires=['numpy', 'scipy', 'nibabel', 'pillow', 'cython',
