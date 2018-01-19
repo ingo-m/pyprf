@@ -15,25 +15,28 @@ Analysis tools for fMRI data from retinotopic mapping experiment. A PRF is estim
 
 ## How to use
 
-1. Install `numpy`. For instance:
+1. The stimulus presentation is implemented in [Psychopy](http://psychopy.org/), so if you would like to run the experiment, you first need to install it (if you just want to run the analysis, you can skip this step). On [debian](https://www.debian.org/), Psychopy can easily be installed using `apt-get`:
+
+```bash
+sudo apt-get install psychopy
+```
+
+If you're running some other operating system, please refer to the [Psychopy website](http://psychopy.org/).
+
+2. Install `numpy`. For instance:
 
 ```bash
 pip install numpy
 ```
  (Or, alternatively, if you're using conda, `conda install -c conda-forge numpy`.)
 
-
-2. Clone or download the repository:
-
-```bash
-git clone https://github.com/ingo-m/pyprf.git
-```
-
-3. Run the installer:
+3. The `pyprf` package can directly be installed from PyPI, in the following way:
 
 ```bash
-pip install /path/to/pyprf
+pip install pyprf
 ```
+
+(Alternatively, you could also installed it from the repository, like this: `git clone https://github.com/ingo-m/pyprf.git` followed by `pip install /path/to/pyprf`.)
 
 4. Stimulus presentation:
 
@@ -43,8 +46,7 @@ You can call the presentation script from command line:
 python ~/pyprf/pyprf/stimulus_presentation/Main/prfStim_Bars.py
 ```
 
-Alternatively, you could start the Psychopy GUI and run the script form there (see [Psychopy documentation](http://www.Psychopy.org/documentation.html) for futher details).  
-After starting the script you can enter *Participant ID* and *run number* in the general user interface (GUI). By default, the folder ```~/pyprf/pyprf/stimulus_presentation/Conditions/``` contains pseudo-randomised design matrices for 3 runs. In order to use these, enter '01', '02', or '03' in the respective field in the GUI. *If you would like to simply run the presentation one time, you can leave this setting at its default value ('01').*
+Alternatively, you could start the Psychopy GUI and run the script form there (see [Psychopy documentation](http://www.Psychopy.org/documentation.html) for futher details). After starting the script you can enter *Participant ID* and *run number* in the general user interface (GUI). By default, the folder ```~/pyprf/pyprf/stimulus_presentation/Conditions/``` contains pseudo-randomised design matrices for 3 runs. In order to use these, enter '01', '02', or '03' in the respective field in the GUI. *If you would like to simply run the presentation one time, you can leave this setting at its default value ('01').*
 
 After starting the script, it will wait for a trigger signal from the fMRI scanner (default: keyboard button number ```5```).
 
@@ -68,7 +70,7 @@ pyprf -config /path/to/config.csv
 ## Dependencies
 [**Python 2.7**](https://www.python.org/download/releases/2.7/)
 
-If you install `pyprf` using `pip` (as described above), all of the following dependencies except for `numpy` are installed automatically - you do not have to take care of this yourself. Simply follow the above installation instructions.
+If you install `pyprf` using `pip` (as described above), all of the following dependencies except for `Psychopy` and `numpy` are installed automatically - you do not have to take care of this yourself. Simply follow the above installation instructions.
 
 | Stimulus presentation                                 | Tested version |
 |-------------------------------------------------------|----------------|
