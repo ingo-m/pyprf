@@ -364,7 +364,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         aryDsgn = aryDsgn.astype(np.float32, copy=False)
 
         # Calculate the least-squares solution for all voxels:
-        aryLstSqFt = np.linalg.lstsq(aryDsgn, aryFuncChnk)[0]
+        aryLstSqFt = np.linalg.lstsq(aryDsgn, aryFuncChnk, rcond=None)[0]
 
         # Multiply the linear term with the respective parameters to obtain the
         # fitted line for all voxels:
