@@ -75,18 +75,18 @@ If you install `pyprf` using `pip` (as described above), all of the following de
 | Stimulus presentation                                 | Tested version |
 |-------------------------------------------------------|----------------|
 | [Psychopy](http://www.Psychopy.org/)                  | 1.83.04        |
-| [NumPy](http://www.numpy.org/)                        | 1.13.1         |
-| [SciPy](http://www.scipy.org/)                        | 0.19.1         |
-| [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 4.3.0          |
+| [NumPy](http://www.numpy.org/)                        | 1.14.0         |
+| [SciPy](http://www.scipy.org/)                        | 1.0.0          |
+| [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 5.0.0          |
 
 | Data analysis                                         | Tested version |
 |-------------------------------------------------------|----------------|
-| [NumPy](http://www.numpy.org/)                        | 1.13.3         |
-| [SciPy](http://www.scipy.org/)                        | 0.19.1         |
-| [NiBabel](http://nipy.org/nibabel/)                   | 2.1.0          |
+| [NumPy](http://www.numpy.org/)                        | 1.14.0         |
+| [SciPy](http://www.scipy.org/)                        | 1.0.0          |
+| [NiBabel](http://nipy.org/nibabel/)                   | 2.2.1          |
 | [Cython](http://cython.org/)¹                         | 0.27.1         |
-| [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 4.3.0          |
-| [Tensorflow](https://www.tensorflow.org/)²            | 1.2.0          |
+| [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 5.0.0          |
+| [Tensorflow](https://www.tensorflow.org/)²            | 1.4.0          |
 
 ¹: For considerably faster performance
 
