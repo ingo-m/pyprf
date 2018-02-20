@@ -13,11 +13,11 @@ with open('README.md') as f:
     long_description = f.read()
 
 setup(name='pyprf',
-      version='1.1.0',
+      version='1.3.0',
       description=('A free & open source python tool for population receptive \
                     field analysis of fMRI data.'),
       url='https://github.com/ingo-m/pyprf',
-      download_url='https://github.com/ingo-m/pyprf/archive/v1.2.9.tar.gz',
+      download_url='https://github.com/ingo-m/pyprf/archive/v1.3.0.tar.gz',
       author='Ingo Marquardt',
       author_email='ingo.marquardt@gmx.de',
       license='GNU General Public License Version 3',
