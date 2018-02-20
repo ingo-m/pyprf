@@ -1,1 +1,1 @@
-include cython_leastsquares.c
+include pyprf/analysis/cython_leastsquares.c
