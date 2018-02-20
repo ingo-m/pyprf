@@ -235,7 +235,9 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                         aryDsgn = aryDsgn.astype(np.float32)
 
                         # Calculate the least-squares solution for all voxels:
-                        vecTmpRes = np.linalg.lstsq(aryDsgn, aryFuncChnk)[1]
+                        vecTmpRes = np.linalg.lstsq(aryDsgn,
+                                                    aryFuncChnk,
+                                                    rcond=None)[1]
 
                     # Check whether current residuals are lower than previously
                     # calculated ones:
