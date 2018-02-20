@@ -13,9 +13,9 @@ with open('README.md') as f:
     long_description = f.read()
 
 # Whereas install_requires metadata is automatically analyzed by pip during an
-# install (i.e. also when installing from pypi), requirements files are not, and
-# only are used when a user specifically installs them using pip install -r.
-# Therefore, we pin versions here.
+# install (i.e. also when installing from pypi), requirements files are not,
+# and only are used when a user specifically installs them using pip install
+# -r. Therefore, we pin versions here.
 
 setup(name='pyprf',
       version='1.3.2',
