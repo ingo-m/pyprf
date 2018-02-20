@@ -12,17 +12,22 @@ from setuptools import setup, Extension
 with open('README.md') as f:
     long_description = f.read()
 
+# Whereas install_requires metadata is automatically analyzed by pip during an
+# install (i.e. also when installing from pypi), requirements files are not, and
+# only are used when a user specifically installs them using pip install -r.
+# Therefore, we pin versions here.
+
 setup(name='pyprf',
-      version='1.3.0',
+      version='1.3.1',
       description=('A free & open source python tool for population receptive \
                     field analysis of fMRI data.'),
       url='https://github.com/ingo-m/pyprf',
-      download_url='https://github.com/ingo-m/pyprf/archive/v1.3.0.tar.gz',
+      download_url='https://github.com/ingo-m/pyprf/archive/v1.3.1.tar.gz',
       author='Ingo Marquardt',
       author_email='ingo.marquardt@gmx.de',
       license='GNU General Public License Version 3',
-      install_requires=['numpy', 'scipy', 'nibabel', 'pillow', 'cython',
-                        'tensorflow'],
+      install_requires=['numpy', 'scipy', 'nibabel', 'pillow==5.0.0',
+                        'cython==0.27.1', 'tensorflow==1.4.0'],
       # setup_requires=['numpy'],
       keywords=['pRF', 'fMRI', 'retinotopy'],
       long_description=long_description,
