@@ -69,7 +69,8 @@ pyprf -config /path/to/config.csv
 ```
 
 ## Dependencies
-[**Python 2.7**](https://www.python.org/download/releases/2.7/)
+
+`pyprf` is implemented in [Python 2.7](https://www.python.org/download/releases/2.7/).
 
 If you install `pyprf` using `pip` (as described above), all of the following dependencies except for `Psychopy` and `numpy` are installed automatically - you do not have to take care of this yourself. Simply follow the above installation instructions.
 
@@ -117,7 +118,7 @@ This application is based on the following work:
 [1] Dumoulin, S. O. & Wandell, B. A. (2008). Population receptive field estimates in human visual cortex. NeuroImage 39, 647–660.
 
 ## Support
-Please use the [github issues](https://github.com/ingo-m/pyprf/issues) for questions or bug reports.
+Please use the [github issues](https://github.com/ingo-m/pyprf/issues) for questions or bug reports. You can also contact us on the `pyprf` [![gitter](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/pyprf/Lobby) channel.
 
 ## License
 The project is licensed under [GNU General Public License Version 3](http://www.gnu.org/licenses/gpl.html).

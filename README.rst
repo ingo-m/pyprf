@@ -114,7 +114,8 @@ Run the analysis:
 Dependencies
 ------------
 
-`**Python 2.7** <https://www.python.org/download/releases/2.7/>`__
+``pyprf`` is implemented in `Python
+2.7 <https://www.python.org/download/releases/2.7/>`__.
 
 If you install ``pyprf`` using ``pip`` (as described above), all of the
 following dependencies except for ``Psychopy`` and ``numpy`` are
@@ -204,7 +205,7 @@ Support
 
 Please use the `github
 issues <https://github.com/ingo-m/pyprf/issues>`__ for questions or bug
-reports.
+reports. You can also contact us on the ``pyprf`` |gitter| channel.
 
 License
 -------
@@ -220,3 +221,5 @@ The project is licensed under `GNU General Public License Version
    :target: https://codecov.io/gh/ingo-m/pyprf
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.835162.svg
    :target: https://doi.org/10.5281/zenodo.835162
+.. |gitter| image:: https://badges.gitter.im/gitterHQ/gitter.png
+   :target: https://gitter.im/pyprf/Lobby
