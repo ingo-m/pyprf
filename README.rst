@@ -219,7 +219,7 @@ The project is licensed under `GNU General Public License Version
    :target: https://travis-ci.org/ingo-m/pyprf
 .. |codecov| image:: https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/ingo-m/pyprf
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.835162.svg
-   :target: https://doi.org/10.5281/zenodo.835162
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1197164.svg
+   :target: https://doi.org/10.5281/zenodo.1197164
 .. |gitter| image:: https://badges.gitter.im/gitterHQ/gitter.png
    :target: https://gitter.im/pyprf/Lobby
