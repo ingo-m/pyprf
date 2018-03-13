@@ -65,9 +65,9 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     # Conditional imports:
     if cfg.strVersion == 'gpu':
-        from find_prf_gpu import find_prf_gpu
+        from pyprf.analysis.find_prf_gpu import find_prf_gpu
     if ((cfg.strVersion == 'cython') or (cfg.strVersion == 'numpy')):
-        from find_prf_cpu import find_prf_cpu
+        from pyprf.analysis.find_prf_cpu import find_prf_cpu
 
     # Convert preprocessing parameters (for temporal and spatial smoothing)
     # from SI units (i.e. [s] and [mm]) into units of data array (volumes and
