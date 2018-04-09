@@ -45,7 +45,7 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
         2D array with functional MRI data, with shape aryFunc[voxel, time].
     aryPrfTc : np.array
         Array with pRF model time courses, with shape
-        aryPrfTc[x-pos, y-pos, SD, motion-direction, time]
+        aryPrfTc[x-pos, y-pos, SD, time]
     strVersion : str
         Which version to use for pRF finding; 'numpy' or 'cython'.
     queOut : multiprocessing.queues.Queue

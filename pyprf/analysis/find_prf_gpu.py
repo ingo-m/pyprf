@@ -44,7 +44,7 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
         2D array with functional MRI data, with shape aryFunc[voxel, time].
     aryPrfTc : np.array
         Array with pRF model time courses, with shape
-        aryPrfTc[x-pos, y-pos, SD, motion-direction, time]
+        aryPrfTc[x-pos, y-pos, SD, time]
     queOut : multiprocessing.queues.Queue
         Queue to put the results on.
 
