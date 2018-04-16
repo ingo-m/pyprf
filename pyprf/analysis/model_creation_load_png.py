@@ -89,16 +89,30 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
         # Casting of array depends on dimensionality (greyscale or RGB, i.e. 2D
         # or 3D):
         if varNumDim == 2:
-            aryPngData[:, :, idx01] = np.array(objIm.resize(
-                (tplVslSpcSze[1], tplVslSpcSze[0]), Image.NEAREST))[:, :]
+            # Rescale png image, and put into numpy array:
+            aryTmp = np.array(objIm.resize((tplVslSpcSze[0], tplVslSpcSze[1]),
+                              Image.NEAREST))[:, :]
+            # x and y dimension of png image and data array do not match, we
+            # turn the image to fit:
+            aryPngData[:, :, idx01] = np.fliplr(aryTmp)
         elif varNumDim == 3:
-            aryPngData[:, :, idx01] = np.array(objIm.resize(
-                (tplVslSpcSze[1], tplVslSpcSze[0]), Image.NEAREST))[:, :, 0]
+            # Rescale png image, and put into numpy array:
+            aryTmp = np.array(objIm.resize((tplVslSpcSze[0], tplVslSpcSze[1]),
+                              Image.NEAREST))[:, :, 0]
+            # x and y dimension of png image and data array do not match, we
+            # turn the image to fit:
+            aryPngData[:, :, idx01] = np.fliplr(aryTmp)
+
         else:
             # Error message:
             strErrMsg = ('ERROR: PNG files for model creation need to be RGB '
                          + 'or greyscale.')
             raise ValueError(strErrMsg)
+
+    # The data need to be flipped upside down, because the coordinates of the
+    # png object returned by pil and the dimensions of the numpy array do not
+    # agree.
+    aryPngData = np.flip(aryPngData, 0)
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
     aryPngData = (aryPngData > 200).astype(np.int8)
