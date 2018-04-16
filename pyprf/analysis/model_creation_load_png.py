@@ -85,18 +85,15 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
 
         # Load & resize image:
         objIm = Image.open(lstPngPaths[idx01])
-        objIm = objIm.resize((tplVslSpcSze[0],
-                              tplVslSpcSze[1]),
-                             resample=Image.NEAREST)
 
         # Casting of array depends on dimensionality (greyscale or RGB, i.e. 2D
         # or 3D):
         if varNumDim == 2:
             aryPngData[:, :, idx01] = np.array(objIm.resize(
-                (objIm.size[0], objIm.size[1]), Image.ANTIALIAS))[:, :]
+                (tplVslSpcSze[1], tplVslSpcSze[0]), Image.NEAREST))[:, :]
         elif varNumDim == 3:
             aryPngData[:, :, idx01] = np.array(objIm.resize(
-                (objIm.size[0], objIm.size[1]), Image.ANTIALIAS))[:, :, 0]
+                (tplVslSpcSze[1], tplVslSpcSze[0]), Image.NEAREST))[:, :, 0]
         else:
             # Error message:
             strErrMsg = ('ERROR: PNG files for model creation need to be RGB '
