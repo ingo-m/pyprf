@@ -2,7 +2,7 @@
 """Load PNGs for pRF model creation."""
 
 # Part of py_pRF_mapping library
-# Copyright (C) 2016  Ingo Marquardt
+# Copyright (C) 2018  Ingo Marquardt
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -94,25 +94,21 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
                               Image.NEAREST))[:, :]
             # x and y dimension of png image and data array do not match, we
             # turn the image to fit:
-            aryPngData[:, :, idx01] = np.fliplr(aryTmp)
+            aryTmp = np.rot90(aryTmp, k=3, axes=(0, 1))
+            aryPngData[:, :, idx01] = aryTmp
         elif varNumDim == 3:
             # Rescale png image, and put into numpy array:
             aryTmp = np.array(objIm.resize((tplVslSpcSze[0], tplVslSpcSze[1]),
                               Image.NEAREST))[:, :, 0]
             # x and y dimension of png image and data array do not match, we
             # turn the image to fit:
-            aryPngData[:, :, idx01] = np.fliplr(aryTmp)
-
+            aryTmp = np.rot90(aryTmp, k=3, axes=(0, 1))
+            aryPngData[:, :, idx01] = aryTmp
         else:
             # Error message:
             strErrMsg = ('ERROR: PNG files for model creation need to be RGB '
                          + 'or greyscale.')
             raise ValueError(strErrMsg)
-
-    # The data need to be flipped upside down, because the coordinates of the
-    # png object returned by pil and the dimensions of the numpy array do not
-    # agree.
-    aryPngData = np.flip(aryPngData, 0)
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
     aryPngData = (aryPngData > 200).astype(np.int8)

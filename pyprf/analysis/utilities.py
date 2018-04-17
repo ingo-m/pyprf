@@ -128,8 +128,7 @@ def crt_gauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
     varSizeX = int(varSizeX)
     varSizeY = int(varSizeY)
 
-    # aryX and aryY are in reversed order, this seems to be necessary:
-    aryY, aryX = sp.mgrid[0:varSizeX,
+    aryX, aryY = sp.mgrid[0:varSizeX,
                           0:varSizeY]
 
     # The actual creation of the Gaussian array:

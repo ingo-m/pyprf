@@ -66,6 +66,9 @@ def model_creation(dicCnfg):
 
         print('------Convolve pixel-wise design matrix with HRF model')
 
+        # Debugging feature:
+        # np.save('/home/john/Desktop/aryPngData.npy', aryPngData)
+
         aryPixConv = conv_dsgn_mat(aryPngData,
                                    cfg.varTr,
                                    cfg.varPar)
