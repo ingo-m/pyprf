@@ -42,7 +42,7 @@ from PIL import Image
 # directly be loaded into the py_pRF_mapping pipepline.
 
 # Logging mode?
-lgcLogMde = True
+lgcLogMde = False
 
 # %% set checkerbar sptial and temporal frequency
 # define reversal frequency
