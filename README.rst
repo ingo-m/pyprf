@@ -16,14 +16,14 @@ flickering black and white checkerboards. It is important that the
 participant fixates throughout the experiment. Therefore, there is a
 central fixation task. The fixation dot occasionally changes its colour,
 and the task is to press a button (number ``1``) in response. At the end
-of the presentation, the participant’s hit rate is provided as feedback.
+of the presentation, the participant's hit rate is provided as feedback.
 
 2. Data analysis
 ~~~~~~~~~~~~~~~~
 
 Analysis tools for fMRI data from retinotopic mapping experiment. A pRF
 is estimated for each voxel (see [1]). The pRF model used here is a 2D
-Gaussian; the free parameters are the Gaussian’s x- and y-position, and
+Gaussian; the free parameters are the Gaussian's x- and y-position, and
 its width (SD). This rather simple pRF model is best suited for early
 visual cortex (higher cortical areas may require more complex models).
 
@@ -41,7 +41,7 @@ How to use
 
     sudo apt-get install psychopy
 
-If you’re running some other operating system, please refer to the
+If you're running some other operating system, please refer to the
 `Psychopy website <http://psychopy.org/>`__.
 
 2. Install ``numpy``. For instance:
@@ -50,7 +50,7 @@ If you’re running some other operating system, please refer to the
 
     pip install numpy
 
-(Or, alternatively, if you’re using conda,
+(Or, alternatively, if you're using conda,
 ``conda install -c conda-forge numpy``.)
 
 3. The ``pyprf`` package can directly be installed from PyPI, in the
@@ -79,9 +79,9 @@ details). After starting the script you can enter *Participant ID* and
 *run number* in the general user interface (GUI). By default, the folder
 ``~/pyprf/pyprf/stimulus_presentation/Conditions/`` contains
 pseudo-randomised design matrices for 3 runs. In order to use these,
-enter ‘01’, ‘02’, or ‘03’ in the respective field in the GUI. *If you
+enter '01', '02', or '03' in the respective field in the GUI. *If you
 would like to simply run the presentation one time, you can leave this
-setting at its default value (‘01’).*
+setting at its default value ('01').*
 
 After starting the script, it will wait for a trigger signal from the
 fMRI scanner (default: keyboard button number ``5``).
@@ -122,33 +122,33 @@ following dependencies except for ``Psychopy`` and ``numpy`` are
 installed automatically - you do not have to take care of this yourself.
 Simply follow the above installation instructions.
 
-+--------------------------------------------------------+----------------+
-| Stimulus presentation                                  | Tested version |
-+========================================================+================+
-| `Psychopy <http://www.Psychopy.org/>`__                | 1.83.04        |
-+--------------------------------------------------------+----------------+
-| `NumPy <http://www.numpy.org/>`__                      | 1.14.0         |
-+--------------------------------------------------------+----------------+
-| `SciPy <http://www.scipy.org/>`__                      | 1.0.0          |
-+--------------------------------------------------------+----------------+
-| `Pillow <https://pypi.python.org/pypi/Pillow/4.3.0>`__ | 5.0.0          |
-+--------------------------------------------------------+----------------+
++----------------------------------------------------------+------------------+
+| Stimulus presentation                                    | Tested version   |
++==========================================================+==================+
+| `Psychopy <http://www.Psychopy.org/>`__                  | 1.83.04          |
++----------------------------------------------------------+------------------+
+| `NumPy <http://www.numpy.org/>`__                        | 1.14.0           |
++----------------------------------------------------------+------------------+
+| `SciPy <http://www.scipy.org/>`__                        | 1.0.0            |
++----------------------------------------------------------+------------------+
+| `Pillow <https://pypi.python.org/pypi/Pillow/4.3.0>`__   | 5.0.0            |
++----------------------------------------------------------+------------------+
 
-+--------------------------------------------------------+----------------+
-| Data analysis                                          | Tested version |
-+========================================================+================+
-| `NumPy <http://www.numpy.org/>`__                      | 1.14.0         |
-+--------------------------------------------------------+----------------+
-| `SciPy <http://www.scipy.org/>`__                      | 1.0.0          |
-+--------------------------------------------------------+----------------+
-| `NiBabel <http://nipy.org/nibabel/>`__                 | 2.2.1          |
-+--------------------------------------------------------+----------------+
-| `Cython <http://cython.org/>`__\ ¹                     | 0.27.1         |
-+--------------------------------------------------------+----------------+
-| `Pillow <https://pypi.python.org/pypi/Pillow/4.3.0>`__ | 5.0.0          |
-+--------------------------------------------------------+----------------+
-| `Tensorflow <https://www.tensorflow.org/>`__\ ²        | 1.4.0          |
-+--------------------------------------------------------+----------------+
++----------------------------------------------------------+------------------+
+| Data analysis                                            | Tested version   |
++==========================================================+==================+
+| `NumPy <http://www.numpy.org/>`__                        | 1.14.0           |
++----------------------------------------------------------+------------------+
+| `SciPy <http://www.scipy.org/>`__                        | 1.0.0            |
++----------------------------------------------------------+------------------+
+| `NiBabel <http://nipy.org/nibabel/>`__                   | 2.2.1            |
++----------------------------------------------------------+------------------+
+| `Cython <http://cython.org/>`__\ ¹                       | 0.27.1           |
++----------------------------------------------------------+------------------+
+| `Pillow <https://pypi.python.org/pypi/Pillow/4.3.0>`__   | 5.0.0            |
++----------------------------------------------------------+------------------+
+| `Tensorflow <https://www.tensorflow.org/>`__\ ²          | 1.4.0            |
++----------------------------------------------------------+------------------+
 
 ¹: For considerably faster performance
 
@@ -219,7 +219,7 @@ The project is licensed under `GNU General Public License Version
    :target: https://travis-ci.org/ingo-m/pyprf
 .. |codecov| image:: https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/ingo-m/pyprf
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1197164.svg
-   :target: https://doi.org/10.5281/zenodo.1197164
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1220207.svg
+   :target: https://doi.org/10.5281/zenodo.1220207
 .. |gitter| image:: https://badges.gitter.im/gitterHQ/gitter.png
    :target: https://gitter.im/pyprf/Lobby
