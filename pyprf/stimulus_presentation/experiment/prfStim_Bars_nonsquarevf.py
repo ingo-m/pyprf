@@ -2,150 +2,251 @@
 """
 Stimulus presentation for pRF mapping.
 
-The purpose of this script is to present retinotopic mapping stimuli using
-Psychopy.
+Present retinotopic mapping stimuli with Psychopy.
+
+This version: Non-square visual field coverage, i.e. bar stimuli all over the
+              screen.
 """
 
-# Part of py_pRF_mapping library
-# Copyright (C) 2016  Marian Schneider
+# Part of pyprf library
+# Copyright (C) 2016  Marian Schneider & Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import division  # so that 1/3=0.333 instead of 1/3=0
-from psychopy import visual, event, core,  monitors, logging, gui, data, misc
-from itertools import cycle  # import cycle if you want to flicker stimuli
-from psychopy.misc import pol2cart
+
+import os
 import numpy as np
 import pickle
-import os
-# import scipy.misc
+import datetime
+from psychopy import visual, event, core,  monitors, logging, gui, data, misc
+from psychopy.misc import pol2cart
+from itertools import cycle
 from PIL import Image
 
-# %% Settings for stimulus logging
-# If in normal mode, this scrip presents stimuli for population receptive field
-# mapping. If in logging mode, this script creates a stimulus log of the
-# stimuli used for the pRF mapping that can be used for the pRF finding
-# analysis of the py_pRF_mapping library. The stimuli are saved as png files,
-# where each png represents the status of visual stimulation for one TR (the
-# png files contain modified screenshots of the visual stimulus, and can be
-# directly be loaded into the py_pRF_mapping pipepline.
 
-# Logging mode?
-lgcLogMde = False
+# *****************************************************************************
+# *** Settings
 
-# %% set checkerbar sptial and temporal frequency
-# define reversal frequency
-tempCyc = 4  # how many bw cycles per s?
-# define sptial frequency
-spatCyc = 1.5
-# set the size of the entire area that the bars should cover [in pixels]
-pixCover = 1920  # 1200 is full screen in these settings
+# Settings for stimulus logging. If in normal mode, this scrip presents stimuli
+# for population receptive field mapping. If in logging mode, this script
+# creates a stimulus log of the stimuli used for the pRF mapping that can be
+# used for the pRF finding analysis of the pyprf library. The stimuli are saved
+# as png files, where each png represents the status of visual stimulation for
+# one TR (the png files contain modified screenshots of the visual stimulus,
+# and can be directly be loaded into the py_pRF_mapping pipepline.
 
+# Frequency of stimulus bar in Hz:
+varTmpFrq = 4
 
-# %%
-""" SAVING and LOGGING """
-# Store info about experiment and experimental run
-expName = 'pRF_mapping_log'  # set experiment name here
-expInfo = {
-    u'participant': u'pilot',
-    u'run': u'04_nonsquarevf',
-    }
-# Create GUI at the beginning of exp to get more expInfo
-dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
-if dlg.OK is False:
-    core.quit()  # user pressed cancel
-expInfo['date'] = data.getDateStr()  # add a simple timestamp
-expInfo['expName'] = expName
+# Sptial frequency of stimulus (cycles per degree):
+varSptlFrq = 1.5
 
-# get current path and save to variable _thisDir
-_thisDir = os.path.dirname(os.path.abspath(__file__))
-# get parent path and move up one directory
-str_path_parent_up = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..'))
-# move to parent_up path
-os.chdir(str_path_parent_up)
+# Size of area covered by bars (in pixels):
+varPix = 1920
 
-# Name and create specific subject folder
-subjFolderName = str_path_parent_up + os.path.sep + \
-    'Log_%s' % (expInfo['participant'])
-if not os.path.isdir(subjFolderName):
-    os.makedirs(subjFolderName)
+# Distance between observer and monitor [cm]:
+varMonDist = 99.0  # [99.0] for 7T scanner
 
-# Name and create data folder for the experiment
-dataFolderName = subjFolderName + os.path.sep + '%s' % (expInfo['expName'])
-if not os.path.isdir(dataFolderName):
-    os.makedirs(dataFolderName)
+# Width of monitor [cm]:
+varMonWdth = 30.0  # [30.0] for 7T scanner
 
-# Name and create specific folder for logging results
-logFolderName = dataFolderName + os.path.sep + 'Logging'
-if not os.path.isdir(logFolderName):
-    os.makedirs(logFolderName)
-logFileName = logFolderName + os.path.sep + '%s_%s_Run_%s_%s' % (
-    expInfo['participant'], expInfo['expName'],
-    expInfo['run'], expInfo['date'])
+# Width of monitor [pixels]:
+varPixX = 1920  # [1920.0] for 7T scanner
 
-# Name and create specific folder for pickle output
-outFolderName = dataFolderName + os.path.sep + 'Output'
-if not os.path.isdir(outFolderName):
-    os.makedirs(outFolderName)
-outFileName = outFolderName + os.path.sep + '%s_%s_Run_%s_%s' % (
-    expInfo['participant'], expInfo['expName'],
-    expInfo['run'], expInfo['date'])
+# Height of monitor [pixels]:
+varPixY = 1200  # [1200.0] for 7T scanner
 
-# save a log file and set level for msg to be received
-logFile = logging.LogFile(logFileName+'.log', level=logging.INFO)
-logging.console.setLevel(logging.WARNING)  # set console to receive warnings
+# Background colour:
+lstBckgrd = [-0.7, -0.7, -0.7]
+# *****************************************************************************
 
 
-#  %%
-"""MONITOR AND WINDOW"""
-# set monitor information:
-distanceMon = 99  # [99] in scanner
-widthMon = 30  # [30] in scanner
-PixW = 1920  # [1920.0] in scanner
-PixH = 1200  # [1200.0] in scanner
+# *****************************************************************************
+# *** Logging
 
-moni = monitors.Monitor('testMonitor', width=widthMon, distance=distanceMon)
-moni.setSizePix([PixW, PixH])  # [1920.0, 1080.0] in psychoph lab
-degCover = misc.pix2deg(pixCover, moni)
+# Name of experiment:
+strExpNme = 'pRF_mapping'
 
-# log monitor info
-logFile.write('MonitorDistance=' + unicode(distanceMon) + 'cm' + '\n')
-logFile.write('MonitorWidth=' + unicode(widthMon) + 'cm' + '\n')
-logFile.write('PixelWidth=' + unicode(PixW) + '\n')
-logFile.write('PixelHeight=' + unicode(PixH) + '\n')
+# Get date string as default session name:
+strDate = str(datetime.datetime.now())
+lstDate = strDate[0:10].split('-')
+strDate = (lstDate[0] + lstDate[1] + lstDate[2])
 
-# set screen:
-# for psychoph lab: make 'fullscr = True', set size =(1920, 1080)
-myWin = visual.Window(
-    size=(PixW, PixH),
+# Dictionary with experiment parameters:
+dicExpInfo = {'Subject_ID': strDate,
+              'Run': '04_nonsquarevf',
+              'Logging mode': ['No', 'Yes']}
+
+# Pop-up GUI to let the user select parameters:
+objGui = gui.DlgFromDict(dictionary=dicExpInfo,
+                         title=strExpNme)
+
+# Close if user presses 'cancel':
+if objGui.OK is False:
+    core.quit()
+
+# Logging mode:
+if dicExpInfo['Logging mode'] == 'Yes':
+    lgcLogMde = True
+else:
+    lgcLogMde = False
+# *****************************************************************************
+
+
+# *****************************************************************************
+# *** Logging
+
+# Set clock:
+objClck = core.Clock()
+
+# Control the logging of participant responses:
+varSwtRspLog = 0
+
+# The key that the participant has to press after a target event:
+strTrgtKey = '1'
+
+# Counter for correct/incorrect responses:
+varCntHit = 0  # Counter for hits
+varCntMis = 0  # Counter for misses
+
+# Set clock for logging:
+logging.setDefaultClock(objClck)
+
+# Add time stamp and experiment name to metadata:
+dicExpInfo['Date'] = data.getDateStr().encode('utf-8')
+dicExpInfo['Experiment_Name'] = strExpNme
+
+# Path of this file:
+strPthMain = os.path.dirname(os.path.abspath(__file__))
+
+# Get parent path:
+strPthPrnt = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# Path of logging folder (parent to subject folder):
+strPthLog = (strPthPrnt
+             + os.path.sep
+             + 'log')
+
+# If it does not exist, create subject folder for logging information
+# pertaining to this session:
+if not os.path.isdir(strPthLog):
+    os.makedirs(strPthLog)
+
+# Path of subject folder:
+strPthSub = (strPthLog
+             + os.path.sep
+             + str(dicExpInfo['Subject_ID'])
+             )
+
+# If it does not exist, create subject folder for logging information
+# pertaining to this session:
+if not os.path.isdir(strPthSub):
+    os.makedirs(strPthSub)
+
+# Name of log file:
+strPthLog = (strPthSub
+             + os.path.sep
+             + '{}_{}_Run_{}_{}'.format(dicExpInfo['Subject_ID'],
+                                        dicExpInfo['Experiment_Name'],
+                                        dicExpInfo['Run'],
+                                        dicExpInfo['Date'])
+             )
+
+# Create a log file and set logging verbosity:
+fleLog = logging.LogFile(strPthLog + '.log', level=logging.DATA)
+
+# Log parent path:
+fleLog.write('Parent path: ' + strPthPrnt + '\n')
+
+# Log condition:
+fleLog.write('Subject_ID: ' + dicExpInfo['Subject_ID'] + '\n')
+fleLog.write('Run: ' + dicExpInfo['Run'] + '\n')
+fleLog.write('Test mode: ' + dicExpInfo['Test mode'] + '\n')
+
+# Set console logging verbosity:
+logging.console.setLevel(logging.WARNING)
+
+# Array for logging of key presses:
+aryKeys = np.array([], dtype=np.float32)
+# *****************************************************************************
+
+
+# *****************************************************************************
+# *** Setup
+
+# Create monitor object:
+objMon = monitors.Monitor('Screen_7T_NOVA_32_Channel_Coil',
+                          width=varMonWdth,
+                          distance=varMonDist)
+
+# Convert size in pixels to size in degrees (given the monitor settings):
+varDegCover = misc.pix2deg(varPix, objMon)
+
+# Set size of monitor:
+objMon.setSizePix([varPixX, varPixY])
+
+# Log monitor info:
+fleLog.write(('Monitor distance: varMonDist = '
+              + str(varMonDist)
+              + ' cm'
+              + '\n'))
+fleLog.write(('Monitor width: varMonWdth = '
+              + str(varMonWdth)
+              + ' cm'
+              + '\n'))
+fleLog.write(('Monitor width: varPixX = '
+              + str(varPixX)
+              + ' pixels'
+              + '\n'))
+fleLog.write(('Monitor height: varPixY = '
+              + str(varPixY)
+              + ' pixels'
+              + '\n'))
+
+# Set screen:
+objWin = visual.Window(
+    size=(varPixX, varPixY),
     screen=0,
     winType='pyglet',  # winType : None, ‘pyglet’, ‘pygame’
     allowGUI=False,
     allowStencil=True,
-    fullscr=True,  # for psychoph lab: fullscr = True
-    monitor=moni,
-    color=[0, 0, 0],
+    fullscr=True,
+    monitor=objMon,
+    color=lstBckgrd,
     colorSpace='rgb',
-    units='pix',
-    blendMode='avg')
+    units='deg',
+    blendMode='avg'
+    )
+# *****************************************************************************
+
+
+# *****************************************************************************
+
+
+
+
+
+
+
+
+
 
 # %%
 """CONDITIONS"""
 # retrieve conditions from pickle file (stored in folder Conditions)
 str_path_conditions = str_path_parent_up + os.path.sep + 'Conditions' + \
-    os.path.sep + 'Conditions_run' + str(expInfo['run']) + '.pickle'
+    os.path.sep + 'Conditions_run' + str(dicExp['run']) + '.pickle'
 with open(str_path_conditions, 'rb') as handle:
     arrays = pickle.load(handle)
 Conditions = arrays["Conditions"]
@@ -168,9 +269,9 @@ print('TARGETS: ')
 print TargetOnsetinSec
 
 # calculate
-Offset = pixCover/NrOfSteps/2
+Offset = varPix/NrOfSteps/2
 aryOri = [0, 45, 90, 135, 180, 225, 270, 315]
-distances = np.linspace(-pixCover/2+Offset, pixCover/2-Offset, NrOfSteps)
+distances = np.linspace(-varPix/2+Offset, varPix/2-Offset, NrOfSteps)
 
 aryPosPix = []
 for ori in [90, 45, 180, 135, 270, 225, 0, 315]:
@@ -190,13 +291,13 @@ logFile.write('TargetDur=' + unicode(TargetDur) + '\n')
 
 # INITIALISE SOME STIMULI
 grating = visual.GratingStim(
-    myWin,
+    objWin,
     tex="sqrXsqr",
     color=[1.0, 1.0, 1.0],
     colorSpace='rgb',
     opacity=1.0,
-    size=(2*PixW, pixCover/NrOfSteps),
-    sf=(spatCyc/(pixCover/NrOfSteps), spatCyc/(pixCover/NrOfSteps)),
+    size=(2*varPixX, varPix/NrOfSteps),
+    sf=(varSptlFrq/(varPix/NrOfSteps), varSptlFrq/(varPix/NrOfSteps)),
     ori=0,
     autoLog=False,
     interpolate=False,
@@ -204,7 +305,7 @@ grating = visual.GratingStim(
 
 # fixation dot
 dotFix = visual.Circle(
-    myWin,
+    objWin,
     autoLog=False,
     name='dotFix',
     radius=2,
@@ -212,7 +313,7 @@ dotFix = visual.Circle(
     lineColor=[1.0, 0.0, 0.0],)
 
 dotFixSurround = visual.Circle(
-    myWin,
+    objWin,
     autoLog=False,
     name='dotFixSurround',
     radius=7,
@@ -221,7 +322,7 @@ dotFixSurround = visual.Circle(
 
 # fixation grid
 Circle = visual.Polygon(
-    win=myWin,
+    win=objWin,
     autoLog=False,
     name='Circle',
     edges=90,
@@ -236,11 +337,11 @@ Circle = visual.Polygon(
     opacity=1,
     interpolate=True)
 Line = visual.Line(
-    win=myWin,
+    win=objWin,
     autoLog=False,
     name='Line',
-    start=(-PixH, 0),
-    end=(PixH, 0),
+    start=(-varPixY, 0),
+    end=(varPixY, 0),
     pos=[0, 0],
     lineWidth=2,
     lineColor=[1.0, 1.0, 1.0],
@@ -251,27 +352,27 @@ Line = visual.Line(
     interpolate=True,)
 # initialisation method
 message = visual.TextStim(
-    myWin,
+    objWin,
     autoLog=False,
     text='Condition',
     height=30,
     pos=(400, 400)
     )
 triggerText = visual.TextStim(
-    win=myWin,
+    win=objWin,
     autoLog=False,
     color='white',
     height=30,
     text='Experiment will start soon. \n Waiting for scanner',)
 targetText = visual.TextStim(
-    win=myWin,
+    win=objWin,
     autoLog=False,
     color='white',
     height=30)
 
-vertices = [(pixCover/2, pixCover/2), (-pixCover/2, pixCover/2),
-            (-pixCover/2, -pixCover/2), (pixCover/2, -pixCover/2)]
-aperture = visual.Aperture(myWin,
+vertices = [(varPix/2, varPix/2), (-varPix/2, varPix/2),
+            (-varPix/2, -varPix/2), (varPix/2, -varPix/2)]
+aperture = visual.Aperture(objWin,
                            autoLog=False,
                            shape=vertices)  # try shape='square'
 aperture.enabled = False
@@ -280,7 +381,7 @@ aperture.enabled = False
 """TIME AND TIMING PARAMETERS"""
 
 # get screen refresh rate
-refr_rate = myWin.getActualFrameRate()  # get screen refresh rate
+refr_rate = objWin.getActualFrameRate()  # get screen refresh rate
 if refr_rate is not None:
     frameDur = 1.0/round(refr_rate)
 else:
@@ -293,7 +394,7 @@ durations = np.arange(ExpectedTR, ExpectedTR*NrOfVols + ExpectedTR, ExpectedTR)
 totalTime = ExpectedTR*NrOfVols
 
 # how many frames b or w? derive from reversal frequency
-numFrame = int(round((1/(tempCyc*2))/frameDur))
+numFrame = int(round((1/(varTmpFrq*2))/frameDur))
 
 # create clock and Landolt clock
 clock = core.Clock()
@@ -323,7 +424,7 @@ if lgcLogMde:
 
     # Calculate area to crop in y-dimension, at top and bottom (should be zero
     # is # full extend of screeen height is used):
-    varCrpY = int(np.around((float(PixH) - float(pixCover)) * 0.5))
+    varCrpY = int(np.around((float(varPixY) - float(varPix)) * 0.5))
 
     print(('Stimulus log will be cropped by '
            + str(varCrpY)
@@ -332,7 +433,7 @@ if lgcLogMde:
 
     # Calculate area to crop in x-dimension, at left and right (would be zero
     # is full extend of screeen width was used):
-    varCrpX = int(np.around((float(PixW) - float(pixCover)) * 0.5))
+    varCrpX = int(np.around((float(varPixX) - float(varPix)) * 0.5))
 
     print(('Stimulus log will be cropped by '
            + str(varCrpX)
@@ -341,17 +442,17 @@ if lgcLogMde:
 
     # Temporary array for screenshots, at full screen size and containing RGB
     # values (needed to obtain buffer content from psychopy):
-    aryBuff = np.zeros((PixH, PixW, 3), dtype=np.int16)
+    aryBuff = np.zeros((varPixY, varPixX, 3), dtype=np.int16)
 
     # Prepare array for screenshots. One value per pixel per volume; since the
     # stimuli are greyscale we discard 2nd and 3rd RGB dimension. Also, there
     # is no need to represent the entire screen, just the part of the screen
     # that is actually stimulated (this is typically a square at the centre of
     # the screen, flanked by unstimulated areas on the left and right side).
-    aryFrames = np.zeros((PixH, PixW, NrOfVols), dtype=np.int16)
+    aryFrames = np.zeros((varPixY, varPixX, NrOfVols), dtype=np.int16)
 
-    # Make sure that pixCover is of interger type:
-    pixCover = int(np.around(pixCover))
+    # Make sure that varPix is of interger type:
+    varPix = int(np.around(varPix))
 
     # Counter for screenshots:
     idxFrame = 0
@@ -366,12 +467,12 @@ core.wait(1)
 if not(lgcLogMde):
     # wait for scanner trigger
     triggerText.draw()
-    myWin.flip()
+    objWin.flip()
     event.waitKeys(keyList=['5'], timeStamped=False)
 
 # reset clocks
 clock.reset()
-logging.data('StartOfRun' + unicode(expInfo['run']))
+logging.data('StartOfRun' + unicode(dicExp['run']))
 
 while clock.getTime() < totalTime:  # noqa
 
@@ -391,16 +492,16 @@ while clock.getTime() < totalTime:  # noqa
         # aperture.enabled = True
         # draw fixation grid (circles and lines)
         if not lgcLogMde:
-            Circle.setSize((degCover*0.2, degCover*0.2))
+            Circle.setSize((varDegCover*0.2, varDegCover*0.2))
             Circle.draw()
-            Circle.setSize((degCover*0.4, degCover*0.4))
+            Circle.setSize((varDegCover*0.4, varDegCover*0.4))
             Circle.draw()
-            Circle.setSize((degCover*0.6, degCover*0.6))
+            Circle.setSize((varDegCover*0.6, varDegCover*0.6))
             Circle.draw()
-            Circle.setSize((degCover*0.8, degCover*0.8))
+            Circle.setSize((varDegCover*0.8, varDegCover*0.8))
             Circle.draw()
             # subtract 0.1 here so that ring is not exactly at outer border
-            Circle.setSize((degCover-0.1, degCover-0.1))
+            Circle.setSize((varDegCover-0.1, varDegCover-0.1))
             Circle.draw()
             Line.setOri(0)
             Line.draw()
@@ -441,13 +542,13 @@ while clock.getTime() < totalTime:  # noqa
             dotFix.draw()
 
         # draw frame
-        myWin.flip()
+        objWin.flip()
 
         # handle key presses each frame
         for key in event.getKeys():
             if key in ['escape', 'q']:
                 logging.data(msg='User pressed quit')
-                myWin.close()
+                objWin.close()
                 core.quit()
             elif key[0] in ['5']:
                 logging.data(msg='Scanner trigger')
@@ -469,7 +570,7 @@ while clock.getTime() < totalTime:  # noqa
               + str(int(NrOfVols))))
 
         # Temporary array for single frame (3 values per pixel - RGB):
-        aryBuff[:, :, :] = myWin.getMovieFrame(buffer='front')
+        aryBuff[:, :, :] = objWin.getMovieFrame(buffer='front')
 
         # print(type(aryBuff))
         # print('type(aryBuff)')
@@ -482,11 +583,11 @@ while clock.getTime() < totalTime:  # noqa
 
         # We only save the central square area that contains the stimulus:
         aryFrames[:, :, idxFrame] = np.copy(aryRgb)
-        # np.copy(aryRgb[varCrpY:(varCrpY + pixCover),
-        #                varCrpX:(varCrpX + pixCover)])
+        # np.copy(aryRgb[varCrpY:(varCrpY + varPix),
+        #                varCrpX:(varCrpX + varPix)])
         idxFrame = idxFrame + 1
 
-logging.data('EndOfRun' + unicode(expInfo['run']) + '\n')
+logging.data('EndOfRun' + unicode(dicExp['run']) + '\n')
 
 # %%
 """TARGET DETECTION RESULTS"""
@@ -539,21 +640,21 @@ targetText.setText(resultText+'\n'+feedbackText)
 logFile.write(unicode(resultText) + '\n')
 logFile.write(unicode(feedbackText) + '\n')
 targetText.draw()
-myWin.flip()
+objWin.flip()
 core.wait(5)
 
 # %%
 """CLOSE DISPLAY"""
-myWin.close()
+objWin.close()
 
 # %%
 """SAVE DATA"""
 
 # create python dictionary
-output = {'ExperimentName': expInfo['expName'],
-          'Date': expInfo['date'],
-          'SubjectID': expInfo['participant'],
-          'Run_Number': expInfo['run'],
+output = {'ExperimentName': dicExp['strExpNme'],
+          'Date': dicExp['date'],
+          'SubjectID': dicExp['participant'],
+          'Run_Number': dicExp['run'],
           'Conditions': Conditions,
           'TriggerPresses': TriggerPressedArray,
           'TargetPresses': TargetPressedArray,
@@ -585,7 +686,7 @@ if lgcLogMde:
     np.savez_compressed((strPthFrm
                          + os.path.sep
                          + 'stimFramesRun'
-                         + expInfo['run']),
+                         + dicExp['run']),
                         aryFrames=aryFrames)
 
     # Maximum intensity of output PNG:
@@ -615,7 +716,7 @@ if lgcLogMde:
         strTmpPth = (strPthFrm
                      + os.path.sep
                      + 'run_'
-                     + expInfo['run']
+                     + dicExp['run']
                      + '_frame_'
                      + str(idxVol + 1).zfill(3)
                      + '.png')
