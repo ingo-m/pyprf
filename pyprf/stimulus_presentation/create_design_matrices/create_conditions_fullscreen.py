@@ -28,112 +28,230 @@ def crt_design(dicParam):
     (~/pyprf/pyprf/stimulus_presentation/design_matrices/).
 
     """
+    # *************************************************************************
+    # *** Get parameters from dictionary
 
+    # File name of design matrix:
+    strFleNme = dicParam['Output file name']
 
+    # Volume TR [s]:
+    varTr = float(dicParam['TR [s]'])
 
-
-
-
-
-
-    # number of TRs of rest during the experiment (if not desired set to zero)
-    NrNullFixBetween = 0
-    if NrNullFixBetween > 0:
-        # avoid that two rest periods can occur immdetialey after each other?
-        lgcRep = True
-        # how many TRs should one rest preiod be? (default 1)
-        NrOfTrPerNull = 3
+    # Target duration [s]:
+    varTrgtDur = float(dicParam['Target duration [s]'])
     
-    # %% Create arrays for position and orientation
+    # Number of orientations between 0 and 360 degree for the bar stimulus:
+    varNumOri = int(dicParam['Number of bar orientations'])
+
+    # Number of position steps for the bar stimulus:    
+    varNumPos = int(dicParam['Number of positions'])
+
+    # Number of stimulus blocks (each positions and orientation occurs once
+    # per stimulus block):
+    varNumBlk = int(dicParam['Number of blocks'])
+
+    # Number of rest trials:
+    varNumRest = int(dicParam['Number of rest trials'])
+    
+    # Duration of initial rest period [volumes]:
+    varDurRestStrt = int(dicParam['Initial rest period [volumes]'])
+
+    # Duration of final rest period [volumes]:
+    varDurRestEnd = int(dicParam['Final rest period [volumes]'])
+
+    # Full screen stimuli?
+    lgcFull = dicParam['Full screen:']
+    
+    # *************************************************************************
+    # *** Preparations
+
+    # Duration of rest period [volumes] - only relevant if varNumRest is not
+    # zero.
+    varDurRest = 3
+
+    # *************************************************************************
+    # *** Stimulus orientation & position
+
+    #  Create arrays for position and orientation
     aryOri = np.empty(0)
     aryPos = np.empty(0)
-    for indBlock in np.arange(NrOfBlocks):
-        aryOriBlock = np.arange(1, NrOfOrientation+1)
+
+    # Loop through blocks (repititions of orientation & position):
+    for idxBlk in range(varNumBlk):
+
+        # Array for orientations in current block:
+        aryOriBlock = np.arange(1, (varNumOri + 1))
+
+        # Randomise order of orientations in current block:
         np.random.shuffle(aryOriBlock)
-        aryOriBlock = np.repeat(aryOriBlock, NrOfSteps)
+
+        # Each orientation is repeated as many times as there are positions:
+        aryOriBlock = np.repeat(aryOriBlock, varNumPos)
+
+        # Array for positions within current block:
         aryPosBlock = np.empty(0)
-        for ind in np.arange(NrOfOrientation):
-            aryPosTemp = np.arange(NrOfSteps)
+
+        # Loop through orientations:
+        for idxOri in range(varNumOri):
+
+            # Array for positions:
+            aryPosTemp = np.arange(varNumPos)
+
+            # Randomise order of positions:
             np.random.shuffle(aryPosTemp)
+
             aryPosBlock = np.append(aryPosBlock, aryPosTemp)
+
+        # Put randomised orientation and positions into run arrays:
         aryOri = np.append(aryOri, aryOriBlock)
         aryPos = np.append(aryPos, aryPosBlock)
+
+    # Array for complete design matrix
+    aryDsg = np.vstack((aryPos, aryOri)).T
     
-    # add fixation blocks inbetween the experiment
-    conditions = np.vstack((aryPos, aryOri)).T
-    
-    if NrNullFixBetween > 0:
+    # Number of volumes:
+    varNumVol = aryDsg.shape[0]
+
+    # *************************************************************************
+    # *** Add rest blocks
+
+    # Add rest blocks?    
+    if varNumRest > 0:
+
+        # Avoid that two rest periods can occur immdetialey after each other.
+        lgcRep = True
+
+        # First and last volumes on which an additional rest block can occur.
+        # (We would not want the additional rest block to occur at the very
+        # beginning or end (where there are already initial and final rest
+        # blocks).
+        varLmtRst01 = varDurRestStrt + 10
+        varLmtRst02 = varNumVol - varDurRestEnd - 10
+
         while lgcRep:
-            NullPos = np.random.choice(np.arange(1, len(conditions)),
-                                       NrNullFixBetween, replace=False)
-            NullPos = np.sort(NullPos)
-            lgcRep = np.greater(np.sum(np.diff(NullPos) == 1), 0)
+          
+            # Vector of volume indices at which the random rest blocks could
+            # occur.
+            vecNullIdx = np.random.choice(
+                                          np.arange(varLmtRst01,
+                                                    varLmtRst02,
+                                                    1,
+                                                    dtype=np.int16),
+                                           varNumRest,
+                                           replace=False
+                                           )            
+
+            # Only check for minimum distance between rest blocks if there are
+            # at least two rest blocks:
+            if varNumRest > 1:
+            
+                # Sort selected indices at which additional rest blocks will be
+                # shown:
+                vecNullIdx = np.sort(vecNullIdx)
     
-        # create null trials in between to be inserted into conditions
-        NullTrialsInBetween = np.zeros(NrOfTrPerNull)[:, None]
-        # insert null trials in between
-        for i, idx in enumerate(NullPos):
-            # adjustment to consider prev. iterations
-            idx = idx + (i*NrOfTrPerNull)
-            conditions = np.insert(conditions, idx, NullTrialsInBetween, axis=0)
+                # Check whether the time difference between two consecutive rest
+                # blocks is at least 10 volumes:
+                lgcDiff = np.all(np.greater_equal(np.diff(vecNullIdx), 10))
+
+                # Only continue if the time difference between rest blocks is
+                # too small"
+                lgcRep = not(lgcDiff)
     
-    # add fixation blocks in beginning and end
-    conditions = np.vstack((np.zeros((NrNullFixStart, 2)),
-                            conditions,
-                            np.zeros((NrNullFixEnd, 2))))
+        # Zeros for rest blocks to be inserted into design matrix:
+        aryZeros = np.zeros(varDurRest)[:, None]
+
+        # Insert rest blocks into design matrix:
+        for idxRest, varRstStrt in enumerate(vecNullIdx):
+
+            # Adjustment insertion index to consider previous iterations:
+            varRstStrtTmp = varRstStrt + (idxRest * varDurRest)
+
+            # Insert into design matrix:
+            aryDsg = np.insert(aryDsg, varRstStrtTmp, aryZeros, axis=0)
     
-    # ----------------------------------------------------------------------------
-    # Makeshift solution for nonsquare visual field: present more steps (NrOfSteps
-    # is 20 instead of 12), but remove extra steps for horizontal bars (positions
-    # 1 and 5).
+
+    # Add fixation blocks at beginning and end of run:
+    aryDsg = np.vstack((np.zeros((varDurRestStrt, 2)),
+                        aryDsg,
+                        np.zeros((varDurRestEnd, 2))))
     
-    # We assume that the aspect ratio of the screen is 1920.0 / 1200.0. Horizontal
-    # bars should only be presented at the central 62.5% percent of positions
-    # relative to the extent of positions of vertical bars (because
-    # 1200.0 / 1920.0 = 0.625).
-    
-    # Number of positions:
-    vecSteps = np.arange(0, NrOfSteps)
-    
-    # Margin to leave out for low/high y-positions:
-    varMarg = np.ceil((float(NrOfSteps) - (0.625 * float(NrOfSteps))) * 0.5)
-    
-    
-    # New condition list (which will replace old list):
-    lstCon = []
-    for idx01 in range(conditions.shape[0]):
-        # Position of current trial (i.e. current row):
-        varTmpPos = conditions[idx01, 0]
-        # Orientation of current trial (i.e. current row):
-        varTmpOri = conditions[idx01, 1]
-        # Check whether current trial has horizontal orientation:
-        if ((varTmpOri == 1.0) or (varTmpOri == 5.0)):
-            # Check whether horizontal orientation is presented outside of the
-            # screen area:
-            if ((varTmpPos < varMarg)
-                    or ((float(NrOfSteps) - varMarg) <= varTmpPos)):
-                # print((str(varTmpPos) + '   ' + str(varTmpOri)))
-                pass
+    # Update number of volumes:
+    varNumVol = aryDsg.shape[0]
+
+
+    # *************************************************************************
+    # *** Full screen mode
+
+    if lgcFull:
+
+        # Makeshift solution for nonsquare visual field: present more steps (e.g. 
+        # 20 instead of 12), but remove extra steps for horizontal bars (positions
+        # 1 and 5).
+        
+        # We assume that the aspect ratio of the screen is 1920.0 / 1200.0. Horizontal
+        # bars should only be presented at the central 62.5% percent of positions
+        # relative to the extent of positions of vertical bars (because
+        # 1200.0 / 1920.0 = 0.625).
+        
+        # Number of positions along vertical axis:
+        varNumPosX = int(np.ceil(float(varNumPos) * (1920.0 / 1200.0)))
+        
+        # Number of positions:
+        # vecSteps = np.arange(0, varNumPosX)
+        
+        # Margin to leave out for low/high y-positions:
+        varMarg = np.ceil(
+                          (float(varNumPosX) - (0.625 * float(varNumPosX)))
+                          * 0.5
+                          )
+                
+        # New condition list (which will replace old list):
+        lstCon = []
+
+        # Loop through volumes:
+        for idxVol in range(varNumVol):
+
+            # Position of current trial (i.e. current row):
+            varTmpPos = aryDsg[idxVol, 0]
+
+            # Orientation of current trial (i.e. current row):
+            varTmpOri = aryDsg[idxVol, 1]
+
+            # Check whether current trial has horizontal orientation:
+            if ((varTmpOri == 1.0) or (varTmpOri == 5.0)):
+
+                # Check whether horizontal orientation is presented outside of the
+                # screen area:
+                if ((varTmpPos < varMarg)
+                        or ((float(varNumPos) - varMarg) <= varTmpPos)):
+
+                    # print((str(varTmpPos) + '   ' + str(varTmpOri)))
+                    pass
+
+                else:
+
+                    # Horizontal orientation is within screen area, keep it:
+                    lstCon.append((varTmpPos, varTmpOri))
+
             else:
-                # Horizontal orientation is within screen area, keep it:
+
+                # Orientation is not horizontal, keep it:
                 lstCon.append((varTmpPos, varTmpOri))
-        else:
-            # Orientation is not horizontal, keep it"
-            lstCon.append((varTmpPos, varTmpOri))
+        
+        # Replace original aryDsg array with new array (without horizontal
+        # condition outside of screen area):
+        aryDsg = np.array(lstCon)
+
+    # *************************************************************************
+    # *** Target events
+   
     
-    # Replace original conditions array with new array (without horizontal
-    # condition outside of screen area):
-    conditions = np.array(lstCon)
-    # ----------------------------------------------------------------------------
-    
-    
-    # %% Prepare target arrays
-    NrOfTargets = int(len(conditions)/10)
-    targets = np.zeros(len(conditions))
+    NrOfTargets = int(len(aryDsg)/10)
+    targets = np.zeros(len(aryDsg))
     lgcRep = True
     while lgcRep:
-        targetPos = np.random.choice(np.arange(NrNullFixStart,
-                                     len(conditions)-NrNullFixEnd), NrOfTargets,
+        targetPos = np.random.choice(np.arange(varDurRestStrt,
+                                     len(aryDsg)-varDurRestEnd), NrOfTargets,
                                      replace=False)
         lgcRep = np.greater(np.sum(np.diff(np.sort(targetPos)) == 1), 0)
     targets[targetPos] = 1
@@ -141,7 +259,7 @@ def crt_design(dicParam):
     targets = targets.astype(bool)
     
     # %% Prepare random target onset delay
-    BlockOnsetinSec = np.arange(len(conditions)) * TR
+    BlockOnsetinSec = np.arange(len(aryDsg)) * TR
     TargetOnsetinSec = BlockOnsetinSec[targets]
     TargetOnsetDelayinSec = np.random.uniform(0.1,
                                               TR-TargetDuration,
@@ -149,12 +267,12 @@ def crt_design(dicParam):
     TargetOnsetinSec = TargetOnsetinSec + TargetOnsetDelayinSec
     
     # %% Create dictionary for saving to pickle
-    array_run1 = {'Conditions': conditions,
+    array_run1 = {'aryDsg': aryDsg,
                   'TargetOnsetinSec': TargetOnsetinSec,
                   'TR': TR,
                   'TargetDuration': TargetDuration,
-                  'NrOfSteps': NrOfSteps,
-                  'NrOfVols': len(conditions),
+                  'varNumPos': varNumPos,
+                  'NrOfVols': len(aryDsg),
                   }
     
     # %% Save dictionary to pickle
@@ -207,11 +325,13 @@ if __name__ == "__main__":
     dicParam = {'Output file name': 'Run_04_Fullscreen',
                 'TR [s]': 2.0,
                 'Target duration [s]': 0.3,
-                'Number of bar orientations': 8,      # NrOfOrientation
-                'Number of positions': 20,            # NrOfSteps
-                'Number of blocks': 2,                # NrOfBlocks
-                'Initial rest period [volumes]': 10,  # NrNullFixStart
-                'Final rest period [volumes]': 10}    # NrNullFixEnd
+                'Number of bar orientations': 8,      # varNumOri
+                'Number of positions': 12,            # varNumPos
+                'Number of blocks': 2,                # varNumBlk
+                'Number of rest trials': 0,           # # number of TRs of rest during the experiment (if not desired set to zero)
+                'Initial rest period [volumes]': 10,  # varDurRestStrt
+                'Final rest period [volumes]': 10,    # varDurRestEnd
+                'Full screen:': [True, False]}        # pRF stimuli over entire screen?
 
     if not(strFleNme is None):
         
