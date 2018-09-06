@@ -1,26 +1,23 @@
 # -*- coding: utf-8 -*-
 """Create design matrices for pRF mapping experiment."""
 
-
-
 import os
+import csv
 import argparse
 import numpy as np
 from psychopy import gui, core
-
-
 # import errno
 
 
 def crt_design(dicParam):
     """
     Create design matrices for pRF mapping experiment.
-    
+
     Parameters
     ----------
     dicParam : dictionary
         Dictionary containing parameters for creation of design matrix.
-        
+
     Returns
     -------
     This function has no return values. A design matrix is created and saved
@@ -34,16 +31,22 @@ def crt_design(dicParam):
     # File name of design matrix:
     strFleNme = dicParam['Output file name']
 
+    # Output path for design matrix:
+    strPth = dicParam['Output path']
+
     # Volume TR [s]:
     varTr = float(dicParam['TR [s]'])
 
     # Target duration [s]:
-    varTrgtDur = float(dicParam['Target duration [s]'])
-    
+    # varTrgtDur = float(dicParam['Target duration [s]'])
+
+    # Inter-trial interval between target events [s]:
+    varIti = float(dicParam['Inter-trial interval for targets [s]'])
+
     # Number of orientations between 0 and 360 degree for the bar stimulus:
     varNumOri = int(dicParam['Number of bar orientations'])
 
-    # Number of position steps for the bar stimulus:    
+    # Number of position steps for the bar stimulus:
     varNumPos = int(dicParam['Number of positions'])
 
     # Number of stimulus blocks (each positions and orientation occurs once
@@ -52,7 +55,7 @@ def crt_design(dicParam):
 
     # Number of rest trials:
     varNumRest = int(dicParam['Number of rest trials'])
-    
+
     # Duration of initial rest period [volumes]:
     varDurRestStrt = int(dicParam['Initial rest period [volumes]'])
 
@@ -61,7 +64,7 @@ def crt_design(dicParam):
 
     # Full screen stimuli?
     lgcFull = dicParam['Full screen:']
-    
+
     # *************************************************************************
     # *** Preparations
 
@@ -108,14 +111,14 @@ def crt_design(dicParam):
 
     # Array for complete design matrix
     aryDsg = np.vstack((aryPos, aryOri)).T
-    
+
     # Number of volumes:
     varNumVol = aryDsg.shape[0]
 
     # *************************************************************************
     # *** Add rest blocks
 
-    # Add rest blocks?    
+    # Add rest blocks?
     if varNumRest > 0:
 
         # Avoid that two rest periods can occur immdetialey after each other.
@@ -129,7 +132,7 @@ def crt_design(dicParam):
         varLmtRst02 = varNumVol - varDurRestEnd - 10
 
         while lgcRep:
-          
+
             # Vector of volume indices at which the random rest blocks could
             # occur.
             vecNullIdx = np.random.choice(
@@ -137,26 +140,26 @@ def crt_design(dicParam):
                                                     varLmtRst02,
                                                     1,
                                                     dtype=np.int16),
-                                           varNumRest,
-                                           replace=False
-                                           )            
+                                          varNumRest,
+                                          replace=False
+                                          )
 
             # Only check for minimum distance between rest blocks if there are
             # at least two rest blocks:
             if varNumRest > 1:
-            
+
                 # Sort selected indices at which additional rest blocks will be
                 # shown:
                 vecNullIdx = np.sort(vecNullIdx)
-    
-                # Check whether the time difference between two consecutive rest
-                # blocks is at least 10 volumes:
+
+                # Check whether the time difference between two consecutive
+                # rest blocks is at least 10 volumes:
                 lgcDiff = np.all(np.greater_equal(np.diff(vecNullIdx), 10))
 
                 # Only continue if the time difference between rest blocks is
                 # too small"
                 lgcRep = not(lgcDiff)
-    
+
         # Zeros for rest blocks to be inserted into design matrix:
         aryZeros = np.zeros(varDurRest)[:, None]
 
@@ -168,43 +171,41 @@ def crt_design(dicParam):
 
             # Insert into design matrix:
             aryDsg = np.insert(aryDsg, varRstStrtTmp, aryZeros, axis=0)
-    
 
     # Add fixation blocks at beginning and end of run:
     aryDsg = np.vstack((np.zeros((varDurRestStrt, 2)),
                         aryDsg,
                         np.zeros((varDurRestEnd, 2))))
-    
+
     # Update number of volumes:
     varNumVol = aryDsg.shape[0]
-
 
     # *************************************************************************
     # *** Full screen mode
 
     if lgcFull:
 
-        # Makeshift solution for nonsquare visual field: present more steps (e.g. 
-        # 20 instead of 12), but remove extra steps for horizontal bars (positions
-        # 1 and 5).
-        
-        # We assume that the aspect ratio of the screen is 1920.0 / 1200.0. Horizontal
-        # bars should only be presented at the central 62.5% percent of positions
-        # relative to the extent of positions of vertical bars (because
-        # 1200.0 / 1920.0 = 0.625).
-        
+        # Makeshift solution for nonsquare visual field: present more steps
+        # (e.g. 20 instead of 12), but remove extra steps for horizontal bars
+        # (positions 1 and 5).
+
+        # We assume that the aspect ratio of the screen is 1920.0 / 1200.0.
+        # Horizontal bars should only be presented at the central 62.5% percent
+        # of positions relative to the extent of positions of vertical bars
+        # (because 1200.0 / 1920.0 = 0.625).
+
         # Number of positions along vertical axis:
         varNumPosX = int(np.ceil(float(varNumPos) * (1920.0 / 1200.0)))
-        
+
         # Number of positions:
         # vecSteps = np.arange(0, varNumPosX)
-        
+
         # Margin to leave out for low/high y-positions:
         varMarg = np.ceil(
                           (float(varNumPosX) - (0.625 * float(varNumPosX)))
                           * 0.5
                           )
-                
+
         # New condition list (which will replace old list):
         lstCon = []
 
@@ -220,8 +221,8 @@ def crt_design(dicParam):
             # Check whether current trial has horizontal orientation:
             if ((varTmpOri == 1.0) or (varTmpOri == 5.0)):
 
-                # Check whether horizontal orientation is presented outside of the
-                # screen area:
+                # Check whether horizontal orientation is presented outside of
+                # the screen area:
                 if ((varTmpPos < varMarg)
                         or ((float(varNumPos) - varMarg) <= varTmpPos)):
 
@@ -237,54 +238,125 @@ def crt_design(dicParam):
 
                 # Orientation is not horizontal, keep it:
                 lstCon.append((varTmpPos, varTmpOri))
-        
+
         # Replace original aryDsg array with new array (without horizontal
         # condition outside of screen area):
         aryDsg = np.array(lstCon)
 
     # *************************************************************************
-    # *** Target events
-   
-    
-    NrOfTargets = int(len(aryDsg)/10)
-    targets = np.zeros(len(aryDsg))
+    # *** Randomise target events
+
+    # Number of target events to present (on average, one every varIti
+    # seconds):
+    varNumTrgt = int(np.around(((float(varNumVol) * varTr) / varIti)))
+
+    # Earliest & latest allowed time for target event in seconds:
+    varLmtTrgt01 = float(varDurRestStrt) * varTr + 2.0
+    varLmtTrgt02 = float(varNumVol - varDurRestEnd) * varTr - 2.0
+
     lgcRep = True
+
     while lgcRep:
-        targetPos = np.random.choice(np.arange(varDurRestStrt,
-                                     len(aryDsg)-varDurRestEnd), NrOfTargets,
-                                     replace=False)
-        lgcRep = np.greater(np.sum(np.diff(np.sort(targetPos)) == 1), 0)
-    targets[targetPos] = 1
-    assert NrOfTargets == np.sum(targets)
-    targets = targets.astype(bool)
-    
-    # %% Prepare random target onset delay
-    BlockOnsetinSec = np.arange(len(aryDsg)) * TR
-    TargetOnsetinSec = BlockOnsetinSec[targets]
-    TargetOnsetDelayinSec = np.random.uniform(0.1,
-                                              TR-TargetDuration,
-                                              size=NrOfTargets)
-    TargetOnsetinSec = TargetOnsetinSec + TargetOnsetDelayinSec
-    
-    # %% Create dictionary for saving to pickle
-    array_run1 = {'aryDsg': aryDsg,
-                  'TargetOnsetinSec': TargetOnsetinSec,
-                  'TR': TR,
-                  'TargetDuration': TargetDuration,
-                  'varNumPos': varNumPos,
-                  'NrOfVols': len(aryDsg),
-                  }
-    
-    # %% Save dictionary to pickle
-    OutFile = os.path.join(OutFolderPath, OutFileName)
-    
-    try:
-        os.makedirs(OutFolderPath)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-        with open(OutFile, 'wb') as handle:
-            pickle.dump(array_run1, handle)
+
+        # Vector of volume indices at which the random target events could
+        # occur.
+        vecTrgt = np.random.choice(
+                                   np.arange(varLmtTrgt01,
+                                             varLmtTrgt02,
+                                             0.1,
+                                             dtype=np.float32),
+                                   varNumTrgt,
+                                   replace=False
+                                   )
+
+        # Sort selected indices at which additional rest blocks will be
+        # shown:
+        vecTrgt = np.sort(vecTrgt)
+
+        # Check whether the time difference between two consecutive
+        # target events is at least 3 seconds:
+        lgcDiff01 = np.all(np.greater_equal(np.diff(vecTrgt), 3.0))
+
+        # Check whether the time difference between two consecutive
+        # target events is not more than 35 seconds:
+        lgcDiff02 = np.all(np.less_equal(np.diff(vecTrgt), 35.0))
+
+        # Only continue if the time difference between rest blocks is
+        # too small"
+        lgcRep = not(np.multiply(lgcDiff01, lgcDiff02))
+
+    # *************************************************************************
+    # *** Save design matrix
+
+    # Concatenate output path and file name:
+    strPthNpz = os.path.join(strPth, strFleNme) + '.npz'
+
+    # Check whether file already exists:
+    if os.path.isfile(strPthNpz):
+
+        strMsg = ('WARNING: File already exists. Please delete or choose '
+                  + 'different file name.')
+
+        print(strMsg)
+
+    else:
+
+        # Save design matrix to npz file:
+        np.savez(strPthNpz,
+                 aryDsg=aryDsg,
+                 vecTrgt=vecTrgt,
+                 lgcFull=lgcFull,
+                 varTr=varTr,
+                 varNumVol=varNumVol,
+                 varNumPos=varNumPos,
+                 varNumTrgt=varNumTrgt,
+                 varIti=varIti)
+
+        # Save information in human-readable format
+        lstCsv = []
+        lstCsv.append('* * *')
+        lstCsv.append('Design matrix')
+        lstCsv.append(aryDsg.tolist())
+        lstCsv.append('* * *')
+        lstCsv.append('Target events')
+        lstCsv.append(list(vecTrgt))
+        lstCsv.append('* * *')
+        lstCsv.append('Full screen mode')
+        lstCsv.append(str(lgcFull))
+        lstCsv.append('* * *')
+        lstCsv.append('Volume TR [s]')
+        lstCsv.append(str(varTr))
+        lstCsv.append('* * *')
+        lstCsv.append('Number of volumes')
+        lstCsv.append(str(varNumVol))
+        lstCsv.append('* * *')
+        lstCsv.append('Number of bar positions')
+        lstCsv.append(str(varNumPos))
+        lstCsv.append('* * *')
+        lstCsv.append('Number of target events')
+        lstCsv.append(str(varNumTrgt))
+        lstCsv.append('* * *')
+        lstCsv.append('Inter-trial interval for target events [s]')
+        lstCsv.append(str(varIti))
+
+        # Output path:
+        strPthTxt = os.path.join(strPth, strFleNme) + '.txt'
+
+        # Create output csv object:
+        objCsv = open(strPthTxt, 'w')
+
+        # Save list to disk:
+        csvOt = csv.writer(objCsv, lineterminator='\n')
+
+        # Write output list data to file (row by row):
+        for strTmp in lstCsv:
+            csvOt.writerow([strTmp])
+
+        # Close:
+        objCsv.close()
+
+
+# *****************************************************************************
 
 if __name__ == "__main__":
 
@@ -300,7 +372,6 @@ if __name__ == "__main__":
                            help='Open a GUI to set parameters for design \
                                  matrix?'
                            )
-
 
     # Add argument to namespace - open a GUI for user to specify design matrix
     # parameters?:
@@ -318,23 +389,24 @@ if __name__ == "__main__":
     # Get arguments from argument parser:
     strGui = objNspc.gui
     strFleNme = objNspc.filename
-   
-    # Dictionary with experiment parameters. 
+
+    # Dictionary with experiment parameters.
     # - 'Number of bar orientations' = number of steps between 0 and 360 deg.
-    # 
-    dicParam = {'Output file name': 'Run_04_Fullscreen',
+    #
+    dicParam = {'Output file name': 'Run_01',
                 'TR [s]': 2.0,
-                'Target duration [s]': 0.3,
-                'Number of bar orientations': 8,      # varNumOri
-                'Number of positions': 12,            # varNumPos
-                'Number of blocks': 2,                # varNumBlk
-                'Number of rest trials': 0,           # # number of TRs of rest during the experiment (if not desired set to zero)
-                'Initial rest period [volumes]': 10,  # varDurRestStrt
-                'Final rest period [volumes]': 10,    # varDurRestEnd
-                'Full screen:': [True, False]}        # pRF stimuli over entire screen?
+                # 'Target duration [s]': 0.3,
+                'Number of bar orientations': 8,
+                'Number of positions': 12,
+                'Number of blocks': 2,
+                'Number of rest trials': 0,
+                'Inter-trial interval for targets [s]': 15.0,
+                'Initial rest period [volumes]': 10,
+                'Final rest period [volumes]': 10,
+                'Full screen:': [True, False]}
 
     if not(strFleNme is None):
-        
+
         # If an input file name is provided, put it into the dictionary (as
         # default, can still be overwritten by user).
         dicParam['Output file name'] = strFleNme
@@ -344,7 +416,7 @@ if __name__ == "__main__":
         # Pop-up GUI to let the user select parameters:
         objGui = gui.DlgFromDict(dictionary=dicParam,
                                  title='Design Matrix Parameters')
-           
+
         # Close if user presses 'cancel':
         if objGui.OK is False:
             core.quit()
@@ -356,7 +428,4 @@ if __name__ == "__main__":
     # Add output path to dictionary.
     dicParam['Output path'] = strPth
 
-    print(dicParam)
-
-    #crt_design(dicParam)
-
+    crt_design(dicParam)
