@@ -41,11 +41,11 @@ strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matr
 
 # Orientation convention is like a clock: 0 is vertical, and positive values rotate clockwise. Beyond 360 and below zero values wrap appropriately.
 # NOTE: can/should be float
-lstOri = [0, 45, 90, 135, 180, 225, 270, 315]
+# lstOri = [0, 45, 90, 135, 180, 225, 270, 315]
 # NOTE: WARNING! in the old version, the following list was hard coded at
 # some point, perhaps the order of orientation is actually taken from this
 # separate, hard-coded list; -- see line 176 of old script
-[90, 45, 180, 135, 270, 225, 0, 315]
+# [90, 45, 180, 135, 270, 225, 0, 315]
 
 
 def prf_stim(dicParam):
@@ -62,16 +62,53 @@ def prf_stim(dicParam):
     # *****************************************************************************
     # *** Experimental parameters (from dictionary)
 
+    # Path of design matrix (npz):
+    strPthNpz = dicParam['Path of design matrix (npz)']
+
+    # Output path & file name of log file:
+    strPthLog = dicParam['Output path (log files)']
+
+    # Target duration [s]:
+    varTrgtDur = dicParam['Target duration [s]']
+
     # Logging mode (logging mode is for creating files for analysis, not to be
     # used during an experiment).
     lgcLogMde = dicParam['Logging mode']
 
+    # Frequency of stimulus bar in Hz:
+    varTmpFrq = dicParam['Temporal frequency [Hz]']
 
-    strPthNpz
-    
+    # Sptial frequency of stimulus (cycles per degree):             ### WARNING CHECK UNITS###
+    varSptlFrq = dicParam['Spatial frequency [cyc/deg]']
 
-    # *****************************************************************************
+    # Distance between observer and monitor [cm]:
+    varMonDist = dicParam['Distance between observer and monitor [cm]']
+
+    # Width of monitor [cm]:
+    varMonWdth = dicParam['Width of monitor [cm]']
+
+    # Width of monitor [pixels]:
+    varPixX = dicParam['Width of monitor [pixels]': 1920,]
+
+    # Height of monitor [pixels]:
+    varPixY = dicParam['Height of monitor [pixels]']
+
+    # Background colour:
+    varBckgrd = dicParam['Background colour [-1 to 1]']
+
+    # *************************************************************************
     # *** Retrieve design matrix
+
+    #        np.savez(strPthNpz,
+    #                 aryDsg=aryDsg,
+    #                 vecTrgt=vecTrgt,
+    #                 lgcFull=lgcFull,
+    #                 varTr=varTr,
+    #                 varNumVol=varNumVol,
+    #                 varNumOri=varNumOri,
+    #                 varNumPos=varNumPos,
+    #                 varNumTrgt=varNumTrgt,
+    #                 varIti=varIti)    
 
     # Load stimulus parameters from npz file.
     objNpz = np.load(strPthNpz)
@@ -88,19 +125,19 @@ def prf_stim(dicParam):
     lgcFull = bool(objNpz['lgcFull'])
 
     # Number of volumes:
-    varNumVol = int(objNpz['varNumVol'])
+    # varNumVol = int(objNpz['varNumVol'])
 
     # Number of bar positions:
-    varNumPos = int(objNpz['varNumPos'])
+    # varNumPos = int(objNpz['varNumPos'])
 
     # Number of orientation:
-    varNumOri = int(objNpz['varNumOri'])
+    # varNumOri = int(objNpz['varNumOri'])
 
     # Number of target events:
-    varNumTrgt = int(objNpz['varNumTrgt'])
+    # varNumTrgt = int(objNpz['varNumTrgt'])
 
     # Average inter-trial interval for target events:
-    varIti = float(objNpz['varIti'])
+    # varIti = float(objNpz['varIti'])
 
     # If in logging mode, only present stimuli very briefly:
     if lgcLogMde:
@@ -118,6 +155,38 @@ def prf_stim(dicParam):
     # Set clock:
     objClck = core.Clock()
 
+    # Set clock for logging:
+    logging.setDefaultClock(objClck)
+
+    # Create a log file and set logging verbosity:
+    fleLog = logging.LogFile(strPthLog, level=logging.DATA)
+
+    # Log stimulus parameters:
+    fleLog.write('Log file path: ' + strPthLog + '\n')
+    fleLog.write('Design matrix: ' + strPthNpz + '\n')
+    fleLog.write('Full screen: ' + str(lgcFull) + '\n')
+    fleLog.write('Volume TR [s]: ' + str(varTr) + '\n')
+    fleLog.write('Frequency of stimulus bar in Hz: ' + str(varTmpFrq) + '\n')
+    fleLog.write('Sptial frequency of stimulus (cycles per degree): '
+                 + str(varSptlFrq) + '\n')
+    fleLog.write('Distance between observer and monitor [cm]: '
+                 + str(varMonDist) + '\n')
+    fleLog.write('Width of monitor [cm]: ' + str(varMonWdth) + '\n')
+    fleLog.write('Width of monitor [pixels]: ' + str(varPixX) + '\n')
+    fleLog.write('Height of monitor [pixels]: ' + str(varPixY) + '\n')
+    fleLog.write('Background colour [-1 to 1]: ' + str(varBckgrd) + '\n')
+    fleLog.write('Target duration [s]: ' + str(varTrgtDur) + '\n')
+    fleLog.write('Logging mode: ' + str(lgcLogMde) + '\n')
+
+    # Set console logging verbosity:
+    logging.console.setLevel(logging.WARNING)
+
+    # *************************************************************************
+    # *** Prepare behavioural response logging
+
+    # Array for logging of key presses:
+    aryKeys = np.array([], dtype=np.float32)
+
     # Control the logging of participant responses:
     varSwtRspLog = 0
 
@@ -127,66 +196,6 @@ def prf_stim(dicParam):
     # Counter for correct/incorrect responses:
     varCntHit = 0  # Counter for hits
     varCntMis = 0  # Counter for misses
-
-    # Set clock for logging:
-    logging.setDefaultClock(objClck)
-
-    # Add time stamp and experiment name to metadata:
-    dicExpInfo['Date'] = data.getDateStr().encode('utf-8')
-    dicExpInfo['Experiment_Name'] = strExpNme
-
-    # Path of this file:
-    strPthMain = os.path.dirname(os.path.abspath(__file__))
-
-    # Get parent path:
-    strPthPrnt = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
-    # Path of logging folder (parent to subject folder):
-    strPthLog = (strPthPrnt
-                 + os.path.sep
-                 + 'log')
-
-    # If it does not exist, create subject folder for logging information
-    # pertaining to this session:
-    if not os.path.isdir(strPthLog):
-        os.makedirs(strPthLog)
-
-    # Path of subject folder:
-    strPthSub = (strPthLog
-                 + os.path.sep
-                 + str(dicExpInfo['Subject_ID'])
-                 )
-
-    # If it does not exist, create subject folder for logging information
-    # pertaining to this session:
-    if not os.path.isdir(strPthSub):
-        os.makedirs(strPthSub)
-
-    # Name of log file:
-    strPthLog = (strPthSub
-                 + os.path.sep
-                 + '{}_{}_Run_{}_{}'.format(dicExpInfo['Subject_ID'],
-                                            dicExpInfo['Experiment_Name'],
-                                            dicExpInfo['Run'],
-                                            dicExpInfo['Date'])
-                 )
-
-    # Create a log file and set logging verbosity:
-    fleLog = logging.LogFile(strPthLog + '.log', level=logging.DATA)
-
-    # Log parent path:
-    fleLog.write('Parent path: ' + strPthPrnt + '\n')
-
-    # Log condition:
-    fleLog.write('Subject_ID: ' + dicExpInfo['Subject_ID'] + '\n')
-    fleLog.write('Run: ' + dicExpInfo['Run'] + '\n')
-    fleLog.write('Test mode: ' + dicExpInfo['Test mode'] + '\n')
-
-    # Set console logging verbosity:
-    logging.console.setLevel(logging.WARNING)
-
-    # Array for logging of key presses:
-    aryKeys = np.array([], dtype=np.float32)
 
     # *************************************************************************
     # *** Setup
@@ -199,6 +208,24 @@ def prf_stim(dicParam):
     # Set size of monitor:
     objMon.setSizePix([varPixX, varPixY])
 
+    # Set screen:
+    objWin = visual.Window(
+        size=(varPixX, varPixY),
+        screen=0,
+        winType='pyglet',  # winType : None, ‘pyglet’, ‘pygame’
+        allowGUI=False,
+        allowStencil=True,
+        fullscr=True,
+        monitor=objMon,
+        color=varBckgrd,
+        colorSpace='rgb',
+        units='deg',
+        blendMode='avg'
+        )
+
+    # *************************************************************************
+    # *** Prepare stimulus properties
+
     # The area that will be covered by the bar stimulus depends on whether
     # presenting in full screen mode or not. If in full screen mode, the
     # entire width of the screen will be covered. If not, a central square
@@ -210,42 +237,6 @@ def prf_stim(dicParam):
 
     # Convert size in pixels to size in degrees (given the monitor settings):
     varDegCover = misc.pix2deg(varPixCov, objMon)
-
-    # Log monitor info:
-    fleLog.write(('Monitor distance: varMonDist = '
-                  + str(varMonDist)
-                  + ' cm'
-                  + '\n'))
-    fleLog.write(('Monitor width: varMonWdth = '
-                  + str(varMonWdth)
-                  + ' cm'
-                  + '\n'))
-    fleLog.write(('Monitor width: varPixX = '
-                  + str(varPixX)
-                  + ' pixels'
-                  + '\n'))
-    fleLog.write(('Monitor height: varPixY = '
-                  + str(varPixY)
-                  + ' pixels'
-                  + '\n'))
-
-    # Set screen:
-    objWin = visual.Window(
-        size=(varPixX, varPixY),
-        screen=0,
-        winType='pyglet',  # winType : None, ‘pyglet’, ‘pygame’
-        allowGUI=False,
-        allowStencil=True,
-        fullscr=True,
-        monitor=objMon,
-        color=lstBckgrd,
-        colorSpace='rgb',
-        units='deg',
-        blendMode='avg'
-        )
-
-    # *************************************************************************
-    # *** Bar stimulus properties
 
     # The thickness of the bar stimulus depends on the size of the screen to
     # be covered, and on the number of positions at which to present the bar.
@@ -736,26 +727,7 @@ if __name__ == "__main__":
     # *************************************************************************
     # *** Stimulus parameters
 
-    # Frequency of stimulus bar in Hz:
-    varTmpFrq = 4.0
 
-    # Sptial frequency of stimulus (cycles per degree): ### WARNING CHECK UNITS###
-    varSptlFrq = 1.5
-
-    # Distance between observer and monitor [cm]:
-    varMonDist = 99.0  # [99.0] for 7T scanner
-
-    # Width of monitor [cm]:
-    varMonWdth = 30.0  # [30.0] for 7T scanner
-
-    # Width of monitor [pixels]:
-    varPixX = 1920  # [1920.0] for 7T scanner
-
-    # Height of monitor [pixels]:
-    varPixY = 1200  # [1200.0] for 7T scanner
-
-    # Background colour:
-    lstBckgrd = [-0.7, -0.7, -0.7]
 
     # *************************************************************************
     # *** GUI 
@@ -791,20 +763,16 @@ if __name__ == "__main__":
     strFleNme = objNspc.filename
 
     # Dictionary with experiment parameters.
-    # - 'Number of bar orientations' = number of steps between 0 and 360 deg.
-    #
-    dicParam = {'Output file name': 'Run_01',
-                'TR [s]': 2.0,
-                # 'Target duration [s]': 0.3,
-                'Number of bar orientations': 8,
-                'Number of positions': 12,
-                'Number of blocks': 2,
-                'Number of rest trials': 0,
-                'Inter-trial interval for targets [s]': 15.0,
-                'Initial rest period [volumes]': 10,
-                'Final rest period [volumes]': 10,
-                'Full screen:': [True, False],
-                'Logging mode': [True, False]}
+    dicParam = {'Run (name of design matrix file)': 'Run_01',
+                'Target duration [s]': 0.3,
+                'Logging mode': [False, True],
+                'Temporal frequency [Hz]': 4.0,
+                'Spatial frequency [cyc/deg]': 1.5,    ### WARNING CHECK UNITS###
+                'Distance between observer and monitor [cm]': 99.0,
+                'Width of monitor [cm]': 30.0,
+                'Width of monitor [pixels]': 1920,
+                'Height of monitor [pixels]': 1200,
+                'Background colour [-1 to 1]': 0.7}
 
     if not(strFleNme is None):
 
@@ -818,23 +786,43 @@ if __name__ == "__main__":
         objGui = gui.DlgFromDict(dictionary=dicParam,
                                  title='Design Matrix Parameters')
 
-        # Close if user presses 'cancel':
-        if objGui.OK is False:
-            core.quit()
+    # Start experiment if user presses 'ok':
+    if objGui.OK is True:
 
-    # Get date string as default session name:
-    strDate = str(datetime.datetime.now())
-    lstDate = strDate[0:10].split('-')
-    lstTime = strDate[11:19].split(':')
-    strDate = (lstDate[0] + lstDate[1] + lstDate[2] + '_' + lstTime[0]
-               + lstTime[1] + lstTime[2])
+        # Get date string as default session name:
+        strDate = str(datetime.datetime.now())
+        lstDate = strDate[0:10].split('-')
+        lstTime = strDate[11:19].split(':')
+        strDate = (lstDate[0] + lstDate[1] + lstDate[2] + '_' + lstTime[0]
+                   + lstTime[1] + lstTime[2])
 
-    # Output path ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
-    strPth = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    strPth = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation'
-    strPth = os.path.join(strPth, 'log', ('Exp_Log_' + strDate + '.txt'))
+        # Path of parent directory:
+        strPth = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    
+        # Output path ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
+        strPthOut = os.path.join(strPth,
+                                'log',
+                                (dicParam['Output file name']
+                                 + strDate
+                                 + '.txt')
+                                )
+    
+        # Add output path to dictionary.
+        dicParam['Output path (log files)'] = strPthOut
 
-    # Add output path to dictionary.
-    dicParam['Output path (log files)'] = strPth
+        # Path of design matrix file (npz):
+        strPthNpz = os.path.join(strPth,
+                                'design_matrices',
+                                (dicParam['Run (name of design matrix file)']
+                                 + '.npz')
+                                )
+    
+        # Add path of design matrix (npz file) to dictionary.
+        dicParam['Path of design matrix (npz)'] = strPthNpz
+    
+        prf_stim(dicParam)
 
-    crt_design(dicParam)
+    else:
+
+        # Close GUI if user presses 'cancel':
+        core.quit()
