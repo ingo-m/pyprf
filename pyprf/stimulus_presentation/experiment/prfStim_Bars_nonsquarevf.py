@@ -27,24 +27,35 @@ This version: Non-square visual field coverage, i.e. bar stimuli all over the
 
 import os
 import numpy as np
-import pickle
 import datetime
 from psychopy import visual, event, core,  monitors, logging, gui, data, misc
 from psychopy.misc import pol2cart
 from itertools import cycle
 from PIL import Image
 
+# Width of monitor [pixels]:
+varPixX = 1920  # [1920.0] for 7T scanner
+# Height of monitor [pixels]:
+varPixY = 1200  # [1200.0] for 7T scanner
+strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
+
+lstOri = [0, 45, 90, 135, 180, 225, 270, 315]
+# NOTE: WARNING! in the old version, the following list was hard coded at
+# some point, perhaps the order of orientation is actually taken from this
+# separate, hard-coded list; -- see line 176 of old script
+[90, 45, 180, 135, 270, 225, 0, 315]
+
 
 def prf_stim():
     """
     Present stimuli for population receptive field mapping.
 
-    If in logging mode, this script
-    creates a stimulus log of the stimuli used for the pRF mapping that can be
-    used for the pRF finding analysis of the pyprf library. The stimuli are saved
-    as png files, where each png represents the status of visual stimulation for
-    one TR (the png files contain modified screenshots of the visual stimulus,
-    and can be directly be loaded into the py_pRF_mapping pipepline.
+    If in logging mode, this script creates a stimulus log of the stimuli used
+    for the pRF mapping that can be used for the pRF finding analysis of the
+    pyprf library. The stimuli are saved as png files, where each png
+    represents the status of visual stimulation for one TR (the png files
+    contain modified screenshots of the visual stimulus, and can be directly be
+    loaded into the py_pRF_mapping pipepline.
     """
 
     # *****************************************************************************
@@ -136,6 +147,7 @@ def prf_stim():
 
     # Array for logging of key presses:
     aryKeys = np.array([], dtype=np.float32)
+
     # *****************************************************************************
 
     # Load stimulus parameters from npz file.
@@ -150,21 +162,32 @@ def prf_stim():
     # Full screen mode? If no, bar stimuli are restricted to a central square.
     # If yes, bars appear on the entire screen. This parameter is set when
     # creating the design matrix.
-    lgcFull = objNpz['lgcFull']
+    lgcFull = bool(objNpz['lgcFull'])
 
     # Number of volumes:
-    varNumVol = objNpz['varNumVol']
+    varNumVol = int(objNpz['varNumVol'])
 
-    # NUmber of bar positions:
-    varNumPos = objNpz['varNumPos']
+    # Number of bar positions:
+    varNumPos = int(objNpz['varNumPos'])
+
+    # Number of orientation:
+    varNumOri = int(objNpz['varNumOri'])
 
     # Number of target events:
-    varNumTrgt = objNpz['varNumTrgt']
+    varNumTrgt = int(objNpz['varNumTrgt'])
 
     # Average inter-trial interval for target events:
-    varIti = objNpz['varIti']
+    varIti = float(objNpz['varIti'])
 
-
+    # If in logging mode, only present stimuli very briefly:
+    if lgcLogMde:
+        # Note: If 'varTr' is set too low in logging mode, frames are
+        # dropped and the stimuli do not get logged properly.
+        varTr = 0.2
+    # Otherwise, use actual volume TR:
+    else:
+        # Volume TR:
+        varTr = float(objNpz['varTr'])
 
 
 
@@ -185,11 +208,20 @@ def prf_stim():
                               width=varMonWdth,
                               distance=varMonDist)
 
-    # Convert size in pixels to size in degrees (given the monitor settings):
-    varDegCover = misc.pix2deg(varPix, objMon)
-
     # Set size of monitor:
     objMon.setSizePix([varPixX, varPixY])
+
+    # The area that will be covered by the bar stimulus depends on whether
+    # presenting in full screen mode or not. If in full screen mode, the
+    # entire width of the screen will be covered. If not, a central square
+    # with a side length equal to the screen height will be covered.
+    if lgcFull:
+        varPixCov = varPixX
+    else:
+        varPixCov = varPixY
+
+    # Convert size in pixels to size in degrees (given the monitor settings):
+    varDegCover = misc.pix2deg(varPixCov, objMon)
 
     # Log monitor info:
     fleLog.write(('Monitor distance: varMonDist = '
@@ -230,45 +262,47 @@ def prf_stim():
 
 
 
+TODO: varPixCov = varPix
 
 
-    # %%
-    """aryDsg"""
-    # retrieve aryDsg from pickle file (stored in folder aryDsg)
-    str_path_aryDsg = str_path_parent_up + os.path.sep + 'aryDsg' + \
-        os.path.sep + 'aryDsg_run' + str(dicExp['run']) + '.pickle'
-    with open(str_path_aryDsg, 'rb') as handle:
-        arrays = pickle.load(handle)
+    # The thickness of the bar stimulus depends on the size of the screen to
+    # be covered, and on the number of positions at which to present the bar.
+    # Bar thickness in pixels:
+    varThckPix = float(varPixCov) / float(varNumPos)
+    # Bar thickness in degree:
+    varThckDgr = misc.pix2deg(varThckPix, objMon)
 
-    aryDsg = arrays["aryDsg"]
-    aryDsg = aryDsg.astype(int)
-    vecTrgt = arrays["vecTrgt"]
-    TargetDur = arrays["TargetDuration"]
+    # Offset of the bar stimuli. The bar stimuli should cover the screen area,
+    # without extending beyond the screen. Because their position refers to
+    # the centre of the bar, we need to limit the extend of positions at the
+    # edge of the screen by an offset, Offset in pixels:
+    varOffsetPix = varThckPix / 2.0
 
-    # If in logging mode, only present stimuli very briefly:
-    if lgcLogMde:
-        # Note: If the 'varTr' is set too low in logging mode, frames are
-        # dropped and the stimuli do not get logged properly.
-        varTr = 0.2
-    # Otherwise, use actual volume TR:
-    else:
-        # Volume TR:
-        varTr = objNpz['varTr']
+    # Maximum bar position in pixels, with respect to origin at centre of
+    # screen:
+    varPosMaxPix = float(varPixCov) / 2.0 - float(varOffsetPix)
 
-    varNumPos = arrays["varNumPos"]
-    varNumVol = arrays["varNumVol"]
-    print('TARGETS: ')
-    print vecTrgt
+    # Array of possible bar positions (displacement relative to origin at
+    # centre of the screen) in pixels:
+    vecPosPix = np.linspace((-varPosMaxPix), varPosMaxPix, varNumPos)
 
-    # calculate
-    Offset = varPix/varNumPos/2
-    aryOri = [0, 45, 90, 135, 180, 225, 270, 315]
-    distances = np.linspace(-varPix/2+Offset, varPix/2-Offset, varNumPos)
+    # Vectors with as repititions of orientations and positions, so that there
+    # is one unique combination of position & orientation for all positions
+    # and orientations:
+    vecOriRep = np.repeat(lstOri, varNumPos)
+    vecPosPixRep = np.tile(vecPosPix, varNumOri)
 
-    aryPosPix = []
-    for ori in [90, 45, 180, 135, 270, 225, 0, 315]:
-        temp = zip(*pol2cart(np.tile(ori, varNumPos), distances))
-        aryPosPix.append(temp)
+    # Convert from polar to cartesian coordinates.
+    # theta, radius = pol2cart(x, y, units=’deg’)
+    vecTheta, vecRadius = pol2cart(vecOriRep, vecPosPixRep, units='deg')
+
+    # lstPosPix = []
+    # for ori in lstOri:
+    #     temp = zip(*pol2cart(np.tile(ori, varNumPos), vecPosPix))
+    #     lstPosPix.append(temp)
+
+
+
 
     # create array to log key pressed events
     TriggerPressedArray = np.array([])
@@ -288,7 +322,7 @@ def prf_stim():
         color=[1.0, 1.0, 1.0],
         colorSpace='rgb',
         opacity=1.0,
-        size=(2*varPixX, varPix/varNumPos),
+        size=(2*varPixX, varPixCov/varNumPos),
         sf=(varSptlFrq/(varPix/varNumPos), varSptlFrq/(varPix/varNumPos)),
         ori=0,
         autoLog=False,
@@ -475,8 +509,8 @@ def prf_stim():
         # get direction
         if 0 < keyOri < 9:
             grating.setOpacity(1)
-            grating.setOri(aryOri[keyOri-1])
-            grating.setPos(aryPosPix[keyOri-1][keyPos])
+            grating.setOri(lstOri[keyOri-1])
+            grating.setPos(lstPosPix[keyOri-1][keyPos])
         else:  # static
             grating.setOpacity(0)
 
@@ -737,9 +771,6 @@ if __name__ == "__main__":
 
     # Sptial frequency of stimulus (cycles per degree):
     varSptlFrq = 1.5
-
-    # Size of area covered by bars (in pixels):
-    varPix = 1920
 
     # Distance between observer and monitor [cm]:
     varMonDist = 99.0  # [99.0] for 7T scanner
