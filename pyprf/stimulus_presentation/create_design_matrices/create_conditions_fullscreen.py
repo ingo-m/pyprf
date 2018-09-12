@@ -6,7 +6,6 @@ import csv
 import argparse
 import numpy as np
 from psychopy import gui, core
-# import errno
 
 
 def crt_design(dicParam):
@@ -65,6 +64,9 @@ def crt_design(dicParam):
     # Full screen stimuli?
     lgcFull = dicParam['Full screen:']
 
+    # Stimulus contrasts:
+    lstCon = dicParam['Stimulus contrasts']
+
     # *************************************************************************
     # *** Preparations
 
@@ -72,47 +74,170 @@ def crt_design(dicParam):
     # zero.
     varDurRest = 3
 
+    # Number of contrast levels:
+    varNumCon = len(lstCon)
+
     # *************************************************************************
     # *** Stimulus orientation & position
 
-    #  Create arrays for position and orientation
+    #  Create arrays for position, orientation, and contrast:
     aryOri = np.empty(0)
     aryPos = np.empty(0)
+    aryCon = np.empty(0)
+
+    # List of orientations. Psychopy orientation convention: "Orientation
+    # convention is like a clock: 0 is vertical, and positive values rotate
+    # clockwise. Beyond 360 and below zero values wrap appropriately."
+    if varNumOri == 6:
+        # Six actual orientations are represented by eight orientation values.
+        # The reason for this is that vertical (0.0 and 180) and horizontal
+        # (90.0 and 270.0) orientation are presented twice. This is to balance
+        # the occurence of vertical/horizontal vs. oblique orientations.
+        lstOri = [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
+    elif varNumOri == 2:
+        # If number of orientations is set to two, only vertical and horizontal
+        # orientations are presented (i.e. no oblique bars).
+        lstOri = [0.0, 90.0, 180.0, 270.0]
 
     # Loop through blocks (repititions of orientation & position):
     for idxBlk in range(varNumBlk):
 
         # Array for orientations in current block:
-        aryOriBlock = np.arange(1, (varNumOri + 1))
+        aryOriBlock = np.array(lstOri)
 
         # Randomise order of orientations in current block:
         np.random.shuffle(aryOriBlock)
 
         # Each orientation is repeated as many times as there are positions:
-        aryOriBlock = np.repeat(aryOriBlock, varNumPos)
+        aryOriBlock = np.repeat(aryOriBlock, (varNumPos * varNumCon))
 
         # Array for positions within current block:
-        aryPosBlock = np.empty(0)
+        # aryPosBlock = np.empty(0)
+
+        # Array for positions & contrasts within current block:
+        aryPosConBlock = np.empty(0).reshape((0, 2))
 
         # Loop through orientations:
-        for idxOri in range(varNumOri):
+        for idxOri in range(len(lstOri)):
 
             # Array for positions:
             aryPosTemp = np.arange(varNumPos)
 
+            # Repeat positions as many time as there are contrast levels:
+            aryPosTemp = np.tile(aryPosTemp, varNumCon)
+
+            # Array for contrast levels:
+            aryConTmp = np.repeat(lstCon, varNumPos)
+
+            # Stack positions and contrasts levels, in order to randomise them
+            # together:
+            aryPosConTmp = np.vstack((aryPosTemp, aryConTmp)).T
+
             # Randomise order of positions:
-            np.random.shuffle(aryPosTemp)
+            np.random.shuffle(aryPosConTmp)
 
-            aryPosBlock = np.append(aryPosBlock, aryPosTemp)
+            # aryPosBlock = np.append(aryPosBlock, aryPosTemp)
+            aryPosConBlock = np.append(aryPosConBlock, aryPosConTmp, axis=0)
 
-        # Put randomised orientation and positions into run arrays:
+        # Put randomised orientations/positions/contrasts into run arrays:
         aryOri = np.append(aryOri, aryOriBlock)
-        aryPos = np.append(aryPos, aryPosBlock)
+        aryPos = np.append(aryPos, aryPosConBlock[:, 0])
+        aryCon = np.append(aryCon, aryPosConBlock[:, 1])
 
-    # Array for complete design matrix
-    aryDsg = np.vstack((aryPos, aryOri)).T
+    # Number of volumes so far (will be updated when rest blocks are inserted).
+    varNumVol = aryCon.shape[0]
 
-    # Number of volumes:
+    # Array for complete design matrix. The design matrix consists of four
+    # columns, containing the following information: (1) Stimulus or rest? (2)
+    # Bar position (3) Bar orientation (4) Bar contrast (or possibly another
+    # stimulus feature implemented in the stimulation script).
+    aryDsg = np.zeros((varNumVol, 4))
+
+    # Put orientations and positions into design matrix:
+    aryDsg[:, 1] = aryPos
+    aryDsg[:, 2] = aryOri
+    aryDsg[:, 3] = aryCon
+
+    # At this point, the design matrix contains only stimulus events (i.e. no
+    # rest blocks). The first column of the design matrix is used to code for
+    # stimulus/rest (redundant but useful in stimulation script). Here, we set
+    # the entire first column of the design matrix to 'one', signifying a
+    # stimulus event. Rest blocks that will be added will be coded as 'zero'.
+    aryDsg[:, 0] = 1.0
+
+    # *************************************************************************
+    # *** Full screen mode
+
+    if lgcFull:
+
+        # Solution for nonsquare visual field: present more steps
+        # (e.g. 20 instead of 12), but remove extra steps for horizontal bars
+        # (positions 1 and 5).
+
+        # We assume that the aspect ratio of the screen is 1920.0 / 1200.0.
+        # Horizontal bars should only be presented at the central 62.5% percent
+        # of positions relative to the extent of positions of vertical bars
+        # (because 1200.0 / 1920.0 = 0.625).
+
+        # Number of positions along vertical axis:
+        varNumPosX = int(np.ceil(float(varNumPos) * (1920.0 / 1200.0)))
+
+        # Number of positions:
+        # vecSteps = np.arange(0, varNumPosX)
+
+        # Margin to leave out for low/high y-positions:
+        varMarg = np.ceil(
+                          (float(varNumPosX) - (0.625 * float(varNumPosX)))
+                          * 0.5
+                          )
+
+        # New condition list (which will replace old list):
+        lstCon = []
+
+        # Loop through volumes:
+        for idxVol in range(varNumVol):
+
+            # Stimulus/rest code of current trial (i.e. current row):
+            varTmpStim = aryDsg[idxVol, 0]
+
+            # Position of current trial (i.e. current row):
+            varTmpPos = aryDsg[idxVol, 1]
+
+            # Orientation of current trial (i.e. current row):
+            varTmpOri = aryDsg[idxVol, 2]
+
+            # Contrast of current trial (i.e. current row):
+            varTmpCon = aryDsg[idxVol, 3]
+
+            # Check whether current trial has horizontal orientation:
+            if ((varTmpOri == 90.0) or (varTmpOri == 270.0)):
+
+                # Check whether horizontal orientation is presented outside of
+                # the screen area:
+                if ((varTmpPos < varMarg)
+                        or ((float(varNumPos) - varMarg) <= varTmpPos)):
+
+                    # print((str(varTmpPos) + '   ' + str(varTmpOri)))
+                    pass
+
+                else:
+
+                    # Horizontal orientation is within screen area, keep it:
+                    lstCon.append((varTmpStim,
+                                   varTmpPos,
+                                   varTmpOri,
+                                   varTmpCon))
+
+            else:
+
+                # Orientation is not horizontal, keep it:
+                lstCon.append((varTmpStim, varTmpPos, varTmpOri, varTmpCon))
+
+        # Replace original aryDsg array with new array (without horizontal
+        # condition outside of screen area):
+        aryDsg = np.array(lstCon)
+
+    # Update number of volumes:
     varNumVol = aryDsg.shape[0]
 
     # *************************************************************************
@@ -160,8 +285,14 @@ def crt_design(dicParam):
                 # too small"
                 lgcRep = not(lgcDiff)
 
+            else:
+
+                # If there is only one rest block, there is no need to check
+                # minimum distance.
+                lgcRep = False
+
         # Zeros for rest blocks to be inserted into design matrix:
-        aryZeros = np.zeros(varDurRest)[:, None]
+        aryZeros = np.zeros((varDurRest, 4))
 
         # Insert rest blocks into design matrix:
         for idxRest, varRstStrt in enumerate(vecNullIdx):
@@ -173,75 +304,9 @@ def crt_design(dicParam):
             aryDsg = np.insert(aryDsg, varRstStrtTmp, aryZeros, axis=0)
 
     # Add fixation blocks at beginning and end of run:
-    aryDsg = np.vstack((np.zeros((varDurRestStrt, 2)),
+    aryDsg = np.vstack((np.zeros((varDurRestStrt, 4)),
                         aryDsg,
-                        np.zeros((varDurRestEnd, 2))))
-
-    # Update number of volumes:
-    varNumVol = aryDsg.shape[0]
-
-    # *************************************************************************
-    # *** Full screen mode
-
-    if lgcFull:
-
-        # Makeshift solution for nonsquare visual field: present more steps
-        # (e.g. 20 instead of 12), but remove extra steps for horizontal bars
-        # (positions 1 and 5).
-
-        # We assume that the aspect ratio of the screen is 1920.0 / 1200.0.
-        # Horizontal bars should only be presented at the central 62.5% percent
-        # of positions relative to the extent of positions of vertical bars
-        # (because 1200.0 / 1920.0 = 0.625).
-
-        # Number of positions along vertical axis:
-        varNumPosX = int(np.ceil(float(varNumPos) * (1920.0 / 1200.0)))
-
-        # Number of positions:
-        # vecSteps = np.arange(0, varNumPosX)
-
-        # Margin to leave out for low/high y-positions:
-        varMarg = np.ceil(
-                          (float(varNumPosX) - (0.625 * float(varNumPosX)))
-                          * 0.5
-                          )
-
-        # New condition list (which will replace old list):
-        lstCon = []
-
-        # Loop through volumes:
-        for idxVol in range(varNumVol):
-
-            # Position of current trial (i.e. current row):
-            varTmpPos = aryDsg[idxVol, 0]
-
-            # Orientation of current trial (i.e. current row):
-            varTmpOri = aryDsg[idxVol, 1]
-
-            # Check whether current trial has horizontal orientation:
-            if ((varTmpOri == 1.0) or (varTmpOri == 5.0)):
-
-                # Check whether horizontal orientation is presented outside of
-                # the screen area:
-                if ((varTmpPos < varMarg)
-                        or ((float(varNumPos) - varMarg) <= varTmpPos)):
-
-                    # print((str(varTmpPos) + '   ' + str(varTmpOri)))
-                    pass
-
-                else:
-
-                    # Horizontal orientation is within screen area, keep it:
-                    lstCon.append((varTmpPos, varTmpOri))
-
-            else:
-
-                # Orientation is not horizontal, keep it:
-                lstCon.append((varTmpPos, varTmpOri))
-
-        # Replace original aryDsg array with new array (without horizontal
-        # condition outside of screen area):
-        aryDsg = np.array(lstCon)
+                        np.zeros((varDurRestEnd, 4))))
 
     # Update number of volumes:
     varNumVol = aryDsg.shape[0]
@@ -324,7 +389,13 @@ def crt_design(dicParam):
         lstCsv = []
         lstCsv.append('* * *')
         lstCsv.append('Design matrix')
-        lstCsv.append(aryDsg.tolist())
+        lstCsv.append('    Columns:')
+        lstCsv.append('    (1) Stimulus or rest?')
+        lstCsv.append('    (2) Bar position')
+        lstCsv.append('    (3) Bar orientation')
+        lstCsv.append('    (4) Bar contrast')
+        for strTmp in aryDsg.tolist():
+            lstCsv.append(strTmp)
         lstCsv.append('* * *')
         lstCsv.append('Target events')
         lstCsv.append(list(vecTrgt))
@@ -407,14 +478,15 @@ if __name__ == "__main__":
     dicParam = {'Output file name': 'Run_01',
                 'TR [s]': 2.0,
                 # 'Target duration [s]': 0.3,
-                'Number of bar orientations': 8,
+                'Number of bar orientations': [6, 2],
                 'Number of positions': 12,
-                'Number of blocks': 2,
+                'Number of blocks': 1,
                 'Number of rest trials': 0,
                 'Inter-trial interval for targets [s]': 15.0,
                 'Initial rest period [volumes]': 10,
                 'Final rest period [volumes]': 10,
-                'Full screen:': [True, False]}
+                'Full screen:': [True, False],
+                'Stimulus contrasts': [[0.02, 1.0], [1.0]]}
 
     if not(strFleNme is None):
 
@@ -429,14 +501,19 @@ if __name__ == "__main__":
                                  title='Design Matrix Parameters')
 
         # Close if user presses 'cancel':
-        if objGui.OK is False:
+        if objGui.OK is True:
+
+            # Output path
+            # ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
+            strPth = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                  '..'))
+            strPth = os.path.join(strPth, 'design_matrices')
+
+            # Add output path to dictionary.
+            dicParam['Output path'] = strPth
+
+            crt_design(dicParam)
+
+        else:
+            # Close if user presses 'cancel':
             core.quit()
-
-    # Output path ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
-    strPth = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    strPth = os.path.join(strPth, 'design_matrices')
-
-    # Add output path to dictionary.
-    dicParam['Output path'] = strPth
-
-    crt_design(dicParam)
