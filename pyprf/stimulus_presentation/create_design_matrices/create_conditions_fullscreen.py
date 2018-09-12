@@ -246,9 +246,13 @@ def crt_design(dicParam):
     # *************************************************************************
     # *** Randomise target events
 
+    # Number of volumes on which target events could occur (not during initial
+    # and final rest periods):
+    varNumVolTrgt = (varNumVol - varDurRestStrt - varDurRestEnd)
+
     # Number of target events to present (on average, one every varIti
     # seconds):
-    varNumTrgt = int(np.around(((float(varNumVol) * varTr) / varIti)))
+    varNumTrgt = int(np.around(((float(varNumVolTrgt) * varTr) / varIti)))
 
     # Earliest & latest allowed time for target event in seconds:
     varLmtTrgt01 = float(varDurRestStrt) * varTr + 2.0
