@@ -77,7 +77,7 @@ def prf_stim(dicParam):
     lgcLogMde = dicParam['Logging mode']
 
     # Frequency of stimulus bar in Hz:
-    varTmpFrq = dicParam['Temporal frequency [Hz]']
+    varGrtFrq = dicParam['Temporal frequency [Hz]']
 
     # Sptial frequency of stimulus (cycles per degree):             ### WARNING CHECK UNITS###
     varSptlFrq = dicParam['Spatial frequency [cyc/deg]']
@@ -109,7 +109,7 @@ def prf_stim(dicParam):
     #                 varNumOri=varNumOri,
     #                 varNumPos=varNumPos,
     #                 varNumTrgt=varNumTrgt,
-    #                 varIti=varIti)    
+    #                 varIti=varIti)
 
     # Load stimulus parameters from npz file.
     objNpz = np.load(strPthNpz)
@@ -117,8 +117,14 @@ def prf_stim(dicParam):
     # Get design matrix (for bar positions and orientation):
     aryDsg = objNpz['aryDsg']
 
+    # Number of volumes:
+    varNumVol = aryDsg.shape[0]
+
     # Vector with times of target events:
     vecTrgt = objNpz['vecTrgt']
+
+    # Number of target events:
+    varNumTrgt = vecTrgt.shape[0]
 
     # Full screen mode? If no, bar stimuli are restricted to a central square.
     # If yes, bars appear on the entire screen. This parameter is set when
@@ -150,9 +156,6 @@ def prf_stim(dicParam):
         # Volume TR:
         varTr = float(objNpz['varTr'])
 
-    # Number of volumes:
-    varNumVol = aryDsg.shape[0]
-
     # *************************************************************************
     # *** Logging
 
@@ -170,7 +173,7 @@ def prf_stim(dicParam):
     fleLog.write('Design matrix: ' + strPthNpz + '\n')
     fleLog.write('Full screen: ' + str(lgcFull) + '\n')
     fleLog.write('Volume TR [s]: ' + str(varTr) + '\n')
-    fleLog.write('Frequency of stimulus bar in Hz: ' + str(varTmpFrq) + '\n')
+    fleLog.write('Frequency of stimulus bar in Hz: ' + str(varGrtFrq) + '\n')
     fleLog.write('Sptial frequency of stimulus (cycles per degree): '
                  + str(varSptlFrq) + '\n')
     fleLog.write('Distance between observer and monitor [cm]: '
@@ -188,8 +191,11 @@ def prf_stim(dicParam):
     # *************************************************************************
     # *** Prepare behavioural response logging
 
-    # Array for logging of key presses:
-    aryKeys = np.array([], dtype=np.float32)
+    # Switch target (show target or not?):
+    varSwtTrgt = 0
+
+    # Switch that is used to control the logging of target events:
+    varSwtTrgtLog = 1
 
     # Control the logging of participant responses:
     varSwtRspLog = 0
@@ -287,11 +293,11 @@ def prf_stim(dicParam):
 
     # Bar stimulus size (length & thickness), in pixels:
     tplBarSzePix = (int(varPixCov), int(varThckPix))
-    
+
     # Bar stimulus spatial frequency (in x & y directions):
     tplBarSf = (float(varSptlFrq) / varThckPix,
                 float(varSptlFrq) / varThckPix)
-   
+
     # *************************************************************************
     # *** Stimuli
 
@@ -368,9 +374,10 @@ def prf_stim(dicParam):
         lstAptrCor = [(varPixCov / 2, varPixCov / 2),
                       (-varPixCov / 2, varPixCov / 2),
                       (-varPixCov / 2, -varPixCov / 2),
-                      (varPixCov / 2, -varPixCov / 2)] 
+                      (varPixCov / 2, -varPixCov / 2)]
 
-        # Aperture for covering left and right side of screen if not stimulating full screen.
+        # Aperture for covering left and right side of screen if not
+        # stimulating full screen.
         objAprtr = visual.Aperture(objWin,
                                    autoLog=False,
                                    shape=lstAptrCor)
@@ -419,88 +426,137 @@ def prf_stim(dicParam):
         idxFrame = 0
 
     # *************************************************************************
+    # *** Timing & switches
+
+    # Target counter:
+    varCntTrgt = 0
+
+    # Time of the first target event:
+    varTmeTrgt = vecTrgt[varCntTrgt]
+
+    # Switch for grating polarity flicker:
+    varSwtGrt = 0
+
+    # The input parameter 'varGrtFrq' gives the grating flicker frequency in
+    # Hz. We need to convert to second:
+    varGrtDur = 1.0 / float(varGrtFrq)
+
+    # *************************************************************************
     # *** Presentation
 
     if not(lgcLogMde):
-        
+
         # Draw fixation dot & surround:
         objFixDot.draw(win=objWin)
         objFixSrr.draw(win=objWin)
-    
+
         # Draw fixation grid:
         objGrdCrcl.draw(win=objWin)
         objGrdLne.draw(win=objWin)
-    
+
         objWin.flip()
-        
+
         # Hide the mouse cursor:
         event.Mouse(visible=False)
-    
-        # Wait for scanner trigger pulse & set clock after receiving trigger pulse
-        # (scanner trigger pulse is received as button press ('5')):
+
+        # Wait for scanner trigger pulse & set clock after receiving trigger
+        # pulse (scanner trigger pulse is received as button press ('5')):
         strTrgr = ['0']
         while strTrgr[0][0] != '5':
             # Check for keypress:
             lstTmp = event.getKeys(keyList=['5'], timeStamped=False)
-            # Whether the list has the correct length (if nothing has happened, lstTmp
-            # will have length zero):
+            # Whether the list has the correct length (if nothing has happened,
+        # lstTmp # will have length zero):
             if len(lstTmp) == 1:
                 strTrgr = lstTmp[0][0]
-    
+
     # Trigger pulse received, reset clock:
     objClck.reset(newT=0.0)
-    
+
     # Main timer which represents the starting point of the experiment:
     varTme01 = objClck.getTime()
 
-    # Time that is updates to track time:
+    # Time that is updated continuously to track time:
     varTme02 = objClck.getTime()
-    
-    # Timer that is used to control the logging of stimulus events:
-    # varTme03 = objClck.getTime()
-    
+
+    # Timer used to control the logging of stimulus events:
+    varTme03 = objClck.getTime()
+
+    # Timer for grating stimulus polarity flicker:
+    varTme04 = objClck.getTime()
+
     # Start of the experiment:
     for idxVol in range(varNumVol):  #noqa
 
-        print(idxVol)
-    
         # Show a grating during this volume?
         lgcOn = (aryDsg[idxVol, 0] == 1.0)
 
         # If a grating is shown, which orientation, position, and contrast?
-#        if lgcOn:
-#
-#            # Get stimulus properties from design matrix:
-#            varTmpPos = aryDsg[idxVol, 1]
-#            varTmpOri = aryDsg[idxVol, 2]
-#            varTmpCon = aryDsg[idxVol, 3]
-#
-#            # Set bar properties:
-#            objBar.setPos(varTmpPos)
-#            objBar.setOri(varTmpOri)
+        if lgcOn:
+
+            # Timer for grating stimulus polarity flicker:
+            varTme04 = objClck.getTime()
+
+            # Get stimulus properties from design matrix:
+            varTmpPos = aryDsg[idxVol, 1]
+            varTmpOri = aryDsg[idxVol, 2]
+            varTmpCon = aryDsg[idxVol, 3]
+
+            # Set bar properties:
+            objBar.setPos(varTmpPos)
+            objBar.setOri(varTmpOri)
+            # TODO : set bar contrast
 
         # Still on the same volume?
         while varTme02 < (varTme01 + (float(idxVol + 1) * varTr)):
-           
+
             # Update timer:
             varTme02 = objClck.getTime()
-            
-            # Draw grating?
-            if lgcOn:
-                objBar.draw(win=objWin)
+
+            # *****************************************************************
+            # *** Target control
+
+            # Time for target?
+            if ((varTmeTrgt <= varTme02)
+                    and (varTme02 <= (varTmeTrgt + varTrgtDur))):
+
+                varSwtTrgt = 1
+
+            else:
+
+                # Was the target just on?
+                if varSwtTrgt == 1:
+
+                        # Switch on the logging of the target event (so that
+                        # the next target event will be logged):
+                        varSwtTrgtLog = 1
+
+                        # Only increase the counter if the last target has not
+                        # been reached yet:
+                        if (varCntTrgt + 1) < varNumTrgt:
+
+                            # Increase the target counter:
+                            varCntTrgt = varCntTrgt + 1
+
+                            # Time of next target event:
+                            varTmeTrgt = vecTrgt[varCntTrgt]
+
+                # Switch the target off.
+                varSwtTrgt = 0
 
             # Draw target?
             if varSwtTrgt == 1:
 
                     # Draw target:
                     objTarget.draw(win=objWin)
+                    # objFixDot.fillColor = [0.0, 0.0, 1.0]
 
                     # Log target?
                     if varSwtTrgtLog == 1:
 
                         # Log target event:
                         strTmp = ('TARGET scheduled for: '
-                                  + str(varTmpTrgtStrt))
+                                  + str(varTmeTrgt))
                         logging.data(strTmp)
 
                         # Switch off (so that the target event is only logged
@@ -517,17 +573,7 @@ def prf_stim(dicParam):
                         # time interval after target onset:
                         varTme03 = objClck.getTime()
 
-            if not(lgcLogMde):
-
-                # Flip drawn objects to screen:
-                objWin.flip()
-            
-            # Check whether exit keys have been pressed:
-            if func_exit() == 1:
-                break
-
             # Check for and log participant's response:
-            varTme02 = objClck.getTime()
             lstRsps = event.getKeys(keyList=[strTrgtKey], timeStamped=False)
 
             # Has the response not been reported yet, and is it still within
@@ -564,54 +610,125 @@ def prf_stim(dicParam):
                 # response won't be logged as a hit anymore afterwards):
                 varSwtRspLog = 0
 
-            # Check whether it's time to show a target on the next frame. Is
-            # the upcoming event a target? We first need to check whether the
-            # end of the design matrix has not been reached yet. This can
-            # happen if there is no target event in the last condition block,
-            # and the variable `varIdxTrgt` has been incremented in the second
-            # last condition block.
-            if (((idx01 + varIdxTrgt) < varNumEvnts) and
-                    aryDesign[idx01+varIdxTrgt][0] == 2):
+            # *****************************************************************
+            # *** Grating control
 
-                # Onset time of upcoming target:
-                varTmpTrgtStrt = aryDesign[idx01+varIdxTrgt][1]
+            # Set grating polarity:
+            if varSwtGrt == 0:
+                # TODO : set polarity
 
-                # Has the start time of the target event been reached?
-                if varTme02 >= (varTme01 + varTmpTrgtStrt):
+            else:
+                # TODO : set reverse polarity
 
-                    # Target switch on:
-                    varSwtTrgt = 1
+            # Change grating polarity:
+            if (varTme04 + varGrtDur) <= varTme02:
+                if varSwtGrt == 0:
+                    varSwtGrt = 1
+                else:
+                    varSwtGrt = 0
 
-                    # Has the end time of the target event been reached?
-                    if varTme02 >= (varTme01 + varTmpTrgtStrt + varDurTar):
+            # Draw grating?
+            if lgcOn:
+                objBar.draw(win=objWin)
 
-                        # Switch the target off:
-                        varSwtTrgt = 0
+            if not(lgcLogMde):
 
-                        # Switch on the logging of the target event (so that
-                        # the next target event will be logged):
-                        varSwtTrgtLog = 1
+                # Flip drawn objects to screen:
+                objWin.flip()
 
-                        # Only increase the index if the end of the design
-                        # matrix has not been reached yet:
-                        if (idx01 + varIdxTrgt) < varNumEvnts:
-
-                            # Increase the index to check whether the next
-                            # event in the design matrix is also a target
-                            # event:
-                            varIdxTrgt = varIdxTrgt + 1
+            # Check whether exit keys have been pressed:
+            if func_exit() == 1:
+                break
 
             # Update current time:
             varTme02 = objClck.getTime()
 
+    # *************************************************************************
+    # *** Feedback
 
+    logging.data('------End of the experiment.------')
 
+    # Performance feedback only if there were any targets:
+    if 0.0 < float(varCntHit + varCntMis):
 
+        # Ratio of hits:
+        varHitRatio = float(varCntHit) / float(varCntHit + varCntMis)
+
+        # Present participant with feedback on her target detection
+        # performance:
+        if 0.99 < varHitRatio:
+            # Perfect performance:
+            strFeedback = ('You have detected '
+                           + str(varCntHit)
+                           + ' targets out of '
+                           + str(varCntHit + varCntMis)
+                           + '\n'
+                           + 'Keep up the good work :)')
+        elif 0.9 < varHitRatio:
+            # OKish performance:
+            strFeedback = ('You have detected '
+                           + str(varCntHit)
+                           + ' targets out of '
+                           + str(varCntHit + varCntMis)
+                           + '\n'
+                           + 'There is still room for improvement.')
+        else:
+            # Low performance:
+            strFeedback = ('You have detected '
+                           + str(varCntHit)
+                           + ' targets out of '
+                           + str(varCntHit + varCntMis)
+                           + '\n'
+                           + 'Please try to focus more.')
+
+        # Create text object:
+        objTxtTmr = visual.TextStim(objWin,
+                                    text=strFeedback,
+                                    font="Courier New",
+                                    pos=(0.0, 0.0),
+                                    color=(1.0, 1.0, 1.0),
+                                    colorSpace='rgb',
+                                    opacity=1.0,
+                                    contrast=1.0,
+                                    ori=0.0,
+                                    height=0.5,
+                                    antialias=True,
+                                    alignHoriz='center',
+                                    alignVert='center',
+                                    flipHoriz=False,
+                                    flipVert=False,
+                                    autoLog=False)
+
+        # Show feedback text:
+        varTme04 = objClck.getTime()
+        while varTme02 < (varTme04 + 3.0):
+            objTxtTmr.draw()
+            objWin.flip()
+            varTme02 = objClck.getTime()
+
+        # Log total number of hits and misses:
+        logging.data(('Number of hits: ' + str(varCntHit)))
+        logging.data(('Number of misses: ' + str(varCntMis)))
+        logging.data(('Percentage of hits: '
+                      + str(np.around((varHitRatio * 100.0), decimals=1))))
+
+    # *************************************************************************
+    # *** End of the experiment
+
+    # Make the mouse cursor visible again:
+    event.Mouse(visible=True)
+
+    # Close everyting:
     objWin.close()
+    core.quit()
+    monitors.quit()
+    logging.quit()
+    event.quit()
 
+    # *************************************************************************
+    # *** Logging mode
 
-
-    # Save screenshots (logging mode)
+    # Save screenshots (logging mode):
     if lgcLogMde:
 
         print('Saving screenshots')
@@ -672,12 +789,9 @@ def prf_stim(dicParam):
             # aryRgb = np.swapaxes(aryRgb, 0, 1)
             # aryRgb = np.swapaxes(aryRgb, 1, 2)
 
-    # %%
-    """FINISH"""
-    core.quit()
-
 # *****************************************************************************
 # *** Function definitions
+
 
 def func_exit():
     """
@@ -723,12 +837,7 @@ def func_exit():
 if __name__ == "__main__":
 
     # *************************************************************************
-    # *** Stimulus parameters
-
-
-
-    # *************************************************************************
-    # *** GUI 
+    # *** GUI
 
     # Create parser object:
     objParser = argparse.ArgumentParser()
@@ -796,28 +905,28 @@ if __name__ == "__main__":
 
         # Path of parent directory:
         strPth = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    
+
         # Output path ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
         strPthOut = os.path.join(strPth,
-                                'log',
-                                (dicParam['Output file name']
-                                 + strDate
-                                 + '.txt')
-                                )
-    
+                                 'log',
+                                 (dicParam['Output file name']
+                                  + strDate
+                                  + '.txt')
+                                 )
+
         # Add output path to dictionary.
         dicParam['Output path (log files)'] = strPthOut
 
         # Path of design matrix file (npz):
         strPthNpz = os.path.join(strPth,
-                                'design_matrices',
-                                (dicParam['Run (name of design matrix file)']
-                                 + '.npz')
-                                )
-    
+                                 'design_matrices',
+                                 (dicParam['Run (name of design matrix file)']
+                                  + '.npz')
+                                 )
+
         # Add path of design matrix (npz file) to dictionary.
         dicParam['Path of design matrix (npz)'] = strPthNpz
-    
+
         prf_stim(dicParam)
 
     else:
