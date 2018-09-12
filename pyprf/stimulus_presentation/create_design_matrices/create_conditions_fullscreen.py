@@ -308,6 +308,7 @@ def crt_design(dicParam):
                  lgcFull=lgcFull,
                  varTr=varTr,
                  varNumVol=varNumVol,
+                 varNumOri=varNumOri,
                  varNumPos=varNumPos,
                  varNumTrgt=varNumTrgt,
                  varIti=varIti)
@@ -329,6 +330,9 @@ def crt_design(dicParam):
         lstCsv.append('* * *')
         lstCsv.append('Number of volumes')
         lstCsv.append(str(varNumVol))
+        lstCsv.append('* * *')
+        lstCsv.append('Number of bar orientations')
+        lstCsv.append(str(varNumOri))
         lstCsv.append('* * *')
         lstCsv.append('Number of bar positions')
         lstCsv.append(str(varNumPos))
