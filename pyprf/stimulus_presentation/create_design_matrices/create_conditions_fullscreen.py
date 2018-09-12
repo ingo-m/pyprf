@@ -243,6 +243,9 @@ def crt_design(dicParam):
         # condition outside of screen area):
         aryDsg = np.array(lstCon)
 
+    # Update number of volumes:
+    varNumVol = aryDsg.shape[0]
+
     # *************************************************************************
     # *** Randomise target events
 
