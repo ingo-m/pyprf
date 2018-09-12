@@ -39,6 +39,8 @@ varPixX = 1920  # [1920.0] for 7T scanner
 varPixY = 1200  # [1200.0] for 7T scanner
 strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
 
+# Orientation convention is like a clock: 0 is vertical, and positive values rotate clockwise. Beyond 360 and below zero values wrap appropriately.
+# NOTE: can/should be float
 lstOri = [0, 45, 90, 135, 180, 225, 270, 315]
 # NOTE: WARNING! in the old version, the following list was hard coded at
 # some point, perhaps the order of orientation is actually taken from this
@@ -46,7 +48,7 @@ lstOri = [0, 45, 90, 135, 180, 225, 270, 315]
 [90, 45, 180, 135, 270, 225, 0, 315]
 
 
-def prf_stim():
+def prf_stim(dicParam):
     """
     Present stimuli for population receptive field mapping.
 
@@ -57,22 +59,60 @@ def prf_stim():
     contain modified screenshots of the visual stimulus, and can be directly be
     loaded into the py_pRF_mapping pipepline.
     """
+    # *****************************************************************************
+    # *** Experimental parameters (from dictionary)
+
+    # Logging mode (logging mode is for creating files for analysis, not to be
+    # used during an experiment).
+    lgcLogMde = dicParam['Logging mode']
+
+
+    strPthNpz
+    
 
     # *****************************************************************************
-    # *** Logging
+    # *** Retrieve design matrix
 
+    # Load stimulus parameters from npz file.
+    objNpz = np.load(strPthNpz)
 
+    # Get design matrix (for bar positions and orientation):
+    aryDsg = objNpz['aryDsg']
 
+    # Vector with times of target events:
+    vecTrgt = objNpz['vecTrgt']
 
-    # Logging mode:
-    if dicExpInfo['Logging mode'] == 'Yes':
-        lgcLogMde = True
+    # Full screen mode? If no, bar stimuli are restricted to a central square.
+    # If yes, bars appear on the entire screen. This parameter is set when
+    # creating the design matrix.
+    lgcFull = bool(objNpz['lgcFull'])
+
+    # Number of volumes:
+    varNumVol = int(objNpz['varNumVol'])
+
+    # Number of bar positions:
+    varNumPos = int(objNpz['varNumPos'])
+
+    # Number of orientation:
+    varNumOri = int(objNpz['varNumOri'])
+
+    # Number of target events:
+    varNumTrgt = int(objNpz['varNumTrgt'])
+
+    # Average inter-trial interval for target events:
+    varIti = float(objNpz['varIti'])
+
+    # If in logging mode, only present stimuli very briefly:
+    if lgcLogMde:
+        # Note: If 'varTr' is set too low in logging mode, frames are
+        # dropped and the stimuli do not get logged properly.
+        varTr = 0.2
+    # Otherwise, use actual volume TR:
     else:
-        lgcLogMde = False
-    # *****************************************************************************
+        # Volume TR:
+        varTr = float(objNpz['varTr'])
 
-
-    # *****************************************************************************
+    # *************************************************************************
     # *** Logging
 
     # Set clock:
@@ -148,59 +188,7 @@ def prf_stim():
     # Array for logging of key presses:
     aryKeys = np.array([], dtype=np.float32)
 
-    # *****************************************************************************
-
-    # Load stimulus parameters from npz file.
-    objNpz = np.load(strPthNpz)
-
-    # Get design matrix (for bar positions and orientation):
-    aryDsg = objNpz['aryDsg']
-
-    # Vector with times of target events:
-    vecTrgt = objNpz['vecTrgt']
-
-    # Full screen mode? If no, bar stimuli are restricted to a central square.
-    # If yes, bars appear on the entire screen. This parameter is set when
-    # creating the design matrix.
-    lgcFull = bool(objNpz['lgcFull'])
-
-    # Number of volumes:
-    varNumVol = int(objNpz['varNumVol'])
-
-    # Number of bar positions:
-    varNumPos = int(objNpz['varNumPos'])
-
-    # Number of orientation:
-    varNumOri = int(objNpz['varNumOri'])
-
-    # Number of target events:
-    varNumTrgt = int(objNpz['varNumTrgt'])
-
-    # Average inter-trial interval for target events:
-    varIti = float(objNpz['varIti'])
-
-    # If in logging mode, only present stimuli very briefly:
-    if lgcLogMde:
-        # Note: If 'varTr' is set too low in logging mode, frames are
-        # dropped and the stimuli do not get logged properly.
-        varTr = 0.2
-    # Otherwise, use actual volume TR:
-    else:
-        # Volume TR:
-        varTr = float(objNpz['varTr'])
-
-
-
-
-
-
-
-
-
-
-
-
-    # *****************************************************************************
+    # *************************************************************************
     # *** Setup
 
     # Create monitor object:
@@ -255,15 +243,9 @@ def prf_stim():
         units='deg',
         blendMode='avg'
         )
-    # *****************************************************************************
 
-
-    # *****************************************************************************
-
-
-
-TODO: varPixCov = varPix
-
+    # *************************************************************************
+    # *** Bar stimulus properties
 
     # The thickness of the bar stimulus depends on the size of the screen to
     # be covered, and on the number of positions at which to present the bar.
@@ -301,68 +283,69 @@ TODO: varPixCov = varPix
     #     temp = zip(*pol2cart(np.tile(ori, varNumPos), vecPosPix))
     #     lstPosPix.append(temp)
 
+    # Bar stimulus size (length & thickness), in pixels:
+    tplBarSzePix = (int(varPixCov), int(varThckPix))
+    
+    # Bar stimulus spatial frequency (in x & y directions):
+    tplBarSf = (float(varSptlFrq) / varThckPix,
+                float(varSptlFrq) / varThckPix)
+   
+    # *************************************************************************
+    # *** Stimuli
 
+    # TODO: varPixCov = varPix
 
-
-    # create array to log key pressed events
-    TriggerPressedArray = np.array([])
-    TargetPressedArray = np.array([])
-
-    logFile.write('aryDsg=' + unicode(aryDsg) + '\n')
-    logFile.write('vecTrgt=' + unicode(vecTrgt) + '\n')
-    logFile.write('TargetDur=' + unicode(TargetDur) + '\n')
-
-    # %%
-    """STIMULI"""
-
-    # INITIALISE SOME STIMULI
-    grating = visual.GratingStim(
+    # Bar stimulus:
+    objBar = visual.GratingStim(
         objWin,
-        tex="sqrXsqr",
+        tex='sqrXsqr',
         color=[1.0, 1.0, 1.0],
         colorSpace='rgb',
         opacity=1.0,
-        size=(2*varPixX, varPixCov/varNumPos),
-        sf=(varSptlFrq/(varPix/varNumPos), varSptlFrq/(varPix/varNumPos)),
-        ori=0,
+        size=tplBarSzePix,
+        sf=tplBarSf,
+        ori=0.0,
         autoLog=False,
         interpolate=False,
+        units='pix'                           ##############CHECK###################
         )
 
-    # fixation dot
-    dotFix = visual.Circle(
+    # Fixation dot:
+    objFixDot = visual.Circle(
         objWin,
-        autoLog=False,
-        name='dotFix',
-        radius=2,
+        radius=2.0,
         fillColor=[1.0, 0.0, 0.0],
-        lineColor=[1.0, 0.0, 0.0],)
+        lineColor=[1.0, 0.0, 0.0],
+        autoLog=False,
+        units='pix')                           ##############CHECK###################
 
-    dotFixSurround = visual.Circle(
+    # Fixation dot surround:
+    objFixSrr = visual.Circle(
         objWin,
-        autoLog=False,
-        name='dotFixSurround',
-        radius=7,
+        radius=7.0,
         fillColor=[0.5, 0.5, 0.0],
-        lineColor=[0.0, 0.0, 0.0],)
-
-    # fixation grid
-    Circle = visual.Polygon(
-        win=objWin,
+        lineColor=[0.0, 0.0, 0.0],
         autoLog=False,
-        name='Circle',
+        units='pix')                           ##############CHECK###################
+
+    # Fixation grid circle:
+    objGrdCrcl = visual.Polygon(
+        win=objWin,
         edges=90,
-        ori=0,
-        units='deg',
+        ori=0.0,
         pos=[0, 0],
         lineWidth=2,
         lineColor=[1.0, 1.0, 1.0],
         lineColorSpace='rgb',
         fillColor=None,
         fillColorSpace='rgb',
-        opacity=1,
-        interpolate=True)
-    Line = visual.Line(
+        opacity=1.0,
+        autoLog=False,
+        interpolate=True,
+        units='deg')
+
+    # Fixation grid line:
+    objGrdLne = visual.Line(
         win=objWin,
         autoLog=False,
         name='Line',
@@ -376,51 +359,40 @@ TODO: varPixCov = varPix
         fillColorSpace='rgb',
         opacity=1,
         interpolate=True,)
-    # initialisation method
-    message = visual.TextStim(
-        objWin,
-        autoLog=False,
-        text='Condition',
-        height=30,
-        pos=(400, 400)
-        )
-    triggerText = visual.TextStim(
-        win=objWin,
-        autoLog=False,
-        color='white',
-        height=30,
-        text='Experiment will start soon. \n Waiting for scanner',)
-    targetText = visual.TextStim(
-        win=objWin,
-        autoLog=False,
-        color='white',
-        height=30)
 
-    vertices = [(varPix/2, varPix/2), (-varPix/2, varPix/2),
-                (-varPix/2, -varPix/2), (varPix/2, -varPix/2)]
-    aperture = visual.Aperture(objWin,
-                               autoLog=False,
-                               shape=vertices)  # try shape='square'
-    aperture.enabled = False
+    if not(lgcFull):
+        # List with aperture coordinates (used to cover left and right side of
+        # the screen when not in full-screen mode). List of tuples.
+        lstAptrCor = [(varPixCov / 2, varPixCov / 2),
+                      (-varPixCov / 2, varPixCov / 2),
+                      (-varPixCov / 2, -varPixCov / 2),
+                      (varPixCov / 2, -varPixCov / 2)] 
 
-    # %%
-    """TIME AND TIMING PARAMETERS"""
+        # Aperture for covering left and right side of screen if not stimulating full screen.
+        objAprtr = visual.Aperture(objWin,
+                                   autoLog=False,
+                                   shape=lstAptrCor)
+        objAprtr.enabled = False
 
-    # get screen refresh rate
-    refr_rate = objWin.getActualFrameRate()  # get screen refresh rate
-    if refr_rate is not None:
-        frameDur = 1.0/round(refr_rate)
+    # *************************************************************************
+    # *** Timing
+
+    # Get screen refresh rate
+    varFps = objWin.getActualFrameRate()
+    if varFps is not None:
+        varFrmeDur = 1.0 / float(varFps)
     else:
-        frameDur = 1.0/60.0  # couldn't get a reliable measure so guess
-    logFile.write('RefreshRate=' + unicode(refr_rate) + '\n')
-    logFile.write('FrameDuration=' + unicode(frameDur) + '\n')
+        # Guessing refresh rate:
+        varFrmeDur = 1.0 / 60.0
+    fleLog.write('Frames per second: ' + str(varFps) + '\n')
 
     # set durations
     durations = np.arange(varTr, varTr*varNumVol + varTr, varTr)
+
     totalTime = varTr*varNumVol
 
     # how many frames b or w? derive from reversal frequency
-    numFrame = int(round((1/(varTmpFrq*2))/frameDur))
+    numFrame = int(round((1/(varTmpFrq*2))/varFrmeDur))
 
     # create clock and Landolt clock
     clock = core.Clock()
@@ -508,42 +480,42 @@ TODO: varPixCov = varPix
 
         # get direction
         if 0 < keyOri < 9:
-            grating.setOpacity(1)
-            grating.setOri(lstOri[keyOri-1])
-            grating.setPos(lstPosPix[keyOri-1][keyPos])
+            objBar.setOpacity(1)
+            objBar.setOri(lstOri[keyOri-1])
+            objBar.setPos(lstPosPix[keyOri-1][keyPos])
         else:  # static
-            grating.setOpacity(0)
+            objBar.setOpacity(0)
 
         while clock.getTime() < durations[i]:
-            # aperture.enabled = True
-            # draw fixation grid (circles and lines)
+            # objAprtr.enabled = True
+            # draw fixation grid (objGrdCrcls and lines)
             if not lgcLogMde:
-                Circle.setSize((varDegCover*0.2, varDegCover*0.2))
-                Circle.draw()
-                Circle.setSize((varDegCover*0.4, varDegCover*0.4))
-                Circle.draw()
-                Circle.setSize((varDegCover*0.6, varDegCover*0.6))
-                Circle.draw()
-                Circle.setSize((varDegCover*0.8, varDegCover*0.8))
-                Circle.draw()
+                objGrdCrcl.setSize((varDegCover*0.2, varDegCover*0.2))
+                objGrdCrcl.draw()
+                objGrdCrcl.setSize((varDegCover*0.4, varDegCover*0.4))
+                objGrdCrcl.draw()
+                objGrdCrcl.setSize((varDegCover*0.6, varDegCover*0.6))
+                objGrdCrcl.draw()
+                objGrdCrcl.setSize((varDegCover*0.8, varDegCover*0.8))
+                objGrdCrcl.draw()
                 # subtract 0.1 here so that ring is not exactly at outer border
-                Circle.setSize((varDegCover-0.1, varDegCover-0.1))
-                Circle.draw()
-                Line.setOri(0)
-                Line.draw()
-                Line.setOri(45)
-                Line.draw()
-                Line.setOri(90)
-                Line.draw()
-                Line.setOri(135)
-                Line.draw()
+                objGrdCrcl.setSize((varDegCover-0.1, varDegCover-0.1))
+                objGrdCrcl.draw()
+                objGrdLne.setOri(0)
+                objGrdLne.draw()
+                objGrdLne.setOri(45)
+                objGrdLne.draw()
+                objGrdLne.setOri(90)
+                objGrdLne.draw()
+                objGrdLne.setOri(135)
+                objGrdLne.draw()
 
             # update contrast flicker with square wave
             y = squFlicker()
-            grating.contrast = y
+            objBar.contrast = y
 
-            grating.draw()
-            aperture.enabled = False
+            objBar.draw()
+            objAprtr.enabled = False
 
             # decide whether to draw target
             # first time in target interval? reset target counter to 0!
@@ -553,19 +525,19 @@ TODO: varPixCov = varPix
                  ) == len(vecTrgt) + 1):
                 # display target!
                 # change color fix dot surround to red
-                dotFixSurround.fillColor = [0.5, 0.0, 0.0]
-                dotFixSurround.lineColor = [0.5, 0.0, 0.0]
+                objFixSrr.fillColor = [0.5, 0.0, 0.0]
+                objFixSrr.lineColor = [0.5, 0.0, 0.0]
             # dont display target!
             else:
                 # keep color fix dot surround yellow
-                dotFixSurround.fillColor = [0.5, 0.5, 0.0]
-                dotFixSurround.lineColor = [0.5, 0.5, 0.0]
+                objFixSrr.fillColor = [0.5, 0.5, 0.0]
+                objFixSrr.lineColor = [0.5, 0.5, 0.0]
 
             if not lgcLogMde:
                 # draw fixation point surround
-                dotFixSurround.draw()
+                objFixSrr.draw()
                 # draw fixation point
-                dotFix.draw()
+                objFixDot.draw()
 
             # draw frame
             objWin.flip()
@@ -663,8 +635,8 @@ TODO: varPixCov = varPix
         feedbackText = 'You really need to focus more!'
 
     targetText.setText(resultText+'\n'+feedbackText)
-    logFile.write(unicode(resultText) + '\n')
-    logFile.write(unicode(feedbackText) + '\n')
+    fleLog.write(unicode(resultText) + '\n')
+    fleLog.write(unicode(feedbackText) + '\n')
     targetText.draw()
     objWin.flip()
     core.wait(5)
@@ -761,15 +733,13 @@ TODO: varPixCov = varPix
 
 if __name__ == "__main__":
 
-    # *****************************************************************************
-    # *** Settings
-
-
+    # *************************************************************************
+    # *** Stimulus parameters
 
     # Frequency of stimulus bar in Hz:
     varTmpFrq = 4.0
 
-    # Sptial frequency of stimulus (cycles per degree):
+    # Sptial frequency of stimulus (cycles per degree): ### WARNING CHECK UNITS###
     varSptlFrq = 1.5
 
     # Distance between observer and monitor [cm]:
@@ -786,28 +756,9 @@ if __name__ == "__main__":
 
     # Background colour:
     lstBckgrd = [-0.7, -0.7, -0.7]
-    # *****************************************************************************
 
-# Name of experiment:
-strExpNme = 'pRF_mapping'
-
-# Get date string as default session name:
-strDate = str(datetime.datetime.now())
-lstDate = strDate[0:10].split('-')
-strDate = (lstDate[0] + lstDate[1] + lstDate[2])
-
-# Dictionary with experiment parameters:
-dicExpInfo = {'Subject_ID': strDate,
-              'Run': '04_nonsquarevf',
-              'Logging mode': ['No', 'Yes']}
-
-# Pop-up GUI to let the user select parameters:
-objGui = gui.DlgFromDict(dictionary=dicExpInfo,
-                         title=strExpNme)
-
-# Close if user presses 'cancel':
-if objGui.OK is False:
-    core.quit()
+    # *************************************************************************
+    # *** GUI 
 
     # Create parser object:
     objParser = argparse.ArgumentParser()
@@ -852,7 +803,8 @@ if objGui.OK is False:
                 'Inter-trial interval for targets [s]': 15.0,
                 'Initial rest period [volumes]': 10,
                 'Final rest period [volumes]': 10,
-                'Full screen:': [True, False]}
+                'Full screen:': [True, False],
+                'Logging mode': [True, False]}
 
     if not(strFleNme is None):
 
@@ -870,11 +822,19 @@ if objGui.OK is False:
         if objGui.OK is False:
             core.quit()
 
+    # Get date string as default session name:
+    strDate = str(datetime.datetime.now())
+    lstDate = strDate[0:10].split('-')
+    lstTime = strDate[11:19].split(':')
+    strDate = (lstDate[0] + lstDate[1] + lstDate[2] + '_' + lstTime[0]
+               + lstTime[1] + lstTime[2])
+
     # Output path ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
     strPth = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    strPth = os.path.join(strPth, 'design_matrices')
+    strPth = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation'
+    strPth = os.path.join(strPth, 'log', ('Exp_Log_' + strDate + '.txt'))
 
     # Add output path to dictionary.
-    dicParam['Output path'] = strPth
+    dicParam['Output path (log files)'] = strPth
 
     crt_design(dicParam)
