@@ -26,6 +26,7 @@ This version: Non-square visual field coverage, i.e. bar stimuli all over the
 
 
 import os
+import argparse
 import numpy as np
 import datetime
 from psychopy import visual, event, core,  monitors, logging, gui, data, misc
@@ -88,7 +89,7 @@ def prf_stim(dicParam):
     varMonWdth = dicParam['Width of monitor [cm]']
 
     # Width of monitor [pixels]:
-    varPixX = dicParam['Width of monitor [pixels]': 1920,]
+    varPixX = dicParam['Width of monitor [pixels]']
 
     # Height of monitor [pixels]:
     varPixY = dicParam['Height of monitor [pixels]']
@@ -149,6 +150,9 @@ def prf_stim(dicParam):
         # Volume TR:
         varTr = float(objNpz['varTr'])
 
+    # Number of volumes:
+    varNumVol = aryDsg.shape[0]
+
     # *************************************************************************
     # *** Logging
 
@@ -196,6 +200,10 @@ def prf_stim(dicParam):
     # Counter for correct/incorrect responses:
     varCntHit = 0  # Counter for hits
     varCntMis = 0  # Counter for misses
+
+    # Time (in seconds) that participants have to respond to a target event in
+    # order for the event to be logged as a hit:
+    varHitTme = 2.0
 
     # *************************************************************************
     # *** Setup
@@ -255,19 +263,22 @@ def prf_stim(dicParam):
     # screen:
     varPosMaxPix = float(varPixCov) / 2.0 - float(varOffsetPix)
 
+
     # Array of possible bar positions (displacement relative to origin at
     # centre of the screen) in pixels:
     vecPosPix = np.linspace((-varPosMaxPix), varPosMaxPix, varNumPos)
 
+
+
     # Vectors with as repititions of orientations and positions, so that there
     # is one unique combination of position & orientation for all positions
     # and orientations:
-    vecOriRep = np.repeat(lstOri, varNumPos)
-    vecPosPixRep = np.tile(vecPosPix, varNumOri)
+    # vecOriRep = np.repeat(lstOri, varNumPos)
+    # vecPosPixRep = np.tile(vecPosPix, varNumOri)
 
     # Convert from polar to cartesian coordinates.
     # theta, radius = pol2cart(x, y, units=’deg’)
-    vecTheta, vecRadius = pol2cart(vecOriRep, vecPosPixRep, units='deg')
+    # vecTheta, vecRadius = pol2cart(vecOriRep, vecPosPixRep, units='deg')
 
     # lstPosPix = []
     # for ori in lstOri:
@@ -366,47 +377,8 @@ def prf_stim(dicParam):
         objAprtr.enabled = False
 
     # *************************************************************************
-    # *** Timing
+    # *** Logging mode preparations
 
-    # Get screen refresh rate
-    varFps = objWin.getActualFrameRate()
-    if varFps is not None:
-        varFrmeDur = 1.0 / float(varFps)
-    else:
-        # Guessing refresh rate:
-        varFrmeDur = 1.0 / 60.0
-    fleLog.write('Frames per second: ' + str(varFps) + '\n')
-
-    # set durations
-    durations = np.arange(varTr, varTr*varNumVol + varTr, varTr)
-
-    totalTime = varTr*varNumVol
-
-    # how many frames b or w? derive from reversal frequency
-    numFrame = int(round((1/(varTmpFrq*2))/varFrmeDur))
-
-    # create clock and Landolt clock
-    clock = core.Clock()
-    logging.setDefaultClock(clock)
-
-    # %%
-    """FUNCTIONS"""
-    # update flicker in a square wave fashion
-    # with every frame
-    SquareArray = np.hstack((
-        np.tile(1, numFrame),
-        np.tile(-1, numFrame)
-        ))
-    SquareCycle = cycle(SquareArray)
-
-
-    def squFlicker():
-        """What does this function do? Why is it defined here?."""
-        mContrast = SquareCycle.next()
-        return mContrast
-
-
-    # %% Logging mode preparations
     if lgcLogMde:
 
         print('Logging mode')
@@ -446,214 +418,198 @@ def prf_stim(dicParam):
         # Counter for screenshots:
         idxFrame = 0
 
-    # %%
-    """RENDER_LOOP"""
-    # Create Counters
-    i = 0
-    # give the system time to settle
-    core.wait(1)
+    # *************************************************************************
+    # *** Presentation
 
     if not(lgcLogMde):
-        # wait for scanner trigger
-        triggerText.draw()
+        
+        # Draw fixation dot & surround:
+        objFixDot.draw(win=objWin)
+        objFixSrr.draw(win=objWin)
+    
+        # Draw fixation grid:
+        objGrdCrcl.draw(win=objWin)
+        objGrdLne.draw(win=objWin)
+    
         objWin.flip()
-        event.waitKeys(keyList=['5'], timeStamped=False)
+        
+        # Hide the mouse cursor:
+        event.Mouse(visible=False)
+    
+        # Wait for scanner trigger pulse & set clock after receiving trigger pulse
+        # (scanner trigger pulse is received as button press ('5')):
+        strTrgr = ['0']
+        while strTrgr[0][0] != '5':
+            # Check for keypress:
+            lstTmp = event.getKeys(keyList=['5'], timeStamped=False)
+            # Whether the list has the correct length (if nothing has happened, lstTmp
+            # will have length zero):
+            if len(lstTmp) == 1:
+                strTrgr = lstTmp[0][0]
+    
+    # Trigger pulse received, reset clock:
+    objClck.reset(newT=0.0)
+    
+    # Main timer which represents the starting point of the experiment:
+    varTme01 = objClck.getTime()
 
-    # reset clocks
-    clock.reset()
-    logging.data('StartOfRun' + unicode(dicExp['run']))
+    # Time that is updates to track time:
+    varTme02 = objClck.getTime()
+    
+    # Timer that is used to control the logging of stimulus events:
+    # varTme03 = objClck.getTime()
+    
+    # Start of the experiment:
+    for idxVol in range(varNumVol):  #noqa
 
-    while clock.getTime() < totalTime:  # noqa
+        print(idxVol)
+    
+        # Show a grating during this volume?
+        lgcOn = (aryDsg[idxVol, 0] == 1.0)
 
-        # get key for motion direction
-        keyPos = aryDsg[i, 0]
-        keyOri = aryDsg[i, 1]
+        # If a grating is shown, which orientation, position, and contrast?
+#        if lgcOn:
+#
+#            # Get stimulus properties from design matrix:
+#            varTmpPos = aryDsg[idxVol, 1]
+#            varTmpOri = aryDsg[idxVol, 2]
+#            varTmpCon = aryDsg[idxVol, 3]
+#
+#            # Set bar properties:
+#            objBar.setPos(varTmpPos)
+#            objBar.setOri(varTmpOri)
 
-        # get direction
-        if 0 < keyOri < 9:
-            objBar.setOpacity(1)
-            objBar.setOri(lstOri[keyOri-1])
-            objBar.setPos(lstPosPix[keyOri-1][keyPos])
-        else:  # static
-            objBar.setOpacity(0)
+        # Still on the same volume?
+        while varTme02 < (varTme01 + (float(idxVol + 1) * varTr)):
+           
+            # Update timer:
+            varTme02 = objClck.getTime()
+            
+            # Draw grating?
+            if lgcOn:
+                objBar.draw(win=objWin)
 
-        while clock.getTime() < durations[i]:
-            # objAprtr.enabled = True
-            # draw fixation grid (objGrdCrcls and lines)
-            if not lgcLogMde:
-                objGrdCrcl.setSize((varDegCover*0.2, varDegCover*0.2))
-                objGrdCrcl.draw()
-                objGrdCrcl.setSize((varDegCover*0.4, varDegCover*0.4))
-                objGrdCrcl.draw()
-                objGrdCrcl.setSize((varDegCover*0.6, varDegCover*0.6))
-                objGrdCrcl.draw()
-                objGrdCrcl.setSize((varDegCover*0.8, varDegCover*0.8))
-                objGrdCrcl.draw()
-                # subtract 0.1 here so that ring is not exactly at outer border
-                objGrdCrcl.setSize((varDegCover-0.1, varDegCover-0.1))
-                objGrdCrcl.draw()
-                objGrdLne.setOri(0)
-                objGrdLne.draw()
-                objGrdLne.setOri(45)
-                objGrdLne.draw()
-                objGrdLne.setOri(90)
-                objGrdLne.draw()
-                objGrdLne.setOri(135)
-                objGrdLne.draw()
+            # Draw target?
+            if varSwtTrgt == 1:
 
-            # update contrast flicker with square wave
-            y = squFlicker()
-            objBar.contrast = y
+                    # Draw target:
+                    objTarget.draw(win=objWin)
 
-            objBar.draw()
-            objAprtr.enabled = False
+                    # Log target?
+                    if varSwtTrgtLog == 1:
 
-            # decide whether to draw target
-            # first time in target interval? reset target counter to 0!
-            if (
-                (sum(clock.getTime() >= vecTrgt)
-                 + sum(clock.getTime() < vecTrgt + 0.3)
-                 ) == len(vecTrgt) + 1):
-                # display target!
-                # change color fix dot surround to red
-                objFixSrr.fillColor = [0.5, 0.0, 0.0]
-                objFixSrr.lineColor = [0.5, 0.0, 0.0]
-            # dont display target!
-            else:
-                # keep color fix dot surround yellow
-                objFixSrr.fillColor = [0.5, 0.5, 0.0]
-                objFixSrr.lineColor = [0.5, 0.5, 0.0]
+                        # Log target event:
+                        strTmp = ('TARGET scheduled for: '
+                                  + str(varTmpTrgtStrt))
+                        logging.data(strTmp)
 
-            if not lgcLogMde:
-                # draw fixation point surround
-                objFixSrr.draw()
-                # draw fixation point
-                objFixDot.draw()
+                        # Switch off (so that the target event is only logged
+                        # once):
+                        varSwtTrgtLog = 0
 
-            # draw frame
-            objWin.flip()
+                        # Once after target onset we set varSwtRspLog to
+                        # one so that the participant's respond can be logged:
+                        varSwtRspLog = 1
 
-            # handle key presses each frame
-            for key in event.getKeys():
-                if key in ['escape', 'q']:
-                    logging.data(msg='User pressed quit')
-                    objWin.close()
-                    core.quit()
-                elif key[0] in ['5']:
-                    logging.data(msg='Scanner trigger')
-                    TriggerPressedArray = np.append(TriggerPressedArray,
-                                                    clock.getTime())
-                elif key in ['1']:
-                    logging.data(msg='Key1 pressed')
-                    TargetPressedArray = np.append(TargetPressedArray,
-                                                   clock.getTime())
+                        # Likewise, just after target onset we set the timer
+                        # for response logging to the current time so that the
+                        # response will only be counted as a hit in a specified
+                        # time interval after target onset:
+                        varTme03 = objClck.getTime()
 
-        i = i + 1
+            if not(lgcLogMde):
 
-        # %% Save screenshots to array
-        if lgcLogMde:
+                # Flip drawn objects to screen:
+                objWin.flip()
+            
+            # Check whether exit keys have been pressed:
+            if func_exit() == 1:
+                break
 
-            print(('---Frame '
-                  + str(idxFrame)
-                  + ' out of '
-                  + str(int(varNumVol))))
+            # Check for and log participant's response:
+            varTme02 = objClck.getTime()
+            lstRsps = event.getKeys(keyList=[strTrgtKey], timeStamped=False)
 
-            # Temporary array for single frame (3 values per pixel - RGB):
-            aryBuff[:, :, :] = objWin.getMovieFrame(buffer='front')
+            # Has the response not been reported yet, and is it still within
+            # the time window?
+            if (varSwtRspLog == 1) and (varTme02 <= (varTme03 + varHitTme)):
 
-            # print(type(aryBuff))
-            # print('type(aryBuff)')
-            # print('aryBuff.shape')
-            # print(aryBuff.shape)
+                # Check whether the list has the correct length:
+                if len(lstRsps) == 1:
 
-            # We only save one value per pixel per volume (because the stimuli are
-            # greyscale we discard 2nd and 3rd RGB dimension):
-            aryRgb = aryBuff[:, :, 0]
+                    # Does the list contain the response key?
+                    if lstRsps[0] == strTrgtKey:
 
-            # We only save the central square area that contains the stimulus:
-            aryFrames[:, :, idxFrame] = np.copy(aryRgb)
-            # np.copy(aryRgb[varCrpY:(varCrpY + varPix),
-            #                varCrpX:(varCrpX + varPix)])
-            idxFrame = idxFrame + 1
+                        # Log hit:
+                        logging.data('Hit')
 
-    logging.data('EndOfRun' + unicode(dicExp['run']) + '\n')
+                        # Count hit:
+                        varCntHit += 1
 
-    # %%
-    """TARGET DETECTION RESULTS"""
+                        # After logging the hit, we have to switch off the
+                        # response logging, so that the same hit is nor logged
+                        # over and over again:
+                        varSwtRspLog = 0
 
-    # calculate target detection results
-    # create an array 'targetDetected' for showing which targets were detected
-    targetDetected = np.zeros(len(vecTrgt))
-    if len(TargetPressedArray) == 0:
-        # if no buttons were pressed
-        print "No keys were pressed/registered"
-        targetsDet = 0
-    else:
-        # if buttons were pressed:
-        for index, target in enumerate(vecTrgt):
-            for TimeKeyPress in TargetPressedArray:
-                if (float(TimeKeyPress) >= float(target) and
-                        float(TimeKeyPress) <= float(target) + 2):
-                    targetDetected[index] = 1
+            elif (varSwtRspLog == 1) and (varTme02 > (varTme03 + varHitTme)):
 
-    logging.data('ArrayOfDetectedTargets' + unicode(targetDetected))
-    print 'Array Of Detected Targets: ' + str(targetDetected)
+                # Log miss:
+                logging.data('Miss')
 
-    # number of detected targets
-    targetsDet = sum(targetDetected)
-    logging.data('NumberOfDetectedTargets' + unicode(targetsDet))
-    # detection ratio
-    DetectRatio = targetsDet/len(targetDetected)
-    logging.data('RatioOfDetectedTargets' + unicode(DetectRatio))
+                # Count miss:
+                varCntMis += 1
 
-    # display target detection results to participant
-    resultText = ('You have detected '
-                  + str(int(np.around(targetsDet, decimals=0)))
-                  + ' out of '
-                  + str(len(vecTrgt))
-                  + ' targets.')
+                # If the subject does not respond to the target within time, we
+                # log this as a miss and set varSwtRspLog to zero (so that the
+                # response won't be logged as a hit anymore afterwards):
+                varSwtRspLog = 0
 
-    print resultText
-    logging.data(resultText)
-    # also display a motivational slogan
-    if DetectRatio >= 0.95:
-        feedbackText = 'Excellent! Keep up the good work'
-    elif DetectRatio < 0.95 and DetectRatio > 0.85:
-        feedbackText = 'Well done! Keep up the good work'
-    elif DetectRatio < 0.8 and DetectRatio > 0.65:
-        feedbackText = 'Please try to focus more'
-    else:
-        feedbackText = 'You really need to focus more!'
+            # Check whether it's time to show a target on the next frame. Is
+            # the upcoming event a target? We first need to check whether the
+            # end of the design matrix has not been reached yet. This can
+            # happen if there is no target event in the last condition block,
+            # and the variable `varIdxTrgt` has been incremented in the second
+            # last condition block.
+            if (((idx01 + varIdxTrgt) < varNumEvnts) and
+                    aryDesign[idx01+varIdxTrgt][0] == 2):
 
-    targetText.setText(resultText+'\n'+feedbackText)
-    fleLog.write(unicode(resultText) + '\n')
-    fleLog.write(unicode(feedbackText) + '\n')
-    targetText.draw()
-    objWin.flip()
-    core.wait(5)
+                # Onset time of upcoming target:
+                varTmpTrgtStrt = aryDesign[idx01+varIdxTrgt][1]
 
-    # %%
-    """CLOSE DISPLAY"""
+                # Has the start time of the target event been reached?
+                if varTme02 >= (varTme01 + varTmpTrgtStrt):
+
+                    # Target switch on:
+                    varSwtTrgt = 1
+
+                    # Has the end time of the target event been reached?
+                    if varTme02 >= (varTme01 + varTmpTrgtStrt + varDurTar):
+
+                        # Switch the target off:
+                        varSwtTrgt = 0
+
+                        # Switch on the logging of the target event (so that
+                        # the next target event will be logged):
+                        varSwtTrgtLog = 1
+
+                        # Only increase the index if the end of the design
+                        # matrix has not been reached yet:
+                        if (idx01 + varIdxTrgt) < varNumEvnts:
+
+                            # Increase the index to check whether the next
+                            # event in the design matrix is also a target
+                            # event:
+                            varIdxTrgt = varIdxTrgt + 1
+
+            # Update current time:
+            varTme02 = objClck.getTime()
+
+
+
+
     objWin.close()
 
-    # %%
-    """SAVE DATA"""
 
-    # create python dictionary
-    output = {'ExperimentName': dicExp['strExpNme'],
-              'Date': dicExp['date'],
-              'SubjectID': dicExp['participant'],
-              'Run_Number': dicExp['run'],
-              'aryDsg': aryDsg,
-              'TriggerPresses': TriggerPressedArray,
-              'TargetPresses': TargetPressedArray,
-              }
-    try:
-        # save dictionary as a pickle in output folder
-        misc.toFile(outFileName + '.pickle', output)
-        print 'Output Data saved as: ' + outFileName + '.pickle'
-    except:
-        print '(OUTPUT folder could not be created.)'
 
     # Save screenshots (logging mode)
     if lgcLogMde:
@@ -719,6 +675,48 @@ def prf_stim(dicParam):
     # %%
     """FINISH"""
     core.quit()
+
+# *****************************************************************************
+# *** Function definitions
+
+def func_exit():
+    """
+    Check whether exit-keys have been pressed.
+
+    The exit keys are 'e' and 'x'; they have to be pressed at the same time.
+    This is supposed to make it less likely that the experiment is aborted
+    by accident.
+    """
+    # Check keyboard, save output to temporary string:
+    lstExit = event.getKeys(keyList=['e', 'x'], timeStamped=False)
+
+    # Whether the list has the correct length (if nothing has happened lstExit
+    # will have length zero):
+    if len(lstExit) != 0:
+
+        if ('e' in lstExit) and ('x' in lstExit):
+
+            # Log end of experiment:
+            logging.data('------Experiment aborted by user.------')
+
+            # Make the mouse cursor visible again:
+            event.Mouse(visible=True)
+
+            # Close everyting:
+            objWin.close()
+            core.quit()
+            monitors.quit()
+            logging.quit()
+            event.quit()
+
+            return 1
+
+        else:
+            return 0
+
+    else:
+        return 0
+
 
 # *****************************************************************************
 
