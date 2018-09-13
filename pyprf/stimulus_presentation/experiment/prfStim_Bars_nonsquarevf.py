@@ -136,6 +136,7 @@ def prf_stim(dicParam):
 
     # Number of bar positions:
     # varNumPos = int(objNpz['varNumPos'])
+    # varNumPos = np.unique(aryDsg[:, 1]).shape[0]
 
     # Number of orientation:
     # varNumOri = int(objNpz['varNumOri'])
@@ -252,6 +253,12 @@ def prf_stim(dicParam):
     # Convert size in pixels to size in degrees (given the monitor settings):
     varDegCover = misc.pix2deg(varPixCov, objMon)
 
+    # Numberic codes used for bar positions:
+    vecPosCode = np.unique(aryDsg[:, 1])
+
+    # Number of bar positions:
+    varNumPos = vecPosCode.shape[0]
+
     # The thickness of the bar stimulus depends on the size of the screen to
     # be covered, and on the number of positions at which to present the bar.
     # Bar thickness in pixels:
@@ -269,12 +276,19 @@ def prf_stim(dicParam):
     # screen:
     varPosMaxPix = float(varPixCov) / 2.0 - float(varOffsetPix)
 
-
     # Array of possible bar positions (displacement relative to origin at
     # centre of the screen) in pixels:
     vecPosPix = np.linspace((-varPosMaxPix), varPosMaxPix, varNumPos)
 
+    # Replace numeric position codes with pixel position values:
+    for idxPos, varPos in enumerate(vecPosCode):
 
+        # Replace current position code, if this is not a rest block:
+        vecLgc = np.multiply((aryDsg[:, 1] == varPos),
+                             (aryDsg[:, 0] != 0.0))
+
+        # Place pixel position value in design matrix:
+        aryDsg[vecLgc, 1] = vecPosPix[idxPos]
 
     # Vectors with as repititions of orientations and positions, so that there
     # is one unique combination of position & orientation for all positions
@@ -301,11 +315,10 @@ def prf_stim(dicParam):
     # *************************************************************************
     # *** Stimuli
 
-    # TODO: varPixCov = varPix
-
     # Bar stimulus:
     objBar = visual.GratingStim(
         objWin,
+        pos=(0.0, 0.0),
         tex='sqrXsqr',
         color=[1.0, 1.0, 1.0],
         colorSpace='rgb',
@@ -504,6 +517,7 @@ def prf_stim(dicParam):
 
             # Set bar properties:
             objBar.setPos(varTmpPos)
+            print(varTmpPos)
             objBar.setOri(varTmpOri)
             # TODO : set bar contrast
 
@@ -616,9 +630,11 @@ def prf_stim(dicParam):
             # Set grating polarity:
             if varSwtGrt == 0:
                 # TODO : set polarity
+                pass
 
             else:
                 # TODO : set reverse polarity
+                pass
 
             # Change grating polarity:
             if (varTme04 + varGrtDur) <= varTme02:
@@ -637,7 +653,7 @@ def prf_stim(dicParam):
                 objWin.flip()
 
             # Check whether exit keys have been pressed:
-            if func_exit() == 1:
+            if func_exit(objWin) == 1:
                 break
 
             # Update current time:
@@ -793,7 +809,7 @@ def prf_stim(dicParam):
 # *** Function definitions
 
 
-def func_exit():
+def func_exit(objWin):
     """
     Check whether exit-keys have been pressed.
 
@@ -885,7 +901,7 @@ if __name__ == "__main__":
 
         # If an input file name is provided, put it into the dictionary (as
         # default, can still be overwritten by user).
-        dicParam['Output file name'] = strFleNme
+        dicParam['Run (name of design matrix file)'] = strFleNme
 
     if strGui == 'True':
 
@@ -909,7 +925,7 @@ if __name__ == "__main__":
         # Output path ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
         strPthOut = os.path.join(strPth,
                                  'log',
-                                 (dicParam['Output file name']
+                                 (dicParam['Run (name of design matrix file)']
                                   + strDate
                                   + '.txt')
                                  )
