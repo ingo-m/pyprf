@@ -229,7 +229,7 @@ def crt_design(dicParam):
             varTmpCon = aryDsg[idxVol, 3]
 
             # Check whether current trial has horizontal orientation:
-            if ((varTmpOri == 90.0) or (varTmpOri == 270.0)):
+            if ((varTmpOri == 0.0) or (varTmpOri == 180.0)):
 
                 # Check whether horizontal orientation is presented outside of
                 # the screen area:
@@ -498,7 +498,7 @@ if __name__ == "__main__":
                 'TR [s]': 2.0,
                 # 'Target duration [s]': 0.3,
                 'Number of bar orientations': [6, 2],
-                'Number of positions': 12,
+                'Number of positions': 7,
                 'Number of blocks': 1,
                 'Number of rest trials': 0,
                 'Inter-trial interval for targets [s]': 15.0,

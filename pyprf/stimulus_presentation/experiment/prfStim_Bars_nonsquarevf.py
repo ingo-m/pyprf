@@ -33,7 +33,7 @@ from psychopy import visual, event, core,  monitors, logging, gui
 from psychopy.tools.coordinatetools import pol2cart
 
 
-# strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
+strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
 
 
 def prf_stim(dicParam):
@@ -233,7 +233,7 @@ def prf_stim(dicParam):
     # The thickness of the bar stimulus depends on the size of the screen to
     # be covered, and on the number of positions at which to present the bar.
     # Bar thickness in pixels:
-    varThckPix = float(varPixCov) / float(varNumPos)
+    varThckPix = float(varPixCov) / float(varNumPos) * 0.5
     # Bar thickness in degree:
     # varThckDgr = misc.pix2deg(varThckPix, objMon)
 
@@ -245,11 +245,12 @@ def prf_stim(dicParam):
 
     # Maximum bar position in pixels, with respect to origin at centre of
     # screen:
-    varPosMaxPix = float(varPixCov) / 2.0 - float(varOffsetPix)
+    varPosMaxPix = float(varPixCov) * 0.5 + float(varOffsetPix)
 
     # Array of possible bar positions (displacement relative to origin at
     # centre of the screen) in pixels:
-    vecPosPix = np.linspace((-varPosMaxPix), varPosMaxPix, varNumPos)
+    vecPosPix = np.linspace(varOffsetPix, varPosMaxPix, varNumPos,
+                            endpoint=True)
 
     # Replace numeric position codes with pixel position values:
     for idxPos, varPos in enumerate(vecPosCode):
@@ -264,12 +265,65 @@ def prf_stim(dicParam):
     # Bar stimulus position is coded as distance from centre of the screen.
     # However, during the presentation we need (x, y) coordinates. Therefore,
     # we convert  the bar stimulus position to Carterian (x, y) coordinates
-    # based on their distance from centre (radius) and angle.
+    # based on their distance from centre (radius) and angle. Unfortunately,
+    # the Psychopy GratingStim is not in conventional
+    # mathematical notation (zero at positive x-axis), but with zero at
+    # the positive y-axis, and clockwise from there. Therefore, we need to adjust the
+    # angle and the radius accordingly here.
     lstPos = [None] * varNumVol
     for idxVol in range(varNumVol):
-        lstPos[idxVol] = pol2cart(aryDsg[idxVol, 2],
-                                  aryDsg[idxVol, 1],
-                                  units='deg')
+
+        # Get angle and radius of current volume:
+        varRad = float(aryDsg[idxVol, 1])
+        varAngle = float(aryDsg[idxVol, 2])
+
+        # Horizontal, upper visual field:
+        if varAngle == 0.0:
+            varTmpX = 0.0
+            varTmpY = varRad
+
+        # Horizontal, lower visual field:
+        elif varAngle == 180.0:
+            varTmpX = 0.0
+            varTmpY = -varRad
+
+        # Vertical, right visual field:
+        elif varAngle == 90.0:
+            varTmpX = varRad
+            varTmpY = 0.0
+
+        # Vertical, left visual field:
+        elif varAngle == 270.0:
+            varTmpX = -varRad
+            varTmpY = 0.0
+            
+        # Upper right quadrant, from centre outward:
+        elif varAngle == 45.0:
+            varTmpX = np.sqrt(np.add(np.square(varRad), np.square(varRad)))
+            varTmpY = 0.0
+
+        # Lower right quadrant, from centre outward:
+        elif varAngle == 135.0:
+            varTmpX = np.sqrt(np.add(np.square(varRad), np.square(varRad)))
+            varTmpY = 0.0
+
+
+        # Lower left quadrant, from centre outward:
+        elif varAngle == 225.0:
+            varTmpX = -np.sqrt(np.add(np.square(varRad), np.square(varRad)))
+            varTmpY = 0.0
+
+        # Upper left quadrant, from centre outward:        
+        elif varAngle == 315.0:
+            varTmpX = -np.sqrt(np.add(np.square(varRad), np.square(varRad)))
+            varTmpY = 0.0
+
+        lstPos[idxVol] = (varTmpX, varTmpY)
+
+    print('aryDsg[:, 1:3]')
+    print(aryDsg[:, 1:3])
+    print('lstPos')
+    print(lstPos)
 
     # Bar stimulus size (length & thickness), in pixels.
     tplBarSzePix = (int(varPixCov), int(varThckPix))
