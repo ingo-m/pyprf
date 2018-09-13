@@ -29,24 +29,8 @@ import os
 import argparse
 import numpy as np
 import datetime
-from psychopy import visual, event, core,  monitors, logging, gui, data, misc
-from psychopy.misc import pol2cart
-from itertools import cycle
+from psychopy import visual, event, core,  monitors, logging, gui, misc
 from PIL import Image
-
-# Width of monitor [pixels]:
-varPixX = 1920  # [1920.0] for 7T scanner
-# Height of monitor [pixels]:
-varPixY = 1200  # [1200.0] for 7T scanner
-strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
-
-# Orientation convention is like a clock: 0 is vertical, and positive values rotate clockwise. Beyond 360 and below zero values wrap appropriately.
-# NOTE: can/should be float
-# lstOri = [0, 45, 90, 135, 180, 225, 270, 315]
-# NOTE: WARNING! in the old version, the following list was hard coded at
-# some point, perhaps the order of orientation is actually taken from this
-# separate, hard-coded list; -- see line 176 of old script
-# [90, 45, 180, 135, 270, 225, 0, 315]
 
 
 def prf_stim(dicParam):
@@ -100,17 +84,6 @@ def prf_stim(dicParam):
     # *************************************************************************
     # *** Retrieve design matrix
 
-    #        np.savez(strPthNpz,
-    #                 aryDsg=aryDsg,
-    #                 vecTrgt=vecTrgt,
-    #                 lgcFull=lgcFull,
-    #                 varTr=varTr,
-    #                 varNumVol=varNumVol,
-    #                 varNumOri=varNumOri,
-    #                 varNumPos=varNumPos,
-    #                 varNumTrgt=varNumTrgt,
-    #                 varIti=varIti)
-
     # Load stimulus parameters from npz file.
     objNpz = np.load(strPthNpz)
 
@@ -130,22 +103,6 @@ def prf_stim(dicParam):
     # If yes, bars appear on the entire screen. This parameter is set when
     # creating the design matrix.
     lgcFull = bool(objNpz['lgcFull'])
-
-    # Number of volumes:
-    # varNumVol = int(objNpz['varNumVol'])
-
-    # Number of bar positions:
-    # varNumPos = int(objNpz['varNumPos'])
-    # varNumPos = np.unique(aryDsg[:, 1]).shape[0]
-
-    # Number of orientation:
-    # varNumOri = int(objNpz['varNumOri'])
-
-    # Number of target events:
-    # varNumTrgt = int(objNpz['varNumTrgt'])
-
-    # Average inter-trial interval for target events:
-    # varIti = float(objNpz['varIti'])
 
     # If in logging mode, only present stimuli very briefly:
     if lgcLogMde:
@@ -239,7 +196,7 @@ def prf_stim(dicParam):
         )
 
     # *************************************************************************
-    # *** Prepare stimulus properties
+    # *** Prepare spatial stimulus properties
 
     # The area that will be covered by the bar stimulus depends on whether
     # presenting in full screen mode or not. If in full screen mode, the
@@ -251,7 +208,7 @@ def prf_stim(dicParam):
         varPixCov = varPixY
 
     # Convert size in pixels to size in degrees (given the monitor settings):
-    varDegCover = misc.pix2deg(varPixCov, objMon)
+    # varDegCover = misc.pix2deg(varPixCov, objMon)
 
     # Numberic codes used for bar positions:
     vecPosCode = np.unique(aryDsg[:, 1])
@@ -264,7 +221,7 @@ def prf_stim(dicParam):
     # Bar thickness in pixels:
     varThckPix = float(varPixCov) / float(varNumPos)
     # Bar thickness in degree:
-    varThckDgr = misc.pix2deg(varThckPix, objMon)
+    # varThckDgr = misc.pix2deg(varThckPix, objMon)
 
     # Offset of the bar stimuli. The bar stimuli should cover the screen area,
     # without extending beyond the screen. Because their position refers to
@@ -290,23 +247,8 @@ def prf_stim(dicParam):
         # Place pixel position value in design matrix:
         aryDsg[vecLgc, 1] = vecPosPix[idxPos]
 
-    # Vectors with as repititions of orientations and positions, so that there
-    # is one unique combination of position & orientation for all positions
-    # and orientations:
-    # vecOriRep = np.repeat(lstOri, varNumPos)
-    # vecPosPixRep = np.tile(vecPosPix, varNumOri)
-
-    # Convert from polar to cartesian coordinates.
-    # theta, radius = pol2cart(x, y, units=’deg’)
-    # vecTheta, vecRadius = pol2cart(vecOriRep, vecPosPixRep, units='deg')
-
-    # lstPosPix = []
-    # for ori in lstOri:
-    #     temp = zip(*pol2cart(np.tile(ori, varNumPos), vecPosPix))
-    #     lstPosPix.append(temp)
-
-    # Bar stimulus size (length & thickness), in pixels:
-    tplBarSzePix = (int(varPixCov), int(varThckPix))
+    # Bar stimulus size (length & thickness), in pixels.
+    tplBarSzePix = (int(varPixCov * 2), int(varThckPix))
 
     # Bar stimulus spatial frequency (in x & y directions):
     tplBarSf = (float(varSptlFrq) / varThckPix,
@@ -318,6 +260,7 @@ def prf_stim(dicParam):
     # Bar stimulus:
     objBar = visual.GratingStim(
         objWin,
+        contrast=1.0,
         pos=(0.0, 0.0),
         tex='sqrXsqr',
         color=[1.0, 1.0, 1.0],
@@ -332,22 +275,49 @@ def prf_stim(dicParam):
         )
 
     # Fixation dot:
-    objFixDot = visual.Circle(
+    objFix = visual.Circle(
         objWin,
-        radius=2.0,
-        fillColor=[1.0, 0.0, 0.0],
-        lineColor=[1.0, 0.0, 0.0],
-        autoLog=False,
-        units='pix')                           ##############CHECK###################
+        units='deg',
+        pos=(0.0, 0.0),
+        radius=0.05,
+        edges=24,
+        fillColor=[-0.69, 0.83, 0.63],
+        fillColorSpace='rgb',
+        lineColor=[-0.69, 0.83, 0.63],
+        lineColorSpace='rgb',
+        lineWidth=0.0,
+        interpolate=False,
+        autoLog=False)
 
-    # Fixation dot surround:
-    objFixSrr = visual.Circle(
+    # Fication dot surround:
+    objFixSrd = visual.Circle(
         objWin,
-        radius=7.0,
-        fillColor=[0.5, 0.5, 0.0],
-        lineColor=[0.0, 0.0, 0.0],
-        autoLog=False,
-        units='pix')                           ##############CHECK###################
+        units='deg',
+        pos=(0.0, 0.0),
+        radius=0.09,
+        edges=24,
+        fillColor=[0.95, 0.04, -1.0],
+        fillColorSpace='rgb',
+        lineColor=[0.95, 0.04, -1.0],
+        lineColorSpace='rgb',
+        lineWidth=0.0,
+        interpolate=False,
+        autoLog=False)
+
+    # Target:
+    objTarget = visual.Circle(
+        objWin,
+        units='deg',
+        pos=(0.0, 0.0),
+        edges=24,
+        radius=0.09,
+        fillColor=[0.95, 0.04, -1.0],
+        fillColorSpace='rgb',
+        lineColor=[0.95, 0.04, -1.0],
+        lineColorSpace='rgb',
+        lineWidth=0.0,
+        interpolate=False,
+        autoLog=False)
 
     # Fixation grid circle:
     objGrdCrcl = visual.Polygon(
@@ -403,37 +373,38 @@ def prf_stim(dicParam):
 
         print('Logging mode')
 
-        # Calculate area to crop in y-dimension, at top and bottom (should be zero
-        # is # full extend of screeen height is used):
-        varCrpY = int(np.around((float(varPixY) - float(varPix)) * 0.5))
+        # Calculate area to crop in y-dimension, at top and bottom (should be
+        # zero is # full extend of screeen height is used):
+        varCrpY = int(np.around((float(varPixY) - float(varPixX)) * 0.5))
 
         print(('Stimulus log will be cropped by '
                + str(varCrpY)
                + ' in y-direction (screen height).'
                ))
 
-        # Calculate area to crop in x-dimension, at left and right (would be zero
-        # is full extend of screeen width was used):
-        varCrpX = int(np.around((float(varPixX) - float(varPix)) * 0.5))
+        # Calculate area to crop in x-dimension, at left and right (would be
+        # zero is full extend of screeen width was used):
+        varCrpX = int(np.around((float(varPixX) - float(varPixX)) * 0.5))
 
         print(('Stimulus log will be cropped by '
                + str(varCrpX)
                + ' in x-direction (screen width).'
                ))
 
-        # Temporary array for screenshots, at full screen size and containing RGB
-        # values (needed to obtain buffer content from psychopy):
+        # Temporary array for screenshots, at full screen size and containing
+        # RGB values (needed to obtain buffer content from psychopy):
         aryBuff = np.zeros((varPixY, varPixX, 3), dtype=np.int16)
 
-        # Prepare array for screenshots. One value per pixel per volume; since the
-        # stimuli are greyscale we discard 2nd and 3rd RGB dimension. Also, there
-        # is no need to represent the entire screen, just the part of the screen
-        # that is actually stimulated (this is typically a square at the centre of
-        # the screen, flanked by unstimulated areas on the left and right side).
+        # Prepare array for screenshots. One value per pixel per volume; since
+        # the stimuli are greyscale we discard 2nd and 3rd RGB dimension. Also,
+        # there is no need to represent the entire screen, just the part of the
+        # screen that is actually stimulated (this is typically a square at the
+        # centre of the screen, flanked by unstimulated areas on the left and
+        # right side).
         aryFrames = np.zeros((varPixY, varPixX, varNumVol), dtype=np.int16)
 
         # Make sure that varPix is of interger type:
-        varPix = int(np.around(varPix))
+        varPixX = int(np.around(varPixX))
 
         # Counter for screenshots:
         idxFrame = 0
@@ -460,8 +431,8 @@ def prf_stim(dicParam):
     if not(lgcLogMde):
 
         # Draw fixation dot & surround:
-        objFixDot.draw(win=objWin)
-        objFixSrr.draw(win=objWin)
+        objFix.draw(win=objWin)
+        objFixSrd.draw(win=objWin)
 
         # Draw fixation grid:
         objGrdCrcl.draw(win=objWin)
@@ -497,18 +468,16 @@ def prf_stim(dicParam):
 
     # Timer for grating stimulus polarity flicker:
     varTme04 = objClck.getTime()
+    varTme05 = objClck.getTime()
 
     # Start of the experiment:
-    for idxVol in range(varNumVol):  #noqa
+    for idxVol in range(varNumVol):
 
         # Show a grating during this volume?
         lgcOn = (aryDsg[idxVol, 0] == 1.0)
 
-        # If a grating is shown, which orientation, position, and contrast?
+        # Set grating properties for current volume:
         if lgcOn:
-
-            # Timer for grating stimulus polarity flicker:
-            varTme04 = objClck.getTime()
 
             # Get stimulus properties from design matrix:
             varTmpPos = aryDsg[idxVol, 1]
@@ -517,15 +486,37 @@ def prf_stim(dicParam):
 
             # Set bar properties:
             objBar.setPos(varTmpPos)
-            print(varTmpPos)
             objBar.setOri(varTmpOri)
-            # TODO : set bar contrast
+            objBar.setColor((varTmpCon, varTmpCon, varTmpCon))
 
         # Still on the same volume?
         while varTme02 < (varTme01 + (float(idxVol + 1) * varTr)):
 
-            # Update timer:
+            # *****************************************************************
+            # *** Draw stimuli
+
+            # Draw fixation dot & surround:
+            objFix.draw(win=objWin)
+            objFixSrd.draw(win=objWin)
+
+            # Draw fixation grid:
+            objGrdCrcl.draw(win=objWin)
+            objGrdLne.draw(win=objWin)
+
+            # If a grating is shown, which orientation, position, and contrast?
+            if lgcOn:
+
+                # Draw grating.
+                objBar.draw(win=objWin)
+
+            # Flip drawn objects to screen:
+            objWin.flip()
+
+            # Update current time:
             varTme02 = objClck.getTime()
+
+            # Update current time:
+            varTme05 = objClck.getTime()
 
             # *****************************************************************
             # *** Target control
@@ -563,7 +554,6 @@ def prf_stim(dicParam):
 
                     # Draw target:
                     objTarget.draw(win=objWin)
-                    # objFixDot.fillColor = [0.0, 0.0, 1.0]
 
                     # Log target?
                     if varSwtTrgtLog == 1:
@@ -587,12 +577,13 @@ def prf_stim(dicParam):
                         # time interval after target onset:
                         varTme03 = objClck.getTime()
 
-            # Check for and log participant's response:
-            lstRsps = event.getKeys(keyList=[strTrgtKey], timeStamped=False)
-
             # Has the response not been reported yet, and is it still within
             # the time window?
             if (varSwtRspLog == 1) and (varTme02 <= (varTme03 + varHitTme)):
+
+                # Check for and log participant's response:
+                lstRsps = event.getKeys(keyList=[strTrgtKey],
+                                        timeStamped=False)
 
                 # Check whether the list has the correct length:
                 if len(lstRsps) == 1:
@@ -627,37 +618,32 @@ def prf_stim(dicParam):
             # *****************************************************************
             # *** Grating control
 
-            # Set grating polarity:
-            if varSwtGrt == 0:
-                # TODO : set polarity
-                pass
-
-            else:
-                # TODO : set reverse polarity
-                pass
-
-            # Change grating polarity:
-            if (varTme04 + varGrtDur) <= varTme02:
-                if varSwtGrt == 0:
-                    varSwtGrt = 1
-                else:
-                    varSwtGrt = 0
-
-            # Draw grating?
+            # If a grating is shown, which orientation, position, and contrast?
             if lgcOn:
-                objBar.draw(win=objWin)
 
-            if not(lgcLogMde):
+                # Change grating polarity:
+                if (varTme04 + varGrtDur) <= varTme05:
 
-                # Flip drawn objects to screen:
-                objWin.flip()
+                    if varSwtGrt == 0:
+                        varSwtGrt = 1
+                        objBar.contrast = 1.0
 
-            # Check whether exit keys have been pressed:
-            if func_exit(objWin) == 1:
-                break
+                    else:
+                        varSwtGrt = 0
+                        objBar.contrast = -1.0
+
+                    # Remember time at which grating polarity was switched:
+                    varTme04 = objClck.getTime()
 
             # Update current time:
-            varTme02 = objClck.getTime()
+            # varTme02 = objClck.getTime()
+
+            # Update current time:
+            # varTme05 = objClck.getTime()
+
+        # Check whether exit keys have been pressed:
+        if func_exit() == 1:
+            break
 
     # *************************************************************************
     # *** Feedback
@@ -809,7 +795,7 @@ def prf_stim(dicParam):
 # *** Function definitions
 
 
-def func_exit(objWin):
+def func_exit():
     """
     Check whether exit-keys have been pressed.
 
@@ -833,7 +819,7 @@ def func_exit(objWin):
             event.Mouse(visible=True)
 
             # Close everyting:
-            objWin.close()
+            # objWin.close()
             core.quit()
             monitors.quit()
             logging.quit()
@@ -895,7 +881,7 @@ if __name__ == "__main__":
                 'Width of monitor [cm]': 30.0,
                 'Width of monitor [pixels]': 1920,
                 'Height of monitor [pixels]': 1200,
-                'Background colour [-1 to 1]': 0.7}
+                'Background colour [-1 to 1]': 0.0}
 
     if not(strFleNme is None):
 
@@ -926,6 +912,7 @@ if __name__ == "__main__":
         strPthOut = os.path.join(strPth,
                                  'log',
                                  (dicParam['Run (name of design matrix file)']
+                                  + '_'
                                   + strDate
                                   + '.txt')
                                  )
