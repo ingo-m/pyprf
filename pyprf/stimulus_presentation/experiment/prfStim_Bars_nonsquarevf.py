@@ -467,8 +467,8 @@ def prf_stim(dicParam):
     if not(lgcLogMde):
 
         # Draw fixation dot & surround:
-        objFix.draw(win=objWin)
         objFixSrd.draw(win=objWin)
+        objFix.draw(win=objWin)
 
         if lgcGrd:
 
@@ -552,8 +552,8 @@ def prf_stim(dicParam):
                 objBar.draw(win=objWin)
 
             # Draw fixation dot & surround:
-            objFix.draw(win=objWin)
             objFixSrd.draw(win=objWin)
+            objFix.draw(win=objWin)
 
             # Flip drawn objects to screen:
             objWin.flip()
@@ -577,61 +577,50 @@ def prf_stim(dicParam):
                     # Switch the target on by changing the fixation dot colour.
                     objFix.fillColor = lstClrTrgt
 
-                    # Switch the switch so that the target will be drawn:
+                    # Log target event:
+                    strTmp = ('TARGET scheduled for: '
+                              + str(varTmeTrgt))
+                    logging.data(strTmp)
+
+                    # Once after target onset we set varSwtRspLog to one so
+                    # that the participant's respond can be logged:
+                    varSwtRspLog = 1
+
+                    # Likewise, just after target onset we set the timer for
+                    # response logging to the current time so that the response
+                    # will only be counted as a hit in a specified time
+                    # interval after target onset:
+                    varTme03 = objClck.getTime()
+
+                    # Switch the target switch.
                     varSwtTrgt = 1
 
             else:
 
+                # No time for target.
+
                 # Was the target just on?
                 if varSwtTrgt == 1:
 
-                        # Switch on the logging of the target event (so that
-                        # the next target event will be logged):
-                        varSwtTrgtLog = 1
+                    # Switch the target off (by changing fixation dot colour
+                    # back to normal).
+                    objFix.fillColor = lstClrFix
 
-                        # Only increase the counter if the last target has not
-                        # been reached yet:
-                        if (varCntTrgt + 1) < varNumTrgt:
+                    # Switch the target switch.
+                    varSwtTrgt = 0
 
-                            # Increase the target counter:
-                            varCntTrgt = varCntTrgt + 1
+                    # Only increase the target  counter if the last target has
+                    # not been reached yet:
+                    if (varCntTrgt + 1) < varNumTrgt:
 
-                            # Time of next target event:
-                            varTmeTrgt = vecTrgt[varCntTrgt]
+                        # Increase the target counter:
+                        varCntTrgt = varCntTrgt + 1
 
-                        # Switch the target off (by changing fixation dot
-                        # colour back to normal).
-                        objFix.fillColor = lstClrFix
+                        # Time of next target event:
+                        varTmeTrgt = vecTrgt[varCntTrgt]
 
-                varSwtTrgt = 0
-
-            # Draw target?
-            if varSwtTrgt == 1:
-
-                    # Log target?
-                    if varSwtTrgtLog == 1:
-
-                        # Log target event:
-                        strTmp = ('TARGET scheduled for: '
-                                  + str(varTmeTrgt))
-                        logging.data(strTmp)
-
-                        # Switch off (so that the target event is only logged
-                        # once):
-                        varSwtTrgtLog = 0
-
-                        # Once after target onset we set varSwtRspLog to
-                        # one so that the participant's respond can be logged:
-                        varSwtRspLog = 1
-
-                        # Likewise, just after target onset we set the timer
-                        # for response logging to the current time so that the
-                        # response will only be counted as a hit in a specified
-                        # time interval after target onset:
-                        varTme03 = objClck.getTime()
-
-            # Has the response not been reported yet, and is it still within
-            # the time window?
+            # Has the participant's response not been reported yet, and is it
+            # still within the time window?
             if (varSwtRspLog == 1) and (varTme02 <= (varTme03 + varHitTme)):
 
                 # Check for and log participant's response:
@@ -651,7 +640,7 @@ def prf_stim(dicParam):
                         varCntHit += 1
 
                         # After logging the hit, we have to switch off the
-                        # response logging, so that the same hit is nor logged
+                        # response logging, so that the same hit is not logged
                         # over and over again:
                         varSwtRspLog = 0
 
