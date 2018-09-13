@@ -1,0 +1,37 @@
+Log file path: /home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/log/Run_01_20180913_194022.txt
+Design matrix: /home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz
+Full screen: True
+Volume TR [s]: 2.0
+Frequency of stimulus bar in Hz: 4.0
+Sptial frequency of stimulus (cycles per degree): 1.5
+Distance between observer and monitor [cm]: 99.0
+Width of monitor [cm]: 30.0
+Width of monitor [pixels]: 1920
+Height of monitor [pixels]: 1200
+Background colour [-1 to 1]: 0.0
+Target duration [s]: 0.3
+Logging mode: False
+0.0006 	WARNING 	Monitor specification not found. Creating a temporary one...
+1.5595 	DATA 	Keypress: 5
+0.0188 	DATA 	Keypress: 6
+19.5017 	DATA 	TARGET scheduled for: 19.499985
+21.5035 	DATA 	Miss
+46.0201 	DATA 	TARGET scheduled for: 45.99996
+48.0258 	DATA 	Miss
+55.4136 	DATA 	TARGET scheduled for: 55.399952
+57.4151 	DATA 	Miss
+58.8175 	DATA 	TARGET scheduled for: 58.79995
+60.8183 	DATA 	Miss
+75.4151 	DATA 	TARGET scheduled for: 75.39993
+77.4163 	DATA 	Miss
+79.2008 	DATA 	TARGET scheduled for: 79.19993
+81.2018 	DATA 	Miss
+82.4018 	DATA 	TARGET scheduled for: 82.399925
+84.4053 	DATA 	Miss
+112.9099 	DATA 	TARGET scheduled for: 112.899895
+114.9130 	DATA 	Miss
+131.1945 	DATA 	Keypress: x
+131.2102 	DATA 	Keypress: e
+131.9765 	DATA 	Keypress: x
+131.9765 	DATA 	Keypress: e
+132.0105 	DATA 	------Experiment aborted by user.------

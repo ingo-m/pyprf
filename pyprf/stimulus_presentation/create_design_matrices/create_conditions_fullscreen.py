@@ -133,8 +133,27 @@ def crt_design(dicParam):
             # together:
             aryPosConTmp = np.vstack((aryPosTemp, aryConTmp)).T
 
-            # Randomise order of positions:
-            np.random.shuffle(aryPosConTmp)
+            # Pseudorandomisation: Don't present the same position twice
+            # in direct succession.
+
+            # Switch for pseudorandomisation:
+            lgcTmp = True
+
+            while lgcTmp:
+
+                # Randomise order of positions (shuffles the array along the
+                # first axis).
+                np.random.shuffle(aryPosConTmp)
+
+                # Minimum difference between successive position codes (if this
+                # value is zero, this means that the same position occurs
+                # twice in a row).
+                varDiffMin = np.min(np.abs(np.diff(aryPosConTmp[:, 0])))
+
+                # Break loop if the same position does not occur twice in a
+                # row.
+                if 0.0 < varDiffMin:
+                    lgcTmp = False
 
             # aryPosBlock = np.append(aryPosBlock, aryPosTemp)
             aryPosConBlock = np.append(aryPosConBlock, aryPosConTmp, axis=0)
