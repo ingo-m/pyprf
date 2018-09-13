@@ -30,10 +30,9 @@ import argparse
 import numpy as np
 import datetime
 from psychopy import visual, event, core,  monitors, logging, gui
-from psychopy.tools.coordinatetools import pol2cart
 
 
-strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
+# strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
 
 
 def prf_stim(dicParam):
@@ -166,9 +165,6 @@ def prf_stim(dicParam):
     # Switch target (show target or not?):
     varSwtTrgt = 0
 
-    # Switch that is used to control the logging of target events:
-    varSwtTrgtLog = 1
-
     # Control the logging of participant responses:
     varSwtRspLog = 0
 
@@ -233,7 +229,7 @@ def prf_stim(dicParam):
     # The thickness of the bar stimulus depends on the size of the screen to
     # be covered, and on the number of positions at which to present the bar.
     # Bar thickness in pixels:
-    varThckPix = float(varPixCov) / float(varNumPos) * 0.5
+    varThckPix = float(varPixCov) / float(varNumPos)
     # Bar thickness in degree:
     # varThckDgr = misc.pix2deg(varThckPix, objMon)
 
@@ -245,11 +241,11 @@ def prf_stim(dicParam):
 
     # Maximum bar position in pixels, with respect to origin at centre of
     # screen:
-    varPosMaxPix = float(varPixCov) * 0.5 + float(varOffsetPix)
+    varPosMaxPix = float(varPixCov) * 0.5 - float(varOffsetPix)
 
     # Array of possible bar positions (displacement relative to origin at
     # centre of the screen) in pixels:
-    vecPosPix = np.linspace(varOffsetPix, varPosMaxPix, varNumPos,
+    vecPosPix = np.linspace(-varPosMaxPix, varPosMaxPix, varNumPos,
                             endpoint=True)
 
     # Replace numeric position codes with pixel position values:
@@ -277,53 +273,58 @@ def prf_stim(dicParam):
         varRad = float(aryDsg[idxVol, 1])
         varAngle = float(aryDsg[idxVol, 2])
 
-        # Horizontal, upper visual field:
+        # Horizontal:
         if varAngle == 0.0:
             varTmpX = 0.0
             varTmpY = varRad
 
-        # Horizontal, lower visual field:
-        elif varAngle == 180.0:
-            varTmpX = 0.0
-            varTmpY = -varRad
-
-        # Vertical, right visual field:
+        # Vertical:
         elif varAngle == 90.0:
             varTmpX = varRad
             varTmpY = 0.0
 
-        # Vertical, left visual field:
-        elif varAngle == 270.0:
-            varTmpX = -varRad
-            varTmpY = 0.0
-            
-        # Upper right quadrant, from centre outward:
+        # Lower left to upper right:
         elif varAngle == 45.0:
-            varTmpX = np.sqrt(np.add(np.square(varRad), np.square(varRad)))
+            if varRad < 0.0:
+                varTmpX = -np.sqrt(
+                                   np.add(
+                                          np.square(varRad),
+                                          np.square(varRad)
+                                          )
+                                   )
+            elif 0.0 < varRad:
+                varTmpX = np.sqrt(
+                                  np.add(
+                                         np.square(varRad),
+                                         np.square(varRad)
+                                         )
+                                  )
+            else:
+                varTmpX = 0.0
             varTmpY = 0.0
 
-        # Lower right quadrant, from centre outward:
+        # Upper left to lower right:
         elif varAngle == 135.0:
-            varTmpX = np.sqrt(np.add(np.square(varRad), np.square(varRad)))
+            if varRad < 0.0:
+                varTmpX = -np.sqrt(
+                                   np.add(
+                                          np.square(varRad),
+                                          np.square(varRad)
+                                          )
+                                   )
+            elif 0.0 < varRad:
+                varTmpX = np.sqrt(
+                                  np.add(
+                                         np.square(varRad),
+                                         np.square(varRad)
+                                         )
+                                  )
+            else:
+                varTmpX = 0.0
             varTmpY = 0.0
 
-
-        # Lower left quadrant, from centre outward:
-        elif varAngle == 225.0:
-            varTmpX = -np.sqrt(np.add(np.square(varRad), np.square(varRad)))
-            varTmpY = 0.0
-
-        # Upper left quadrant, from centre outward:        
-        elif varAngle == 315.0:
-            varTmpX = -np.sqrt(np.add(np.square(varRad), np.square(varRad)))
-            varTmpY = 0.0
-
+        # Position is coded as a tuple:
         lstPos[idxVol] = (varTmpX, varTmpY)
-
-    print('aryDsg[:, 1:3]')
-    print(aryDsg[:, 1:3])
-    print('lstPos')
-    print(lstPos)
 
     # Bar stimulus size (length & thickness), in pixels.
     tplBarSzePix = (int(varPixCov), int(varThckPix))

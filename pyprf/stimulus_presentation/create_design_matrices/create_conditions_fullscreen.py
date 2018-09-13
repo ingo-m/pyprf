@@ -93,11 +93,11 @@ def crt_design(dicParam):
         # The reason for this is that vertical (0.0 and 180) and horizontal
         # (90.0 and 270.0) orientation are presented twice. This is to balance
         # the occurence of vertical/horizontal vs. oblique orientations.
-        lstOri = [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
+        lstOri = [0.0, 45.0, 90.0, 135.0]
     elif varNumOri == 2:
         # If number of orientations is set to two, only vertical and horizontal
         # orientations are presented (i.e. no oblique bars).
-        lstOri = [0.0, 90.0, 180.0, 270.0]
+        lstOri = [0.0, 90.0]
 
     # Loop through blocks (repititions of orientation & position):
     for idxBlk in range(varNumBlk):
@@ -229,7 +229,8 @@ def crt_design(dicParam):
             varTmpCon = aryDsg[idxVol, 3]
 
             # Check whether current trial has horizontal orientation:
-            if ((varTmpOri == 0.0) or (varTmpOri == 180.0)):
+            # if ((varTmpOri == 0.0) or (varTmpOri == 180.0)):
+            if (varTmpOri == 0.0):
 
                 # Check whether horizontal orientation is presented outside of
                 # the screen area:
@@ -498,7 +499,7 @@ if __name__ == "__main__":
                 'TR [s]': 2.0,
                 # 'Target duration [s]': 0.3,
                 'Number of bar orientations': [6, 2],
-                'Number of positions': 7,
+                'Number of positions': 14,
                 'Number of blocks': 1,
                 'Number of rest trials': 0,
                 'Inter-trial interval for targets [s]': 15.0,
