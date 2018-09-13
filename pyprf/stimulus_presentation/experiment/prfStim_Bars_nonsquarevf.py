@@ -30,7 +30,10 @@ import argparse
 import numpy as np
 import datetime
 from psychopy import visual, event, core,  monitors, logging, gui, misc
-from PIL import Image
+from psychopy.tools.coordinatetools import pol2cart
+
+
+# strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
 
 
 def prf_stim(dicParam):
@@ -106,9 +109,14 @@ def prf_stim(dicParam):
 
     # If in logging mode, only present stimuli very briefly:
     if lgcLogMde:
+
+        # Conditional import:
+        from PIL import Image
+
         # Note: If 'varTr' is set too low in logging mode, frames are
         # dropped and the stimuli do not get logged properly.
         varTr = 0.2
+
     # Otherwise, use actual volume TR:
     else:
         # Volume TR:
@@ -247,8 +255,18 @@ def prf_stim(dicParam):
         # Place pixel position value in design matrix:
         aryDsg[vecLgc, 1] = vecPosPix[idxPos]
 
+    # Bar stimulus position is coded as distance from centre of the screen.
+    # However, during the presentation we need (x, y) coordinates. Therefore,
+    # we convert  the bar stimulus position to Carterian (x, y) coordinates
+    # based on their distance from centre (radius) and angle.
+    lstPos = [None] * varNumVol
+    for idxVol in range(varNumVol):
+        lstPos[idxVol] = pol2cart(aryDsg[idxVol, 2],
+                                  aryDsg[idxVol, 1],
+                                  units='deg')
+
     # Bar stimulus size (length & thickness), in pixels.
-    tplBarSzePix = (int(varPixCov * 2), int(varThckPix))
+    tplBarSzePix = (int(varPixCov), int(varThckPix))
 
     # Bar stimulus spatial frequency (in x & y directions):
     tplBarSf = (float(varSptlFrq) / varThckPix,
@@ -319,7 +337,8 @@ def prf_stim(dicParam):
         interpolate=False,
         autoLog=False)
 
-    # Fixation grid circle:
+
+    # Fixation grid circles:
     objGrdCrcl = visual.Polygon(
         win=objWin,
         edges=90,
@@ -480,7 +499,7 @@ def prf_stim(dicParam):
         if lgcOn:
 
             # Get stimulus properties from design matrix:
-            varTmpPos = aryDsg[idxVol, 1]
+            varTmpPos = lstPos[idxVol]
             varTmpOri = aryDsg[idxVol, 2]
             varTmpCon = aryDsg[idxVol, 3]
 
