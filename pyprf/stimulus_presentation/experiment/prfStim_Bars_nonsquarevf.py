@@ -237,11 +237,11 @@ def prf_stim(dicParam):
     # without extending beyond the screen. Because their position refers to
     # the centre of the bar, we need to limit the extend of positions at the
     # edge of the screen by an offset, Offset in pixels:
-    varOffsetPix = varThckPix / 2.0
+    # varOffsetPix = varThckPix / 2.0
 
     # Maximum bar position in pixels, with respect to origin at centre of
     # screen:
-    varPosMaxPix = float(varPixCov) * 0.5 - float(varOffsetPix)
+    varPosMaxPix = float(varPixCov) * 0.5  # - float(varOffsetPix)
 
     # Array of possible bar positions (displacement relative to origin at
     # centre of the screen) in pixels:
@@ -258,14 +258,12 @@ def prf_stim(dicParam):
         # Place pixel position value in design matrix:
         aryDsg[vecLgc, 1] = vecPosPix[idxPos]
 
-    # Bar stimulus position is coded as distance from centre of the screen.
-    # However, during the presentation we need (x, y) coordinates. Therefore,
-    # we convert  the bar stimulus position to Carterian (x, y) coordinates
-    # based on their distance from centre (radius) and angle. Unfortunately,
-    # the Psychopy GratingStim is not in conventional
-    # mathematical notation (zero at positive x-axis), but with zero at
-    # the positive y-axis, and clockwise from there. Therefore, we need to adjust the
-    # angle and the radius accordingly here.
+    # Psychopy orientation convention: "Orientation convention is like a clock:
+    # 0 is vertical, and positive values rotate clockwise." Actually, 0 is the
+    # positive x-axis. Orientations are coded as follows: horizontal = 0.0,
+    # vertical = 90.0, lower left to upper right = 45.0, upper left to lower
+    # right = 135.0. We need to convert psychopy orientation & direction
+    # convention into x and y coordinates.
     lstPos = [None] * varNumVol
     for idxVol in range(varNumVol):
 

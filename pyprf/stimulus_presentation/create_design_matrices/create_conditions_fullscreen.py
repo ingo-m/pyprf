@@ -42,11 +42,12 @@ def crt_design(dicParam):
     # Inter-trial interval between target events [s]:
     varIti = float(dicParam['Inter-trial interval for targets [s]'])
 
-    # Number of orientations between 0 and 360 degree for the bar stimulus:
+    # Number of orientations between for the bar stimulus:
     varNumOri = int(dicParam['Number of bar orientations'])
 
     # Number of position steps for the bar stimulus:
-    varNumPos = int(dicParam['Number of positions'])
+    varNumPosX = int(dicParam['Number of bar positions on x-axis'])
+    varNumPosY = int(dicParam['Number of bar positions on y-axis'])
 
     # Number of stimulus blocks (each positions and orientation occurs once
     # per stimulus block):
@@ -87,12 +88,10 @@ def crt_design(dicParam):
 
     # List of orientations. Psychopy orientation convention: "Orientation
     # convention is like a clock: 0 is vertical, and positive values rotate
-    # clockwise. Beyond 360 and below zero values wrap appropriately."
-    if varNumOri == 6:
-        # Six actual orientations are represented by eight orientation values.
-        # The reason for this is that vertical (0.0 and 180) and horizontal
-        # (90.0 and 270.0) orientation are presented twice. This is to balance
-        # the occurence of vertical/horizontal vs. oblique orientations.
+    # clockwise." Actually, 0 is the positive x-axis.
+    if varNumOri == 4:
+        # Orientations are coded as follows: horizontal = 0.0, vertical = 90.0,
+        # lower left to upper right = 45.0, upper left to lower right = 135.0.
         lstOri = [0.0, 45.0, 90.0, 135.0]
     elif varNumOri == 2:
         # If number of orientations is set to two, only vertical and horizontal
@@ -108,8 +107,10 @@ def crt_design(dicParam):
         # Randomise order of orientations in current block:
         np.random.shuffle(aryOriBlock)
 
-        # Each orientation is repeated as many times as there are positions:
-        aryOriBlock = np.repeat(aryOriBlock, (varNumPos * varNumCon))
+        # Each orientation is repeated as many times as there are positions (it
+        # is assumed that the x-dimension - i.e. screen width - is as least as
+        # large as the y-dimension).
+        aryOriBlock = np.repeat(aryOriBlock, (varNumPosX * varNumCon))
 
         # Array for positions within current block:
         # aryPosBlock = np.empty(0)
@@ -121,13 +122,13 @@ def crt_design(dicParam):
         for idxOri in range(len(lstOri)):
 
             # Array for positions:
-            aryPosTemp = np.arange(varNumPos)
+            aryPosTemp = np.arange(varNumPosX)
 
             # Repeat positions as many time as there are contrast levels:
             aryPosTemp = np.tile(aryPosTemp, varNumCon)
 
             # Array for contrast levels:
-            aryConTmp = np.repeat(lstCon, varNumPos)
+            aryConTmp = np.repeat(lstCon, varNumPosX)
 
             # Stack positions and contrasts levels, in order to randomise them
             # together:
@@ -189,26 +190,10 @@ def crt_design(dicParam):
 
     if lgcFull:
 
-        # Solution for nonsquare visual field: present more steps
-        # (e.g. 20 instead of 12), but remove extra steps for horizontal bars
-        # (positions 1 and 5).
-
-        # We assume that the aspect ratio of the screen is 1920.0 / 1200.0.
-        # Horizontal bars should only be presented at the central 62.5% percent
-        # of positions relative to the extent of positions of vertical bars
-        # (because 1200.0 / 1920.0 = 0.625).
-
-        # Number of positions along vertical axis:
-        varNumPosX = int(np.ceil(float(varNumPos) * (1920.0 / 1200.0)))
-
-        # Number of positions:
-        # vecSteps = np.arange(0, varNumPosX)
+        # Remove horizontal bar positions that are not on screen.
 
         # Margin to leave out for low/high y-positions:
-        varMarg = np.ceil(
-                          (float(varNumPosX) - (0.625 * float(varNumPosX)))
-                          * 0.5
-                          )
+        varMarg = float(varNumPosX - varNumPosY) * 0.5
 
         # New condition list (which will replace old list):
         lstCon = []
@@ -235,7 +220,7 @@ def crt_design(dicParam):
                 # Check whether horizontal orientation is presented outside of
                 # the screen area:
                 if ((varTmpPos < varMarg)
-                        or ((float(varNumPos) - varMarg) <= varTmpPos)):
+                        or ((float(varNumPosX) - varMarg) <= varTmpPos)):
 
                     # print((str(varTmpPos) + '   ' + str(varTmpOri)))
                     pass
@@ -401,7 +386,8 @@ def crt_design(dicParam):
                  varTr=varTr,
                  varNumVol=varNumVol,
                  varNumOri=varNumOri,
-                 varNumPos=varNumPos,
+                 varNumPosX=varNumPosX,
+                 varNumPosY=varNumPosY,
                  varNumTrgt=varNumTrgt,
                  varIti=varIti)
 
@@ -432,8 +418,11 @@ def crt_design(dicParam):
         lstCsv.append('Number of bar orientations')
         lstCsv.append(str(varNumOri))
         lstCsv.append('* * *')
-        lstCsv.append('Number of bar positions')
-        lstCsv.append(str(varNumPos))
+        lstCsv.append('Number of bar positions on x-axis')
+        lstCsv.append(str(varNumPosX))
+        lstCsv.append('* * *')
+        lstCsv.append('Number of bar positions on y-axis')
+        lstCsv.append(str(varNumPosY))
         lstCsv.append('* * *')
         lstCsv.append('Number of target events')
         lstCsv.append(str(varNumTrgt))
@@ -497,9 +486,9 @@ if __name__ == "__main__":
     #
     dicParam = {'Output file name': 'Run_01',
                 'TR [s]': 2.0,
-                # 'Target duration [s]': 0.3,
-                'Number of bar orientations': [6, 2],
-                'Number of positions': 14,
+                'Number of bar orientations': [4, 2],
+                'Number of bar positions on x-axis': 20,
+                'Number of bar positions on y-axis': 12,
                 'Number of blocks': 1,
                 'Number of rest trials': 0,
                 'Inter-trial interval for targets [s]': 15.0,
