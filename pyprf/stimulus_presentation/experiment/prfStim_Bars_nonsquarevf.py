@@ -29,7 +29,7 @@ import os
 import argparse
 import numpy as np
 import datetime
-from psychopy import visual, event, core,  monitors, logging, gui, misc
+from psychopy import visual, event, core,  monitors, logging, gui
 from psychopy.tools.coordinatetools import pol2cart
 
 
@@ -84,6 +84,9 @@ def prf_stim(dicParam):
     # Background colour:
     varBckgrd = dicParam['Background colour [-1 to 1]']
 
+    # Show fixation grid?
+    lgcGrd = dicParam['Show fixation grid?']
+
     # *************************************************************************
     # *** Retrieve design matrix
 
@@ -116,6 +119,9 @@ def prf_stim(dicParam):
         # Note: If 'varTr' is set too low in logging mode, frames are
         # dropped and the stimuli do not get logged properly.
         varTr = 0.2
+
+        # In log mode, don't show grid.
+        lgcGrd = False
 
     # Otherwise, use actual volume TR:
     else:
@@ -292,6 +298,12 @@ def prf_stim(dicParam):
         units='pix'                           ##############CHECK###################
         )
 
+    # Colour of fixation dot:
+    lstClrFix = [-0.69, 0.83, 0.63]
+
+    # Colour of fixation dot when it becomes a target:
+    lstClrTrgt = [0.95, 0.04, -1.0]
+
     # Fixation dot:
     objFix = visual.Circle(
         objWin,
@@ -299,9 +311,9 @@ def prf_stim(dicParam):
         pos=(0.0, 0.0),
         radius=0.05,
         edges=24,
-        fillColor=[-0.69, 0.83, 0.63],
+        fillColor=lstClrFix,
         fillColorSpace='rgb',
-        lineColor=[-0.69, 0.83, 0.63],
+        lineColor=lstClrFix,
         lineColorSpace='rgb',
         lineWidth=0.0,
         interpolate=False,
@@ -314,61 +326,63 @@ def prf_stim(dicParam):
         pos=(0.0, 0.0),
         radius=0.09,
         edges=24,
-        fillColor=[0.95, 0.04, -1.0],
+        fillColor=lstClrTrgt,
         fillColorSpace='rgb',
-        lineColor=[0.95, 0.04, -1.0],
+        lineColor=lstClrTrgt,
         lineColorSpace='rgb',
         lineWidth=0.0,
         interpolate=False,
         autoLog=False)
 
-    # Target:
-    objTarget = visual.Circle(
-        objWin,
-        units='deg',
-        pos=(0.0, 0.0),
-        edges=24,
-        radius=0.09,
-        fillColor=[0.95, 0.04, -1.0],
-        fillColorSpace='rgb',
-        lineColor=[0.95, 0.04, -1.0],
-        lineColorSpace='rgb',
-        lineWidth=0.0,
-        interpolate=False,
-        autoLog=False)
+    if lgcGrd:
 
+        # Number of grid circles:
+        varNumCrcl = 3
 
-    # Fixation grid circles:
-    objGrdCrcl = visual.Polygon(
-        win=objWin,
-        edges=90,
-        ori=0.0,
-        pos=[0, 0],
-        lineWidth=2,
-        lineColor=[1.0, 1.0, 1.0],
-        lineColorSpace='rgb',
-        fillColor=None,
-        fillColorSpace='rgb',
-        opacity=1.0,
-        autoLog=False,
-        interpolate=True,
-        units='deg')
+        # Radi at which to present grid circles:
+        vecGrdCrclRad = np.linspace((0.25 * float(varPixY)),
+                                    (0.75 * float(varPixY)),
+                                    num=varNumCrcl)
 
-    # Fixation grid line:
-    objGrdLne = visual.Line(
-        win=objWin,
-        autoLog=False,
-        name='Line',
-        start=(-varPixY, 0),
-        end=(varPixY, 0),
-        pos=[0, 0],
-        lineWidth=2,
-        lineColor=[1.0, 1.0, 1.0],
-        lineColorSpace='rgb',
-        fillColor=None,
-        fillColorSpace='rgb',
-        opacity=1,
-        interpolate=True,)
+        # In practice 'radius' seems to refer to refer to the diameter of the
+        # circle.
+
+        # Fixation grid circles:
+        lstGrdCrcl = [None] * varNumCrcl
+        for idxCrcl, varRad in enumerate(vecGrdCrclRad):
+            lstGrdCrcl[idxCrcl] = visual.Circle(
+                win=objWin,
+                pos=(0.0, 0.0),
+                radius=varRad,
+                edges=128,
+                lineWidth=2.0,
+                lineColor=[1.0, 1.0, 1.0],
+                lineColorSpace='rgb',
+                fillColor=None,
+                fillColorSpace='rgb',
+                opacity=1.0,
+                autoLog=False,
+                interpolate=True,
+                units='pix')
+
+        # Fixation grid line:
+        lstGrdLne = [None] * 4
+        for idxLne, varOri in enumerate([0.0, 45.0, 90.0, 135.0]):
+            lstGrdLne[idxLne] = visual.Line(
+                win=objWin,
+                ori=varOri,
+                start=(int(-varPixY), 0),
+                end=(int(varPixY), 0),
+                pos=(0.0, 0.0),
+                lineWidth=2.0,
+                lineColor=[1.0, 1.0, 1.0],
+                lineColorSpace='rgb',
+                fillColor=None,
+                fillColorSpace='rgb',
+                opacity=1.0,
+                autoLog=False,
+                interpolate=True,
+                units='pix')
 
     if not(lgcFull):
         # List with aperture coordinates (used to cover left and right side of
@@ -447,20 +461,26 @@ def prf_stim(dicParam):
     # *************************************************************************
     # *** Presentation
 
+    # Hide the mouse cursor:
+    event.Mouse(visible=False)
+
     if not(lgcLogMde):
 
         # Draw fixation dot & surround:
         objFix.draw(win=objWin)
         objFixSrd.draw(win=objWin)
 
-        # Draw fixation grid:
-        objGrdCrcl.draw(win=objWin)
-        objGrdLne.draw(win=objWin)
+        if lgcGrd:
+
+            # Draw fixation grid circles:
+            for objGrdCrcl in lstGrdCrcl:
+                objGrdCrcl.draw(win=objWin)
+
+            # Draw fixation grid lines:
+            for objGrdLne in lstGrdLne:
+                objGrdLne.draw(win=objWin)
 
         objWin.flip()
-
-        # Hide the mouse cursor:
-        event.Mouse(visible=False)
 
         # Wait for scanner trigger pulse & set clock after receiving trigger
         # pulse (scanner trigger pulse is received as button press ('5')):
@@ -514,19 +534,26 @@ def prf_stim(dicParam):
             # *****************************************************************
             # *** Draw stimuli
 
-            # Draw fixation dot & surround:
-            objFix.draw(win=objWin)
-            objFixSrd.draw(win=objWin)
+            # Draw fixation grid?
+            if lgcGrd:
 
-            # Draw fixation grid:
-            objGrdCrcl.draw(win=objWin)
-            objGrdLne.draw(win=objWin)
+                # Draw fixation grid circles:
+                for objGrdCrcl in lstGrdCrcl:
+                    objGrdCrcl.draw(win=objWin)
+
+                # Draw fixation grid lines:
+                for objGrdLne in lstGrdLne:
+                    objGrdLne.draw(win=objWin)
 
             # If a grating is shown, which orientation, position, and contrast?
             if lgcOn:
 
                 # Draw grating.
                 objBar.draw(win=objWin)
+
+            # Draw fixation dot & surround:
+            objFix.draw(win=objWin)
+            objFixSrd.draw(win=objWin)
 
             # Flip drawn objects to screen:
             objWin.flip()
@@ -544,7 +571,14 @@ def prf_stim(dicParam):
             if ((varTmeTrgt <= varTme02)
                     and (varTme02 <= (varTmeTrgt + varTrgtDur))):
 
-                varSwtTrgt = 1
+                # Was the target off on the previous frame?
+                if varSwtTrgt == 0:
+
+                    # Switch the target on by changing the fixation dot colour.
+                    objFix.fillColor = lstClrTrgt
+
+                    # Switch the switch so that the target will be drawn:
+                    varSwtTrgt = 1
 
             else:
 
@@ -565,14 +599,14 @@ def prf_stim(dicParam):
                             # Time of next target event:
                             varTmeTrgt = vecTrgt[varCntTrgt]
 
-                # Switch the target off.
+                        # Switch the target off (by changing fixation dot
+                        # colour back to normal).
+                        objFix.fillColor = lstClrFix
+
                 varSwtTrgt = 0
 
             # Draw target?
             if varSwtTrgt == 1:
-
-                    # Draw target:
-                    objTarget.draw(win=objWin)
 
                     # Log target?
                     if varSwtTrgtLog == 1:
@@ -900,7 +934,8 @@ if __name__ == "__main__":
                 'Width of monitor [cm]': 30.0,
                 'Width of monitor [pixels]': 1920,
                 'Height of monitor [pixels]': 1200,
-                'Background colour [-1 to 1]': 0.0}
+                'Background colour [-1 to 1]': 0.0,
+                'Show fixation grid?': [False, True]}
 
     if not(strFleNme is None):
 
