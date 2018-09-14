@@ -538,10 +538,6 @@ def prf_stim(dicParam):
 
     if not(lgcLogMde):
 
-        # Draw fixation dot & surround:
-        objFixSrd.draw(win=objWin)
-        objFix.draw(win=objWin)
-
         if lgcGrd:
 
             # Draw fixation grid circles:
@@ -551,6 +547,10 @@ def prf_stim(dicParam):
             # Draw fixation grid lines:
             for objGrdLne in lstGrdLne:
                 objGrdLne.draw(win=objWin)
+
+        # Draw fixation dot & surround:
+        objFixSrd.draw(win=objWin)
+        objFix.draw(win=objWin)
 
         objWin.flip()
 
