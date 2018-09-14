@@ -263,11 +263,11 @@ def prf_stim(dicParam):
     # without extending beyond the screen. Because their position refers to
     # the centre of the bar, we need to limit the extend of positions at the
     # edge of the screen by an offset, Offset in pixels:
-    # varOffsetPix = varThckPix / 2.0
+    varOffsetPix = varThckPix * 0.5
 
     # Maximum bar position in pixels, with respect to origin at centre of
     # screen:
-    varPosMaxPix = float(varPixCov) * 0.5  # - float(varOffsetPix)
+    varPosMaxPix = (float(varPixCov) * 0.5) - float(varOffsetPix)
 
     # Array of possible bar positions (displacement relative to origin at
     # centre of the screen) in pixels:
@@ -371,6 +371,7 @@ def prf_stim(dicParam):
 
     # Colour of fixation dot:
     lstClrFix = [-0.69, 0.83, 0.63]
+    # lstClrFix = [0.04, 0.95, -1.0]
 
     # Colour of fixation dot when it becomes a target:
     lstClrTrgt = [0.95, 0.04, -1.0]
