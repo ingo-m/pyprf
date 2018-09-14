@@ -62,6 +62,10 @@ def prf_stim(dicParam):
     # used during an experiment).
     lgcLogMde = dicParam['Logging mode']
 
+    # Directory where to save stimulus log (frames) for analysis if in logging
+    # mode.
+    strPthFrm = dicParam['Output path stimulus log (frames)']
+
     # Frequency of stimulus bar in Hz:
     varGrtFrq = dicParam['Temporal frequency [Hz]']
 
@@ -490,8 +494,11 @@ def prf_stim(dicParam):
         print('Logging mode')
 
         # Calculate area to crop in y-dimension, at top and bottom (should be
-        # zero is # full extend of screeen height is used):
-        varCrpY = int(np.around((float(varPixY) - float(varPixX)) * 0.5))
+        # zero is full extend of screeen height is used):
+        if lgcFull:
+            varCrpY = 0
+        else:
+            varCrpY = int(np.around((float(varPixY) - float(varPixX)) * 0.5))
 
         print(('Stimulus log will be cropped by '
                + str(varCrpY)
@@ -500,7 +507,10 @@ def prf_stim(dicParam):
 
         # Calculate area to crop in x-dimension, at left and right (would be
         # zero is full extend of screeen width was used):
-        varCrpX = int(np.around((float(varPixX) - float(varPixX)) * 0.5))
+        if lgcFull:
+            varCrpX = 0
+        else:
+            varCrpX = int(np.around((float(varPixX) - float(varPixX)) * 0.5))
 
         print(('Stimulus log will be cropped by '
                + str(varCrpX)
@@ -509,7 +519,7 @@ def prf_stim(dicParam):
 
         # Temporary array for screenshots, at full screen size and containing
         # RGB values (needed to obtain buffer content from psychopy):
-        aryBuff = np.zeros((varPixY, varPixX, 3), dtype=np.int16)
+        aryBuff = np.zeros((varPixY, varPixX, 3), dtype=np.int8)
 
         # Prepare array for screenshots. One value per pixel per volume; since
         # the stimuli are greyscale we discard 2nd and 3rd RGB dimension. Also,
@@ -517,7 +527,7 @@ def prf_stim(dicParam):
         # screen that is actually stimulated (this is typically a square at the
         # centre of the screen, flanked by unstimulated areas on the left and
         # right side).
-        aryFrames = np.zeros((varPixY, varPixX, varNumVol), dtype=np.int16)
+        aryFrames = np.zeros((varPixY, varPixX, varNumVol), dtype=np.int8)
 
         # Make sure that varPix is of interger type:
         varPixX = int(np.around(varPixX))
@@ -766,9 +776,33 @@ def prf_stim(dicParam):
             # Update current time:
             # varTme05 = objClck.getTime()
 
+        if lgcLogMde:
+
+            # Temporary array for single frame (3 values per pixel - RGB):
+            aryBuff[:, :, :] = objWin.getMovieFrame(buffer='front')
+
+            # print(type(aryBuff))
+            # print('type(aryBuff)')
+            # print('aryBuff.shape')
+            # print(aryBuff.shape)
+
+            # We only save one value per pixel per volume (because the stimuli
+            # are greyscale we discard 2nd and 3rd RGB dimension):
+            aryRgb = aryBuff[:, :, 0]
+
+            # We only save the central square area that contains the stimulus:
+            aryFrames[:, :, idxFrame] = \
+                np.copy(aryRgb[varCrpY:(varCrpY + varPixCov),
+                               varCrpX:(varCrpX + varPixCov)]
+                        ).astype(np.int8)
+
+            idxFrame = idxFrame + 1
+
         # Check whether exit keys have been pressed:
         if func_exit() == 1:
             break
+
+    print('echo1')
 
     # *************************************************************************
     # *** Feedback
@@ -839,43 +873,34 @@ def prf_stim(dicParam):
         logging.data(('Percentage of hits: '
                       + str(np.around((varHitRatio * 100.0), decimals=1))))
 
-    # *************************************************************************
-    # *** End of the experiment
-
-    # Make the mouse cursor visible again:
-    event.Mouse(visible=True)
-
-    # Close everyting:
-    objWin.close()
-    core.quit()
-    monitors.quit()
-    logging.quit()
-    event.quit()
+    print('echo2')
 
     # *************************************************************************
     # *** Logging mode
+
+    print('echo3')
 
     # Save screenshots (logging mode):
     if lgcLogMde:
 
         print('Saving screenshots')
 
-        # Target directory for frames (screenshots):
-        strPthFrm = (dataFolderName + os.path.sep + 'Frames')
-
-        # Check whether directory for frames exists, if not create it:
+        # Check whether target directory for frames (screenshots) for frames
+        # exists, if not create it:
         lgcDir = os.path.isdir(strPthFrm)
+
         # If directory does not exist, create it:
         if not(lgcDir):
             # Create direcotry for segments:
             os.mkdir(strPthFrm)
 
+        print(strPthFrm)
+
         # Save stimulus frame array to npy file:
         aryFrames = aryFrames.astype(np.int16)
         np.savez_compressed((strPthFrm
                              + os.path.sep
-                             + 'stimFramesRun'
-                             + dicExp['run']),
+                             + 'stimFramesRun'),
                             aryFrames=aryFrames)
 
         # Maximum intensity of output PNG:
@@ -904,8 +929,6 @@ def prf_stim(dicParam):
             # files  corresponding to fMRI volumes) starts at '1' (not at '0').
             strTmpPth = (strPthFrm
                          + os.path.sep
-                         + 'run_'
-                         + dicExp['run']
                          + '_frame_'
                          + str(idxVol + 1).zfill(3)
                          + '.png')
@@ -913,8 +936,18 @@ def prf_stim(dicParam):
             # Save image to disk:
             im.save(strTmpPth)
 
-            # aryRgb = np.swapaxes(aryRgb, 0, 1)
-            # aryRgb = np.swapaxes(aryRgb, 1, 2)
+    # *************************************************************************
+    # *** End of the experiment
+
+    # Make the mouse cursor visible again:
+    event.Mouse(visible=True)
+
+    # Close everyting:
+    objWin.close()
+    core.quit()
+    monitors.quit()
+    logging.quit()
+    event.quit()
 
 # *****************************************************************************
 # *** Function definitions
@@ -1055,6 +1088,14 @@ if __name__ == "__main__":
 
         # Add path of design matrix (npz file) to dictionary.
         dicParam['Path of design matrix (npz)'] = strPthNpz
+
+        # Add path for stimulus log (screenshots) for analysis to dictionary:
+        strPthFrm = os.path.join(strPth,
+                                 'log',
+                                 (dicParam['Run (name of design matrix file)']
+                                  + '_frames')
+                                 )
+        dicParam['Output path stimulus log (frames)'] = strPthFrm
 
         prf_stim(dicParam)
 
