@@ -194,7 +194,7 @@ def prf_stim(dicParam):
     objWin = visual.Window(
         size=(varPixX, varPixY),
         screen=0,
-        winType='pyglet',  # winType : None, ‘pyglet’, ‘pygame’
+        winType='pyglet',  # winType : None, 'pyglet', 'pygame'
         allowGUI=False,
         allowStencil=True,
         fullscr=True,
@@ -202,8 +202,7 @@ def prf_stim(dicParam):
         color=varBckgrd,
         colorSpace='rgb',
         units='deg',
-        blendMode='avg'
-        )
+        blendMode='avg')
 
     # *************************************************************************
     # *** Spatial stimulus properties
@@ -258,7 +257,7 @@ def prf_stim(dicParam):
     fleLog.write('* * * \n')
 
     # Bar stimulus size (length & thickness), in pixels.
-    tplBarSzePix = (int(varPixCov), int(varThckPix))
+    tplBarSzePix = (int(varPixX), int(varThckPix))
 
     # Offset of the bar stimuli. The bar stimuli should cover the screen area,
     # without extending beyond the screen. Because their position refers to
@@ -456,20 +455,31 @@ def prf_stim(dicParam):
                 interpolate=True,
                 units='pix')
 
-    if not(lgcFull):
-        # List with aperture coordinates (used to cover left and right side of
-        # the screen when not in full-screen mode). List of tuples.
-        lstAptrCor = [(varPixCov / 2, varPixCov / 2),
-                      (-varPixCov / 2, varPixCov / 2),
-                      (-varPixCov / 2, -varPixCov / 2),
-                      (varPixCov / 2, -varPixCov / 2)]
+    # *************************************************************************
+    # *** Aperture
 
-        # Aperture for covering left and right side of screen if not
-        # stimulating full screen.
-        objAprtr = visual.Aperture(objWin,
-                                   autoLog=False,
-                                   shape=lstAptrCor)
-        objAprtr.enabled = False
+    # The area that will be covered by the bar stimulus depends on whether
+    # presenting in full screen mode or not. If in full screen mode, the entire
+    # width of the screen will be covered. If not, a central square with a side
+    # length equal to the screen height will be covered.
+
+    if not(lgcFull):
+
+        # Aperture side length in degree. For some reason, the aperture does
+        # not seem to accept pixel units.
+        varDegCov = pix2deg(float(varPixCov), objMon)
+
+        # Aperture for covering left and right side of screen if not presenting
+        # in full screen mode.
+        objAprtr = visual.Aperture(
+            objWin,
+            size=varDegCov,
+            pos=(0, 0),
+            shape='square',
+            inverted=False,
+            units='deg')
+
+        objAprtr.enabled = True
 
     # *************************************************************************
     # *** Logging mode preparations
