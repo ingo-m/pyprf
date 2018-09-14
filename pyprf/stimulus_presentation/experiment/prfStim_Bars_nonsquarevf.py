@@ -30,7 +30,7 @@ import argparse
 import numpy as np
 import datetime
 from psychopy import visual, event, core,  monitors, logging, gui
-
+from psychopy.tools.monitorunittools import pix2deg
 
 # strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
 
@@ -65,8 +65,8 @@ def prf_stim(dicParam):
     # Frequency of stimulus bar in Hz:
     varGrtFrq = dicParam['Temporal frequency [Hz]']
 
-    # Sptial frequency of stimulus (cycles per degree):             ### WARNING CHECK UNITS###
-    varSptlFrq = dicParam['Spatial frequency [cyc/deg]']
+    # Sptial frequency of stimulus (cycles along width of bar stimulus):
+    varBarSf = dicParam['Spatial frequency [cyc per bar]']
 
     # Distance between observer and monitor [cm]:
     varMonDist = dicParam['Distance between observer and monitor [cm]']
@@ -143,10 +143,10 @@ def prf_stim(dicParam):
     fleLog.write('Log file path: ' + strPthLog + '\n')
     fleLog.write('Design matrix: ' + strPthNpz + '\n')
     fleLog.write('Full screen: ' + str(lgcFull) + '\n')
-    fleLog.write('Volume TR [s]: ' + str(varTr) + '\n')
+    fleLog.write('Volume TR [s] (from design matrix): ' + str(varTr) + '\n')
     fleLog.write('Frequency of stimulus bar in Hz: ' + str(varGrtFrq) + '\n')
-    fleLog.write('Sptial frequency of stimulus (cycles per degree): '
-                 + str(varSptlFrq) + '\n')
+    fleLog.write('Sptial frequency of stimulus (cycles along width of '
+                 + 'bar stimulus): ' + str(varBarSf) + '\n')
     fleLog.write('Distance between observer and monitor [cm]: '
                  + str(varMonDist) + '\n')
     fleLog.write('Width of monitor [cm]: ' + str(varMonWdth) + '\n')
@@ -206,7 +206,7 @@ def prf_stim(dicParam):
         )
 
     # *************************************************************************
-    # *** Prepare spatial stimulus properties
+    # *** Spatial stimulus properties
 
     # The area that will be covered by the bar stimulus depends on whether
     # presenting in full screen mode or not. If in full screen mode, the
@@ -218,7 +218,7 @@ def prf_stim(dicParam):
         varPixCov = varPixY
 
     # Convert size in pixels to size in degrees (given the monitor settings):
-    # varDegCover = misc.pix2deg(varPixCov, objMon)
+    # varDegCover = pix2deg(varPixCov, objMon)
 
     # Numberic codes used for bar positions:
     vecPosCode = np.unique(aryDsg[:, 1])
@@ -230,8 +230,35 @@ def prf_stim(dicParam):
     # be covered, and on the number of positions at which to present the bar.
     # Bar thickness in pixels:
     varThckPix = float(varPixCov) / float(varNumPos)
+
     # Bar thickness in degree:
-    # varThckDgr = misc.pix2deg(varThckPix, objMon)
+    varThckDgr = np.around(pix2deg(varThckPix, objMon), decimals=5)
+
+    # Write stimulus parameters to log file.
+    fleLog.write('* * * Stimulus properties in degrees of visual angle '
+                 + '* * * \n')
+    fleLog.write('Width of bar stimulus [deg]: ' + str(varThckDgr) + '\n')
+
+    # Spatial frequency of bar stimulus is defined (in user input) as cycles
+    # along width of the bar  stimulus. We need to convert this to cycles per
+    # pixel (for the stimulus creation) and to cycles per degree (for
+    # reference, written to log file).
+
+    # Spatial frequency in cycles per pixel:
+    varBarSfPix = float(varBarSf) / varThckPix
+    tplBarSfPix = (varBarSfPix, varBarSfPix)
+
+    # Spatial frequency in cycles per degree of visual angle (for reference
+    # only):
+    varBarSfDeg = np.around((float(varBarSf) / varThckDgr), decimals=5)
+
+    # Write stimulus parameters to log file.
+    fleLog.write('Spatial frequency of bar stimulus [cyc/deg]: '
+                 + str(varBarSfDeg) + '\n')
+    fleLog.write('* * * \n')
+
+    # Bar stimulus size (length & thickness), in pixels.
+    tplBarSzePix = (int(varPixCov), int(varThckPix))
 
     # Offset of the bar stimuli. The bar stimuli should cover the screen area,
     # without extending beyond the screen. Because their position refers to
@@ -324,13 +351,6 @@ def prf_stim(dicParam):
         # Position is coded as a tuple:
         lstPos[idxVol] = (varTmpX, varTmpY)
 
-    # Bar stimulus size (length & thickness), in pixels.
-    tplBarSzePix = (int(varPixCov), int(varThckPix))
-
-    # Bar stimulus spatial frequency (in x & y directions):
-    tplBarSf = (float(varSptlFrq) / varThckPix,
-                float(varSptlFrq) / varThckPix)
-
     # *************************************************************************
     # *** Stimuli
 
@@ -344,12 +364,11 @@ def prf_stim(dicParam):
         colorSpace='rgb',
         opacity=1.0,
         size=tplBarSzePix,
-        sf=tplBarSf,
+        sf=tplBarSfPix,
         ori=0.0,
         autoLog=False,
         interpolate=False,
-        units='pix'                           ##############CHECK###################
-        )
+        units='pix')
 
     # Colour of fixation dot:
     lstClrFix = [-0.69, 0.83, 0.63]
@@ -971,7 +990,7 @@ if __name__ == "__main__":
                 'Target duration [s]': 0.3,
                 'Logging mode': [False, True],
                 'Temporal frequency [Hz]': 4.0,
-                'Spatial frequency [cyc/deg]': 1.5,    ### WARNING CHECK UNITS###
+                'Spatial frequency [cyc per bar]': 1.5,
                 'Distance between observer and monitor [cm]': 99.0,
                 'Width of monitor [cm]': 30.0,
                 'Width of monitor [pixels]': 1920,
