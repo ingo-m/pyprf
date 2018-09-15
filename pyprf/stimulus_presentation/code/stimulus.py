@@ -523,11 +523,11 @@ def prf_stim(dicParam):
         if lgcFull:
             aryFrames = np.zeros((varHalfPixY,
                                   varHalfPixX,
-                                  varNumVol), dtype=np.int8)
+                                  varNumVol), dtype=np.uint8)
         else:
             aryFrames = np.zeros((varHalfPixY,
                                   varHalfPixY,
-                                  varNumVol), dtype=np.int8)
+                                  varNumVol), dtype=np.uint8)
 
         # Counter for screenshots:
         idxFrame = 0
@@ -641,9 +641,12 @@ def prf_stim(dicParam):
                 # Draw grating.
                 objBar.draw(win=objWin)
 
-            # Draw fixation dot & surround:
-            objFixSrd.draw(win=objWin)
-            objFix.draw(win=objWin)
+            # Don't draw fixation point in logging mode:
+            if not(lgcLogMde):
+
+                # Draw fixation dot & surround:
+                objFixSrd.draw(win=objWin)
+                objFix.draw(win=objWin)
 
             # Flip drawn objects to screen:
             objWin.flip()
@@ -778,17 +781,58 @@ def prf_stim(dicParam):
             # Temporary array for single frame (3 values per pixel - RGB):
             aryBuff[:, :, :] = objWin.getMovieFrame(buffer='front')
 
+# if idxVol == 11:
+#     print('aryBuff.shape')
+#     print(aryBuff.shape)
+#     np.save('/home/john/Desktop/frame_011.npy', aryBuff)
+
             # We only save one value per pixel per volume (because the stimuli
             # are greyscale we discard 2nd and 3rd RGB dimension):
             aryRgb = aryBuff[:, :, 0]
 
             # Sample the relevant part of the screen (all the screen if in
             # full screen mode, central square otherwise).0
-            aryRgb = aryRgb[:, varCrpX:(varPixX - varCrpX)].astype(np.int8)
+            aryRgb = aryRgb[:, varCrpX:(varPixX - varCrpX)]
 
             # Only sample every second pixel:
             aryRgb = aryRgb[::2, ::2]
 
+
+            # Maximum pixel intensity:
+            varTmpMax = np.max(aryRgb)
+            # Pixel intensity from screenshot is in range -1 to 127 (?). Scale
+            # to 0 to 255.
+            varTmpMax = varTmpMax + 127
+
+            #print('varTmpMax')
+            #print(varTmpMax)
+
+            print('np.max(aryRgb)')
+            print(np.max(aryRgb))
+
+            print('np.min(aryRgb)')
+            print(np.min(aryRgb))
+
+            # The stimulus log is supposed to contain information about where
+            # the stimulus was presented on each volume, and at which contrast.
+            # The pattern inside the stimulus (chequerboard) is not of
+            # interest. Therefore, we create a logical array (True = stimulus
+            # was present on this pixel).
+            # aryRgb = np.logical_or(
+            #                        np.equal(aryRgb, np.min(aryRgb)),
+            #                        np.equal(aryRgb, np.min(aryRgb))
+            #                        ).astype(np.int8)
+            aryRgb = np.equal(aryRgb, -1).astype(np.int8)
+
+
+            # Rescale to range 0 to 255:
+            aryRgb = np.multiply(aryRgb, varTmpMax).astype(np.uint8)
+
+
+
+
+
+            # Hard copy:
             aryFrames[:, :, idxFrame] = np.copy(aryRgb)
 
             idxFrame = idxFrame + 1
@@ -796,8 +840,6 @@ def prf_stim(dicParam):
         # Check whether exit keys have been pressed:
         if func_exit() == 1:
             break
-
-    print('echo1')
 
     # *************************************************************************
     # *** Feedback
@@ -868,12 +910,8 @@ def prf_stim(dicParam):
         logging.data(('Percentage of hits: '
                       + str(np.around((varHitRatio * 100.0), decimals=1))))
 
-    print('echo2')
-
     # *************************************************************************
     # *** Logging mode
-
-    print('echo3')
 
     # Save screenshots (logging mode):
     if lgcLogMde:
@@ -892,21 +930,10 @@ def prf_stim(dicParam):
         print(strPthFrm)
 
         # Save stimulus frame array to npy file:
-        aryFrames = aryFrames.astype(np.int16)
         np.savez_compressed((strPthFrm
                              + os.path.sep
                              + 'stimFramesRun'),
                             aryFrames=aryFrames)
-
-        # Maximum intensity of output PNG:
-        varScle = 255
-
-        # Rescale array:
-        aryFrames = np.logical_or(np.equal(aryFrames, np.min(aryFrames)),
-                                  np.equal(aryFrames, np.max(aryFrames))
-                                  )
-        aryFrames = np.multiply(aryFrames, varScle)
-        aryFrames = aryFrames.astype(np.uint8)
 
         # Loop through volumes and save PNGs:
         for idxVol in range(varNumVol):
@@ -917,19 +944,19 @@ def prf_stim(dicParam):
                   + str(int(varNumVol))))
 
             # Create image: TODO: compatibility with new Pillow version?
-            im = Image.fromarray(aryFrames[:, :, idxVol])
+            objImg = Image.fromarray(aryFrames[:, :, idxVol], mode='L')
 
             # File name (with leading zeros, e.g. '*_004' or '*_042'). For
             # consistency with earlier versions, the numbering of frames (PNG
             # files  corresponding to fMRI volumes) starts at '1' (not at '0').
             strTmpPth = (strPthFrm
                          + os.path.sep
-                         + '_frame_'
+                         + 'frame_'
                          + str(idxVol + 1).zfill(3)
                          + '.png')
 
             # Save image to disk:
-            im.save(strTmpPth)
+            objImg.save(strTmpPth)
 
     # *************************************************************************
     # *** End of the experiment
