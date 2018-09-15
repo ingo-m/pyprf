@@ -56,7 +56,7 @@ def prf_stim(dicParam):
     strPthLog = dicParam['Output path (log files)']
 
     # Target duration [s]:
-    varTrgtDur = dicParam['Target duration [s]']
+    varTrgtDur = float(dicParam['Target duration [s]'])
 
     # Logging mode (logging mode is for creating files for analysis, not to be
     # used during an experiment).
@@ -67,25 +67,25 @@ def prf_stim(dicParam):
     strPthFrm = dicParam['Output path stimulus log (frames)']
 
     # Frequency of stimulus bar in Hz:
-    varGrtFrq = dicParam['Temporal frequency [Hz]']
+    varGrtFrq = float(dicParam['Temporal frequency [Hz]'])
 
     # Sptial frequency of stimulus (cycles along width of bar stimulus):
-    varBarSf = dicParam['Spatial frequency [cyc per bar]']
+    varBarSf = float(dicParam['Spatial frequency [cyc per bar]'])
 
     # Distance between observer and monitor [cm]:
-    varMonDist = dicParam['Distance between observer and monitor [cm]']
+    varMonDist = float(dicParam['Distance between observer and monitor [cm]'])
 
     # Width of monitor [cm]:
-    varMonWdth = dicParam['Width of monitor [cm]']
+    varMonWdth = float(dicParam['Width of monitor [cm]'])
 
     # Width of monitor [pixels]:
-    varPixX = dicParam['Width of monitor [pixels]']
+    varPixX = int(dicParam['Width of monitor [pixels]'])
 
     # Height of monitor [pixels]:
-    varPixY = dicParam['Height of monitor [pixels]']
+    varPixY = int(dicParam['Height of monitor [pixels]'])
 
     # Background colour:
-    varBckgrd = dicParam['Background colour [-1 to 1]']
+    varBckgrd = float(dicParam['Background colour [-1 to 1]'])
 
     # Show fixation grid?
     lgcGrd = dicParam['Show fixation grid?']
@@ -261,7 +261,7 @@ def prf_stim(dicParam):
     fleLog.write('* * * \n')
 
     # Bar stimulus size (length & thickness), in pixels.
-    tplBarSzePix = (int(varPixX), int(varThckPix))
+    tplBarSzePix = (varPixX, int(varThckPix))
 
     # Offset of the bar stimuli. The bar stimuli should cover the screen area,
     # without extending beyond the screen. Because their position refers to
@@ -493,24 +493,12 @@ def prf_stim(dicParam):
 
         print('Logging mode')
 
-        # Calculate area to crop in y-dimension, at top and bottom (should be
-        # zero is full extend of screeen height is used):
-        if lgcFull:
-            varCrpY = 0
-        else:
-            varCrpY = int(np.around((float(varPixY) - float(varPixX)) * 0.5))
-
-        print(('Stimulus log will be cropped by '
-               + str(varCrpY)
-               + ' in y-direction (screen height).'
-               ))
-
-        # Calculate area to crop in x-dimension, at left and right (would be
-        # zero is full extend of screeen width was used):
+        # Calculate area to crop in x-dimension, at left and right (zero is
+        # full extend of screeen width is used):
         if lgcFull:
             varCrpX = 0
         else:
-            varCrpX = int(np.around((float(varPixX) - float(varPixX)) * 0.5))
+            varCrpX = int(np.around((float(varPixX) - float(varPixY)) * 0.5))
 
         print(('Stimulus log will be cropped by '
                + str(varCrpX)
@@ -521,16 +509,25 @@ def prf_stim(dicParam):
         # RGB values (needed to obtain buffer content from psychopy):
         aryBuff = np.zeros((varPixY, varPixX, 3), dtype=np.int8)
 
+        # It is not necessary to sample every pixel; only every second pixel is
+        # sampled. Number of pixel to be sampled along x and y direction:
+        varHalfPixX = int(np.around(varPixX * 0.5))
+        varHalfPixY = int(np.around(varPixY * 0.5))
+
         # Prepare array for screenshots. One value per pixel per volume; since
         # the stimuli are greyscale we discard 2nd and 3rd RGB dimension. Also,
         # there is no need to represent the entire screen, just the part of the
-        # screen that is actually stimulated (this is typically a square at the
-        # centre of the screen, flanked by unstimulated areas on the left and
-        # right side).
-        aryFrames = np.zeros((varPixY, varPixX, varNumVol), dtype=np.int8)
-
-        # Make sure that varPix is of interger type:
-        varPixX = int(np.around(varPixX))
+        # screen that is actually stimulated (if not in full screen mode, this
+        # is a square at the centre of the screen, flanked by unstimulated
+        # areas on the left and right side).
+        if lgcFull:
+            aryFrames = np.zeros((varHalfPixY,
+                                  varHalfPixX,
+                                  varNumVol), dtype=np.int8)
+        else:
+            aryFrames = np.zeros((varHalfPixY,
+                                  varHalfPixY,
+                                  varNumVol), dtype=np.int8)
 
         # Counter for screenshots:
         idxFrame = 0
@@ -781,20 +778,18 @@ def prf_stim(dicParam):
             # Temporary array for single frame (3 values per pixel - RGB):
             aryBuff[:, :, :] = objWin.getMovieFrame(buffer='front')
 
-            # print(type(aryBuff))
-            # print('type(aryBuff)')
-            # print('aryBuff.shape')
-            # print(aryBuff.shape)
-
             # We only save one value per pixel per volume (because the stimuli
             # are greyscale we discard 2nd and 3rd RGB dimension):
             aryRgb = aryBuff[:, :, 0]
 
-            # We only save the central square area that contains the stimulus:
-            aryFrames[:, :, idxFrame] = \
-                np.copy(aryRgb[varCrpY:(varCrpY + varPixCov),
-                               varCrpX:(varCrpX + varPixCov)]
-                        ).astype(np.int8)
+            # Sample the relevant part of the screen (all the screen if in
+            # full screen mode, central square otherwise).0
+            aryRgb = aryRgb[:, varCrpX:(varPixX - varCrpX)].astype(np.int8)
+
+            # Only sample every second pixel:
+            aryRgb = aryRgb[::2, ::2]
+
+            aryFrames[:, :, idxFrame] = np.copy(aryRgb)
 
             idxFrame = idxFrame + 1
 
