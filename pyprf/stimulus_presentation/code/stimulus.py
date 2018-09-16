@@ -32,8 +32,6 @@ import datetime
 from psychopy import visual, event, core,  monitors, logging, gui
 from psychopy.tools.monitorunittools import pix2deg
 
-# strPthNpz = '/home/john/PhD/GitHub/pyprf/pyprf/stimulus_presentation/design_matrices/Run_01.npz'
-
 
 def prf_stim(dicParam):
     """
@@ -116,8 +114,9 @@ def prf_stim(dicParam):
     # If in logging mode, only present stimuli very briefly:
     if lgcLogMde:
 
-        # Conditional import:
+        # Conditional imports:
         from PIL import Image
+        from scipy.stats import mode
 
         # Note: If 'varTr' is set too low in logging mode, frames are
         # dropped and the stimuli do not get logged properly.
@@ -781,10 +780,8 @@ def prf_stim(dicParam):
             # Temporary array for single frame (3 values per pixel - RGB):
             aryBuff[:, :, :] = objWin.getMovieFrame(buffer='front')
 
-# if idxVol == 11:
-#     print('aryBuff.shape')
-#     print(aryBuff.shape)
-#     np.save('/home/john/Desktop/frame_011.npy', aryBuff)
+            # Clear frames (otherwise stack of frames will pile up in memory):
+            objWin.movieFrames = []
 
             # We only save one value per pixel per volume (because the stimuli
             # are greyscale we discard 2nd and 3rd RGB dimension):
@@ -797,40 +794,22 @@ def prf_stim(dicParam):
             # Only sample every second pixel:
             aryRgb = aryRgb[::2, ::2]
 
-
-            # Maximum pixel intensity:
-            varTmpMax = np.max(aryRgb)
-            # Pixel intensity from screenshot is in range -1 to 127 (?). Scale
-            # to 0 to 255.
-            varTmpMax = varTmpMax + 127
-
-            #print('varTmpMax')
-            #print(varTmpMax)
-
-            print('np.max(aryRgb)')
-            print(np.max(aryRgb))
-
-            print('np.min(aryRgb)')
-            print(np.min(aryRgb))
+            # On first frame, get pixel value of background intensity:
+            if idxVol == 0:
+                varBck = mode(aryRgb, axis=None)[0]
 
             # The stimulus log is supposed to contain information about where
             # the stimulus was presented on each volume, and at which contrast.
             # The pattern inside the stimulus (chequerboard) is not of
             # interest. Therefore, we create a logical array (True = stimulus
             # was present on this pixel).
-            # aryRgb = np.logical_or(
-            #                        np.equal(aryRgb, np.min(aryRgb)),
-            #                        np.equal(aryRgb, np.min(aryRgb))
-            #                        ).astype(np.int8)
-            aryRgb = np.equal(aryRgb, -1).astype(np.int8)
+            aryRgb = np.not_equal(aryRgb, varBck).astype(np.int8)
 
+            # Contrast value on current volume:
+            varTmpMax = int(np.around(255.0 * aryDsg[idxVol, 3]))
 
             # Rescale to range 0 to 255:
             aryRgb = np.multiply(aryRgb, varTmpMax).astype(np.uint8)
-
-
-
-
 
             # Hard copy:
             aryFrames[:, :, idxFrame] = np.copy(aryRgb)
@@ -897,18 +876,29 @@ def prf_stim(dicParam):
                                     flipVert=False,
                                     autoLog=False)
 
-        # Show feedback text:
-        varTme04 = objClck.getTime()
-        while varTme02 < (varTme04 + 3.0):
-            objTxtTmr.draw()
-            objWin.flip()
-            varTme02 = objClck.getTime()
+        if not(lgcLogMde):
+
+            # Show feedback text:
+            varTme04 = objClck.getTime()
+            while varTme02 < (varTme04 + 3.0):
+                objTxtTmr.draw()
+                objWin.flip()
+                varTme02 = objClck.getTime()
 
         # Log total number of hits and misses:
         logging.data(('Number of hits: ' + str(varCntHit)))
         logging.data(('Number of misses: ' + str(varCntMis)))
         logging.data(('Percentage of hits: '
                       + str(np.around((varHitRatio * 100.0), decimals=1))))
+
+    # *************************************************************************
+    # *** End of the experiment
+
+    # Make the mouse cursor visible again:
+    event.Mouse(visible=True)
+
+    # Close window:
+    objWin.close()
 
     # *************************************************************************
     # *** Logging mode
@@ -927,8 +917,6 @@ def prf_stim(dicParam):
             # Create direcotry for segments:
             os.mkdir(strPthFrm)
 
-        print(strPthFrm)
-
         # Save stimulus frame array to npy file:
         np.savez_compressed((strPthFrm
                              + os.path.sep
@@ -938,12 +926,12 @@ def prf_stim(dicParam):
         # Loop through volumes and save PNGs:
         for idxVol in range(varNumVol):
 
-            print(('---Frame '
-                  + str(idxVol)
-                  + ' out of '
-                  + str(int(varNumVol))))
+            # print(('---Frame '
+            #       + str(idxVol)
+            #       + ' out of '
+            #       + str(int(varNumVol))))
 
-            # Create image: TODO: compatibility with new Pillow version?
+            # Create image:
             objImg = Image.fromarray(aryFrames[:, :, idxVol], mode='L')
 
             # File name (with leading zeros, e.g. '*_004' or '*_042'). For
@@ -959,13 +947,8 @@ def prf_stim(dicParam):
             objImg.save(strTmpPth)
 
     # *************************************************************************
-    # *** End of the experiment
+    # *** Close everyting
 
-    # Make the mouse cursor visible again:
-    event.Mouse(visible=True)
-
-    # Close everyting:
-    objWin.close()
     core.quit()
     monitors.quit()
     logging.quit()
