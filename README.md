@@ -26,13 +26,20 @@ sudo apt-get install psychopy
 
 If you're running some other operating system, please refer to the [Psychopy website](http://psychopy.org/).
 
-For the stimulus presentation, you do not need to install `pyprf`. You only need a copy of the folder `~/pyprf/pyprf/stimulus_presentation`. The easiest way to get the `pyprf` stimuli is to clone the github repository (`git clone https://github.com/ingo-m/pyprf.git`, or click the download button). Then you can simply copy the folder `stimulus_presentation` and all its contents to the computer that you use for stimulus presentation. (Do not change the folder names. )
+For the stimulus presentation, you do not need to install `pyprf`. You only need a copy of the folder `~/pyprf/pyprf/stimulus_presentation` The easiest way to get the `pyprf` stimuli is to clone the github repository:
+
+```bash
+git clone https://github.com/ingo-m/pyprf.git
+```
+(Or click the download button.)
+
+Then you can simply copy the folder `stimulus_presentation` and all its contents to the computer that you use for stimulus presentation. (Do not change the folder names. )
 
 2. Create design matrix
 
 Before you can run the experiment, you need to create a design matrix in which you specify the experimental design (e.g. how many repetitions of the stimulus, inter trial interval for target events, fMRI volume TR, etc.). You can either open the script `~/pyprf/pyprf/stimulus_presentation/code/create_design_matrix.py` in Psychopy and run it from there, or call it directly at command line.
 
-<img src="logo/example_gui_design.png" width=200 align="right" />
+<img src="logo/example_gui_design.png" width=300 align="right" />
 
 You can specify all parameters in the GUI that will pop up. Note that there is one stimulus per fMRI volume, so you have to know the volume TR when creating the design matrix.
 
@@ -46,13 +53,13 @@ python `~/pyprf/pyprf/stimulus_presentation/code/stimulus.py`
 
 A GUI will open where you can specify further experimental parameters. Importantly, the name of the design matrix (e.g. 'Run_01') needs to match that of the file you created in the previous step.
 
-<img src="logo/example_gui_experiment.png" width=200 align="right" />
+<img src="logo/example_gui_experiment.png" width=300 align="right" />
 
 After starting the script, it will wait for a trigger signal from the fMRI scanner (default: keyboard button `5`).
 
 The stimuli look like this:
 
-<img src="logo/example_stim.png" width=200 align="right" />
+<img src="logo/example_stim.png" width=400 align="center" />
 
 You can interrupt the presentation by pressing `e` and `x` at the same time.
 
