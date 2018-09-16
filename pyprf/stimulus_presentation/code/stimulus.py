@@ -1057,7 +1057,7 @@ if __name__ == "__main__":
 
         # Pop-up GUI to let the user select parameters:
         objGui = gui.DlgFromDict(dictionary=dicParam,
-                                 title='Design Matrix Parameters')
+                                 title='Experiment Parameters')
 
     # Start experiment if user presses 'ok':
     if objGui.OK is True:
