@@ -327,6 +327,9 @@ def prf_stim(dicParam):
             if lgcFull:
                 # Scale y-position.
                 varTmpY = varRad * varSclPosX
+            else:
+                # Not in full screen mode, don't scale.
+                varTmpY = varRad
 
         # Vertical:
         elif varAngle == 90.0:
