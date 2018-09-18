@@ -84,8 +84,11 @@ def test_main():
     lgcTestNpPol = np.all(np.equal(aryTmplPol, aryTestNpPol))
     lgcTestNpSd = np.all(np.equal(aryTmplSd, aryTestNpSd))
 
-    # Conjunction of all test results:
-    lgcTestNp = np.all([lgcTestNpR2, lgcTestNpEcc, lgcTestNpPol, lgcTestNpSd])
+    # Did numpy version pass the test?
+    assert lgcTestNpR2
+    assert lgcTestNpEcc
+    assert lgcTestNpPol
+    assert lgcTestNpSd
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
@@ -107,6 +110,9 @@ def test_main():
 
     # Test whether the template and test results correspond:
     lgcTestCy = np.all(np.equal(aryTmplR2, aryTestCyR2))
+
+    # Did cython version pass the test?
+    assert lgcTestCy
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
@@ -128,6 +134,9 @@ def test_main():
 
     # Test whether the template and test results correspond:
     lgcTestTf = np.all(np.equal(aryTmplR2, aryTestTfR2))
+
+    # Did tensorflow version pass the test?
+    assert lgcTestTf
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
@@ -149,7 +158,7 @@ def test_main():
             os.remove((strDirRes + '/' + strTmp))
     # --------------------------------------------------------------------------
 
-    assert (lgcTestNp and lgcTestCy and lgcTestTf)
+    # assert (lgcTestNp and lgcTestCy and lgcTestTf)
 
 
 def test_load_large_nii():
