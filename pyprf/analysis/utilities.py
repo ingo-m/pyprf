@@ -35,7 +35,7 @@ def load_nii(strPathIn, varSzeThr=5000.0):
     varSzeThr : float
         If the nii file is larger than this threshold (in MB), the file is
         loaded volume-by-volume in order to prevent memory overflow. Default
-        threshold is 1000 MB.
+        threshold is 5000 MB.
 
     Returns
     -------

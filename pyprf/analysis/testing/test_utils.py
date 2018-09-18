@@ -113,3 +113,15 @@ def test_main():
     # --------------------------------------------------------------------------
 
     assert (lgcTestNp and lgcTestCy and lgcTestTf)
+
+
+def test_load_large_nii():
+    """Test nii-loading function for large nii files."""
+    # Load example functional data in normal mode:
+    aryFunc01, _, _ = util.load_nii((strDir + '/exmpl_data_func.nii.gz'))
+
+    # Load example functional data in large-file mode:
+    aryFunc02, _, _ = util.load_nii((strDir + '/exmpl_data_func.nii.gz'),
+                                    varSzeThr=0.0)
+
+    assert np.all(np.equal(aryFunc01, aryFunc02))

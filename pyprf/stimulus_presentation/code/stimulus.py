@@ -60,6 +60,14 @@ def prf_stim(dicParam):
     # used during an experiment).
     lgcLogMde = dicParam['Logging mode']
 
+    # On windows, the return value may be a string, not a bool. We need to
+    # correct for this.
+    if not(type(lgcLogMde) == 'bool'):
+        if lgcLogMde == 'True':
+            lgcLogMde = True
+        else:
+            lgcLogMde = False
+
     # Directory where to save stimulus log (frames) for analysis if in logging
     # mode.
     strPthFrm = dicParam['Output path stimulus log (frames)']
@@ -88,6 +96,14 @@ def prf_stim(dicParam):
     # Show fixation grid?
     lgcGrd = dicParam['Show fixation grid?']
 
+    # On windows, the return value may be a string, not a bool. We need to
+    # correct for this.
+    if not(type(lgcGrd) == 'bool'):
+        if lgcGrd == 'True':
+            lgcGrd = True
+        else:
+            lgcGrd = False
+
     # *************************************************************************
     # *** Retrieve design matrix
 
@@ -111,15 +127,33 @@ def prf_stim(dicParam):
     # creating the design matrix.
     lgcFull = bool(objNpz['lgcFull'])
 
-    # If in logging mode, only present stimuli very briefly:
+    # Number of bar positions on x-axis:
+    varNumPosX = int(objNpz['varNumPosX'])
+
+    # Number of bar positions on y-axis:
+    varNumPosY = int(objNpz['varNumPosY'])
+
+    # If in full screen mode, we need to make sure that the bar position along
+    # the shorted axis (x-axis) is adjusted, so that the bar is always within
+    # the screen area (and not half cut off).
+    if lgcFull:
+        # Ratio of bar positions (from design matrix), e.g. 18/11:
+        varRatioPos = float(varNumPosX) / float(varNumPosY)
+        # Ratio of screen widht/height in pixels (e.g. 1920/1200):
+        varRatioPix = float(varPixX) / float(varPixY)
+        # Scaling factor for bar positions along x-axis:
+        varSclPosX = varRatioPos / varRatioPix
+
+    # Adjustments for logging mode:
     if lgcLogMde:
 
         # Conditional imports:
         from PIL import Image
         from scipy.stats import mode
 
-        # Note: If 'varTr' is set too low in logging mode, frames are
-        # dropped and the stimuli do not get logged properly.
+        # If in logging mode, only present stimuli very briefly. Note: If
+        # 'varTr' is set too low in logging mode, frames are dropped and the
+        # stimuli do not get logged properly.
         varTr = 0.2
 
         # In log mode, don't show grid.
@@ -303,7 +337,15 @@ def prf_stim(dicParam):
         # Horizontal:
         if varAngle == 0.0:
             varTmpX = 0.0
-            varTmpY = varRad
+
+            # If in full screen mode, make sure that the bar is not partially
+            # outside of the screen area.
+            if lgcFull:
+                # Scale y-position.
+                varTmpY = varRad * varSclPosX
+            else:
+                # Not in full screen mode, don't scale.
+                varTmpY = varRad
 
         # Vertical:
         elif varAngle == 90.0:
@@ -1033,6 +1075,11 @@ if __name__ == "__main__":
     # Get arguments from argument parser:
     strGui = objNspc.gui
     strFleNme = objNspc.filename
+
+    # Default temporal ferquency = 4 Hz, as in Shapley, R. (1990). Visual
+    # sensitivity and parallel retinocortical channels. Annual Review of
+    # Psychology, 41, 635–658.
+    # https://doi.org/10.1146/annurev.ps.41.020190.003223
 
     # Dictionary with experiment parameters.
     dicParam = {'Run (name of design matrix file)': 'Run_01',
