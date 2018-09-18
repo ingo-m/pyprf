@@ -508,20 +508,22 @@ if __name__ == "__main__":
     strFleNme = objNspc.filename
 
     # Dictionary with experiment parameters.
-    # - 'Number of bar orientations' = number of steps between 0 and 360 deg.
-    #
     dicParam = {'Output file name': 'Run_01',
-                'TR [s]': 2.0,
+                'TR [s]': 1.944,
                 'Number of bar orientations': [4, 2],
-                'Number of bar positions on x-axis': 16,
-                'Number of bar positions on y-axis': 10,
-                'Number of blocks': 1,
-                'Number of rest trials': 0,
+                'Number of bar positions on x-axis': 14,
+                'Number of bar positions on y-axis': 8,
+                'Number of blocks': 2,
+                'Number of rest trials': 1,
                 'Inter-trial interval for targets [s]': 15.0,
                 'Initial rest period [volumes]': 10,
                 'Final rest period [volumes]': 10,
                 'Full screen:': [True, False],
-                'Stimulus contrasts': [[0.02, 1.0], [1.0]]}
+                'Stimulus contrasts': [[0.05, 1.0], [1.0]]}
+
+    # Luminance constrasts for LGN pRF mapping experiment:
+    # Maximum contrast = 0.99, at pixel value 1.0
+    # Low contrast = 0.1  (precisely: 0.0975), at pixel value: 0.05
 
     if not(strFleNme is None):
 

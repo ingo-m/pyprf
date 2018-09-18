@@ -1060,6 +1060,11 @@ if __name__ == "__main__":
     strGui = objNspc.gui
     strFleNme = objNspc.filename
 
+    # Default temporal ferquency = 4 Hz, as in Shapley, R. (1990). Visual
+    # sensitivity and parallel retinocortical channels. Annual Review of
+    # Psychology, 41, 635–658.
+    # https://doi.org/10.1146/annurev.ps.41.020190.003223
+
     # Dictionary with experiment parameters.
     dicParam = {'Run (name of design matrix file)': 'Run_01',
                 'Target duration [s]': 0.3,
