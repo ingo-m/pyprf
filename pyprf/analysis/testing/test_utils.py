@@ -42,7 +42,7 @@ def test_main():
     aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=varRnd)
     aryTmplEcc = np.around(aryTmplEcc.astype(np.float32), decimals=varRnd)
     aryTmplPol = np.around(aryTmplPol.astype(np.float32), decimals=varRnd)
-    aryTmplSd = np.around(aryTmplSd.astype(np.float32), decimals=varRnd)
+    aryTmplSd = np.around(aryTmplSd.astype(np.float32), decimals=1)
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
@@ -76,7 +76,7 @@ def test_main():
     aryTestNpR2 = np.around(aryTestNpR2.astype(np.float32), decimals=varRnd)
     aryTestNpEcc = np.around(aryTestNpEcc.astype(np.float32), decimals=varRnd)
     aryTestNpPol = np.around(aryTestNpPol.astype(np.float32), decimals=varRnd)
-    aryTestNpSd = np.around(aryTestNpSd.astype(np.float32), decimals=varRnd)
+    aryTestNpSd = np.around(aryTestNpSd.astype(np.float32), decimals=1)
 
     # Test whether the template and test results correspond:
     lgcTestNpR2 = np.all(np.equal(aryTmplR2, aryTestNpR2))
