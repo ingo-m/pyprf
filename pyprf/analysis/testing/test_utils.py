@@ -39,10 +39,10 @@ def test_main():
                                      + '/exmpl_data_results_SD.nii.gz'))
 
     # Round template reults:
-    aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=varRnd)
-    aryTmplEcc = np.around(aryTmplEcc.astype(np.float32), decimals=varRnd)
-    aryTmplPol = np.around(aryTmplPol.astype(np.float32), decimals=varRnd)
-    aryTmplSd = np.around(aryTmplSd.astype(np.float32), decimals=1)
+    aryTmplR2 = np.around(aryTmplR2, decimals=varRnd).astype(np.float32)
+    aryTmplEcc = np.around(aryTmplEcc, decimals=varRnd).astype(np.float32)
+    aryTmplPol = np.around(aryTmplPol, decimals=varRnd).astype(np.float32)
+    aryTmplSd = np.around(aryTmplSd, decimals=varRnd).astype(np.float32)
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
@@ -73,10 +73,10 @@ def test_main():
                                        + 'pRF_test_results_np_SD.nii.gz'))
 
     # Round test results:
-    aryTestNpR2 = np.around(aryTestNpR2.astype(np.float32), decimals=varRnd)
-    aryTestNpEcc = np.around(aryTestNpEcc.astype(np.float32), decimals=varRnd)
-    aryTestNpPol = np.around(aryTestNpPol.astype(np.float32), decimals=varRnd)
-    aryTestNpSd = np.around(aryTestNpSd.astype(np.float32), decimals=1)
+    aryTestNpR2 = np.around(aryTestNpR2, decimals=varRnd).astype(np.float32)
+    aryTestNpEcc = np.around(aryTestNpEcc, decimals=varRnd).astype(np.float32)
+    aryTestNpPol = np.around(aryTestNpPol, decimals=varRnd).astype(np.float32)
+    aryTestNpSd = np.around(aryTestNpSd, decimals=varRnd).astype(np.float32)
 
     # Test whether the template and test results correspond:
     lgcTestNpR2 = np.all(np.equal(aryTmplR2, aryTestNpR2))
