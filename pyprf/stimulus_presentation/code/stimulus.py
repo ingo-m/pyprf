@@ -60,6 +60,14 @@ def prf_stim(dicParam):
     # used during an experiment).
     lgcLogMde = dicParam['Logging mode']
 
+    # On windows, the return value may be a string, not a bool. We need to
+    # correct for this.
+    if not(type(lgcLogMde) == 'bool'):
+        if lgcLogMde == 'True':
+            lgcLogMde = True
+        else:
+            lgcLogMde = False
+
     # Directory where to save stimulus log (frames) for analysis if in logging
     # mode.
     strPthFrm = dicParam['Output path stimulus log (frames)']
@@ -87,6 +95,14 @@ def prf_stim(dicParam):
 
     # Show fixation grid?
     lgcGrd = dicParam['Show fixation grid?']
+
+    # On windows, the return value may be a string, not a bool. We need to
+    # correct for this.
+    if not(type(lgcGrd) == 'bool'):
+        if lgcGrd == 'True':
+            lgcGrd = True
+        else:
+            lgcGrd = False
 
     # *************************************************************************
     # *** Retrieve design matrix
