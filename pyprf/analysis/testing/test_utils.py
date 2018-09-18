@@ -22,12 +22,27 @@ def test_main():
     # Decimal places to round before comparing template and test results:
     varRnd = 3
 
-    # Load template result:
+    # Load template result - R2:
     aryTmplR2, _, _ = util.load_nii((strDir
                                      + '/exmpl_data_results_R2.nii.gz'))
 
+    # Load template result - eccentricity:
+    aryTmplEcc, _, _ = util.load_nii(
+        (strDir + '/exmpl_data_results_eccentricity.nii.gz'))
+
+    # Load template result - polar angle:
+    aryTmplPol, _, _ = util.load_nii(
+        (strDir + '/exmpl_data_results_polar_angle.nii.gz'))
+
+    # Load template result - SD:
+    aryTmplSd, _, _ = util.load_nii((strDir
+                                     + '/exmpl_data_results_SD.nii.gz'))
+
     # Round template reults:
     aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=varRnd)
+    aryTmplEcc = np.around(aryTmplEcc.astype(np.float32), decimals=varRnd)
+    aryTmplPol = np.around(aryTmplPol.astype(np.float32), decimals=varRnd)
+    aryTmplSd = np.around(aryTmplSd.astype(np.float32), decimals=varRnd)
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
@@ -39,16 +54,38 @@ def test_main():
     # Call main pyprf function:
     pyprf_main.pyprf(strCsvCnfgNp, lgcTest=True)
 
-    # Load result:
+    # Load result - R2:
     aryTestNpR2, _, _ = util.load_nii((strDir
                                        + '/result/'
                                        + 'pRF_test_results_np_R2.nii.gz'))
 
+    # Load result - eccentricity:
+    aryTestNpEcc, _, _ = util.load_nii((
+        strDir + '/result/' + 'pRF_test_results_np_eccentricity.nii.gz'))
+
+    # Load result - polar angle:
+    aryTestNpPol, _, _ = util.load_nii(
+        (strDir + '/result/' + 'pRF_test_results_np_polar_angle.nii.gz'))
+
+    # Load result - SD:
+    aryTestNpSd, _, _ = util.load_nii((strDir
+                                       + '/result/'
+                                       + 'pRF_test_results_np_SD.nii.gz'))
+
     # Round test results:
     aryTestNpR2 = np.around(aryTestNpR2.astype(np.float32), decimals=varRnd)
+    aryTestNpEcc = np.around(aryTestNpEcc.astype(np.float32), decimals=varRnd)
+    aryTestNpPol = np.around(aryTestNpPol.astype(np.float32), decimals=varRnd)
+    aryTestNpSd = np.around(aryTestNpSd.astype(np.float32), decimals=varRnd)
 
     # Test whether the template and test results correspond:
-    lgcTestNp = np.all(np.equal(aryTmplR2, aryTestNpR2))
+    lgcTestNpR2 = np.all(np.equal(aryTmplR2, aryTestNpR2))
+    lgcTestNpEcc = np.all(np.equal(aryTmplEcc, aryTestNpEcc))
+    lgcTestNpPol = np.all(np.equal(aryTmplPol, aryTestNpPol))
+    lgcTestNpSd = np.all(np.equal(aryTmplSd, aryTestNpSd))
+
+    # Conjunction of all test results:
+    lgcTestNp = np.all([lgcTestNpR2, lgcTestNpEcc, lgcTestNpPol, lgcTestNpSd])
     # --------------------------------------------------------------------------
 
     # --------------------------------------------------------------------------
