@@ -111,15 +111,33 @@ def prf_stim(dicParam):
     # creating the design matrix.
     lgcFull = bool(objNpz['lgcFull'])
 
-    # If in logging mode, only present stimuli very briefly:
+    # Number of bar positions on x-axis:
+    varNumPosX = int(objNpz['varNumPosX'])
+
+    # Number of bar positions on y-axis:
+    varNumPosY = int(objNpz['varNumPosY'])
+
+    # If in full screen mode, we need to make sure that the bar position along
+    # the shorted axis (x-axis) is adjusted, so that the bar is always within
+    # the screen area (and not half cut off).
+    if lgcFull:
+        # Ratio of bar positions (from design matrix), e.g. 18/11:
+        varRatioPos = float(varNumPosX) / float(varNumPosY)
+        # Ratio of screen widht/height in pixels (e.g. 1920/1200):
+        varRatioPix = float(varPixX) / float(varPixY)
+        # Scaling factor for bar positions along x-axis:
+        varSclPosX = varRatioPos / varRatioPix
+
+    # Adjustments for logging mode:
     if lgcLogMde:
 
         # Conditional imports:
         from PIL import Image
         from scipy.stats import mode
 
-        # Note: If 'varTr' is set too low in logging mode, frames are
-        # dropped and the stimuli do not get logged properly.
+        # If in logging mode, only present stimuli very briefly. Note: If
+        # 'varTr' is set too low in logging mode, frames are dropped and the
+        # stimuli do not get logged properly.
         varTr = 0.2
 
         # In log mode, don't show grid.
@@ -303,7 +321,12 @@ def prf_stim(dicParam):
         # Horizontal:
         if varAngle == 0.0:
             varTmpX = 0.0
-            varTmpY = varRad
+
+            # If in full screen mode, make sure that the bar is not partially
+            # outside of the screen area.
+            if lgcFull:
+                # Scale y-position.
+                varTmpY = varRad * varSclPosX
 
         # Vertical:
         elif varAngle == 90.0:

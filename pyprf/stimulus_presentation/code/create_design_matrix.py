@@ -81,6 +81,32 @@ def crt_design(dicParam):
     # *************************************************************************
     # *** Stimulus orientation & position
 
+    # Number of x-positions and y-positions should both be even or both be odd,
+    # in order for bar positions to cover the scren regularly.
+    if (varNumPosX % 2) == 0:
+
+        # Even number of x-positions.
+
+        if (varNumPosY % 2) == 1:
+
+            # Odd number of y-positions.
+            strTmp = ('Even number of x-positions, and odd number of '
+                      + 'y-positions. Will add one more y-position.')
+            print(strTmp)
+            varNumPosY = varNumPosY + 1
+
+    else:
+
+        # Odd number of x-positions.
+
+        if (varNumPosY % 2) == 0:
+
+            # Evem number of y-positions.
+            strTmp = ('Odd number of x-positions, and even number of '
+                      + 'y-positions. Will add one more y-position.')
+            print(strTmp)
+            varNumPosY = varNumPosY + 1
+
     #  Create arrays for position, orientation, and contrast:
     aryOri = np.empty(0)
     aryPos = np.empty(0)
@@ -220,7 +246,7 @@ def crt_design(dicParam):
                 # Check whether horizontal orientation is presented outside of
                 # the screen area:
                 if ((varTmpPos < varMarg)
-                        or ((float(varNumPosX) - varMarg) <= varTmpPos)):
+                        or ((float(varNumPosX) - varMarg) < varTmpPos)):
 
                     # print((str(varTmpPos) + '   ' + str(varTmpOri)))
                     pass
