@@ -1,7 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/pyprf.svg)](https://badge.fury.io/py/pyprf)
 [![Build Status](https://travis-ci.org/ingo-m/pyprf.svg?branch=master)](https://travis-ci.org/ingo-m/pyprf)
 [![codecov](https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg)](https://codecov.io/gh/ingo-m/pyprf)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1419798.svg)](https://doi.org/10.5281/zenodo.1419798)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1421970.svg)](https://doi.org/10.5281/zenodo.1421970)
 
 # PyPRF
 <img src="logo/logo.png" width=200 align="right" />
@@ -102,14 +102,14 @@ If you install `pyprf` using `pip` (as described above), all of the following de
 | Stimulus presentation                                 | Tested version |
 |-------------------------------------------------------|----------------|
 | [Psychopy](http://www.Psychopy.org/)                  | 1.83.04        |
-| [NumPy](http://www.numpy.org/)                        | 1.14.0         |
-| [SciPy](http://www.scipy.org/)                        | 1.0.0          |
+| [NumPy](http://www.numpy.org/)                        | 1.15.1         |
+| [SciPy](http://www.scipy.org/)                        | 1.1.0          |
 | [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 5.0.0          |
 
 | Data analysis                                         | Tested version |
 |-------------------------------------------------------|----------------|
-| [NumPy](http://www.numpy.org/)                        | 1.14.0         |
-| [SciPy](http://www.scipy.org/)                        | 1.0.0          |
+| [NumPy](http://www.numpy.org/)                        | 1.15.1         |
+| [SciPy](http://www.scipy.org/)                        | 1.1.0          |
 | [NiBabel](http://nipy.org/nibabel/)                   | 2.2.1          |
 | [Cython](http://cython.org/)¹                         | 0.27.1         |
 | [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 5.0.0          |

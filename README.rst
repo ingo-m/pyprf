@@ -1,4 +1,7 @@
-|PyPI version| |Build Status| |codecov| |DOI|
+`PyPI version <https://badge.fury.io/py/pyprf>`__ `Build
+Status <https://travis-ci.org/ingo-m/pyprf>`__
+`codecov <https://codecov.io/gh/ingo-m/pyprf>`__
+`DOI <https://doi.org/10.5281/zenodo.1421970>`__
 
 PyPRF
 =====
@@ -158,9 +161,9 @@ Simply follow the above installation instructions.
 +========================================================+================+
 | `Psychopy <http://www.Psychopy.org/>`__                | 1.83.04        |
 +--------------------------------------------------------+----------------+
-| `NumPy <http://www.numpy.org/>`__                      | 1.14.0         |
+| `NumPy <http://www.numpy.org/>`__                      | 1.15.1         |
 +--------------------------------------------------------+----------------+
-| `SciPy <http://www.scipy.org/>`__                      | 1.0.0          |
+| `SciPy <http://www.scipy.org/>`__                      | 1.1.0          |
 +--------------------------------------------------------+----------------+
 | `Pillow <https://pypi.python.org/pypi/Pillow/4.3.0>`__ | 5.0.0          |
 +--------------------------------------------------------+----------------+
@@ -168,9 +171,9 @@ Simply follow the above installation instructions.
 +--------------------------------------------------------+----------------+
 | Data analysis                                          | Tested version |
 +========================================================+================+
-| `NumPy <http://www.numpy.org/>`__                      | 1.14.0         |
+| `NumPy <http://www.numpy.org/>`__                      | 1.15.1         |
 +--------------------------------------------------------+----------------+
-| `SciPy <http://www.scipy.org/>`__                      | 1.0.0          |
+| `SciPy <http://www.scipy.org/>`__                      | 1.1.0          |
 +--------------------------------------------------------+----------------+
 | `NiBabel <http://nipy.org/nibabel/>`__                 | 2.2.1          |
 +--------------------------------------------------------+----------------+
@@ -236,21 +239,11 @@ Support
 
 Please use the `github
 issues <https://github.com/ingo-m/pyprf/issues>`__ for questions or bug
-reports. You can also contact us on the ``pyprf`` |gitter| channel.
+reports. You can also contact us on the ``pyprf``
+`gitter <https://gitter.im/pyprf/Lobby>`__ channel.
 
 License
 ~~~~~~~
 
 The project is licensed under `GNU General Public License Version
 3 <http://www.gnu.org/licenses/gpl.html>`__.
-
-.. |PyPI version| image:: https://badge.fury.io/py/pyprf.svg
-   :target: https://badge.fury.io/py/pyprf
-.. |Build Status| image:: https://travis-ci.org/ingo-m/pyprf.svg?branch=master
-   :target: https://travis-ci.org/ingo-m/pyprf
-.. |codecov| image:: https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/ingo-m/pyprf
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1419798.svg
-   :target: https://doi.org/10.5281/zenodo.1419798
-.. |gitter| image:: https://badges.gitter.im/gitterHQ/gitter.png
-   :target: https://gitter.im/pyprf/Lobby
