@@ -82,7 +82,8 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
         # Iteration counter:
         idxCnt = 0
 
-        while True:
+        # Stop if coordinator says stop:
+        while not(objCoord.should_stop()):
 
             # Feed example to Tensorflow placeholder
             # aryTmp02 = np.copy(lstPrfTc[idxCnt])
@@ -94,12 +95,8 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
 
             idxCnt += 1
 
-            # Stop if coordinator says stop:
-            if objCoord.should_stop():
-                break
-
             # Stop if all data has been put on the queue:
-            elif idxCnt == varNumMdls:
+            if idxCnt == varNumMdls:
                 break
 
     # -------------------------------------------------------------------------
