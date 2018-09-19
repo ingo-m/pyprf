@@ -1,0 +1,3 @@
+# Example functional data cropped (in order to reduce memory load on pytest):
+
+fslroi exmpl_data_func.nii.gz exmpl_data_func_cropped.nii.gz 68 58 2 33 18 25
