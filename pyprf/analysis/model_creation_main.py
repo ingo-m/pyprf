@@ -136,12 +136,10 @@ def model_creation(dicCnfg):
                   (vecPrfTcShp[3] == cfg.varNumVol))
 
         # Only fit pRF models if dimensions of pRF time course models are
-        # correct:
-        if not(lgcDim):
-            # Error message:
-            strErrMsg = ('---Error: Dimensions of specified pRF time course ' +
-                         'models do not agree with specified model parameters')
-            raise ValueError(strErrMsg)
-    # *************************************************************************
+        # correct.
+        strErrMsg = ('Dimensions of specified pRF time course models do not '
+                     + 'agree with specified model parameters')
+        assert lgcDim, strErrMsg
+        # *********************************************************************
 
     return aryPrfTc

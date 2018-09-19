@@ -146,7 +146,7 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
 
     # Concatenate convolved pixel time courses (into the same order as they
     # were entered into the analysis):
-    aryPixConv = np.zeros(0)
+    aryPixConv = np.zeros(0, dtype=np.float32)
     for idxRes in range(0, varPar):
         aryPixConv = np.append(aryPixConv, lstPixConv[idxRes])
 
@@ -158,7 +158,7 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
     aryPixConv = np.reshape(aryPixConv,
                             [tplPngSize[0],
                              tplPngSize[1],
-                             varNumVol])
+                             varNumVol]).astype(np.float32)
 
     # Return:
     return aryPixConv
