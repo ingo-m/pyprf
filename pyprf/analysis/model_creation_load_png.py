@@ -86,29 +86,29 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
         # Load & resize image:
         objIm = Image.open(lstPngPaths[idx01])
 
+        # Rescale png image to size of visual space model:
+        aryTmp = np.array(objIm.resize((tplVslSpcSze[0], tplVslSpcSze[1]),
+                          Image.NEAREST))
+
+        # Number of dimensions (two for greyscale image, three for RGB image).
+        varNumDim = aryTmp.ndim
+
         # Casting of array depends on dimensionality (greyscale or RGB, i.e. 2D
-        # or 3D):
-        if varNumDim == 2:
-            # Rescale png image, and put into numpy array:
-            aryTmp = np.array(objIm.resize((tplVslSpcSze[0], tplVslSpcSze[1]),
-                              Image.NEAREST))[:, :]
-            # x and y dimension of png image and data array do not match, we
-            # turn the image to fit:
-            aryTmp = np.rot90(aryTmp, k=3, axes=(0, 1))
-            aryPngData[:, :, idx01] = aryTmp
-        elif varNumDim == 3:
-            # Rescale png image, and put into numpy array:
-            aryTmp = np.array(objIm.resize((tplVslSpcSze[0], tplVslSpcSze[1]),
-                              Image.NEAREST))[:, :, 0]
-            # x and y dimension of png image and data array do not match, we
-            # turn the image to fit:
-            aryTmp = np.rot90(aryTmp, k=3, axes=(0, 1))
-            aryPngData[:, :, idx01] = aryTmp
-        else:
-            # Error message:
-            strErrMsg = ('ERROR: PNG files for model creation need to be RGB '
-                         + 'or greyscale.')
-            raise ValueError(strErrMsg)
+        # or 3D).
+        # if varNumDim == 2:
+        #    # Rescale png image, and put into numpy array:
+        #    aryTmp = aryTmp[:, :]
+        # elif varNumDim == 3:
+        if varNumDim == 3:
+
+            # In case of RGB image, reduce number of dimensions (stimuli are
+            # greyscale, so all three RGB values are assumed to be the same).
+            aryTmp = aryTmp[:, :, 0]
+
+        # x and y dimension of png image and data array do not match, we
+        # turn the image to fit:
+        aryTmp = np.rot90(aryTmp, k=3, axes=(0, 1))
+        aryPngData[:, :, idx01] = np.copy(aryTmp)
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
     aryPngData = (aryPngData > 200).astype(np.int8)
