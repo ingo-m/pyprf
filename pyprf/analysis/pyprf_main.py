@@ -120,19 +120,22 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     vecMdlXpos = np.linspace(cfg.varExtXmin,
                              cfg.varExtXmax,
                              cfg.varNumX,
-                             endpoint=True)
+                             endpoint=True,
+                             dtype=np.float32)
 
     # Vector with the moddeled y-positions of the pRFs:
     vecMdlYpos = np.linspace(cfg.varExtYmin,
                              cfg.varExtYmax,
                              cfg.varNumY,
-                             endpoint=True)
+                             endpoint=True,
+                             dtype=np.float32)
 
     # Vector with the moddeled standard deviations of the pRFs:
     vecMdlSd = np.linspace(cfg.varPrfStdMin,
                            cfg.varPrfStdMax,
                            cfg.varNumPrfSizes,
-                           endpoint=True)
+                           endpoint=True,
+                           dtype=np.float32)
 
     # Empty list for results (parameters of best fitting pRF model):
     lstPrfRes = [None] * cfg.varPar
@@ -154,6 +157,10 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                               num=cfg.varPar,
                               endpoint=False)
     vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
+
+    # Make sure type is float32:
+    aryFunc = aryFunc.astype(np.float32)
+    aryPrfTc = aryPrfTc.astype(np.float32)
 
     # Put functional data into chunks:
     for idxChnk in range(0, cfg.varPar):
@@ -248,10 +255,10 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     # Concatenate output vectors (into the same order as the voxels that were
     # included in the fitting):
-    aryBstXpos = np.zeros(0)
-    aryBstYpos = np.zeros(0)
-    aryBstSd = np.zeros(0)
-    aryBstR2 = np.zeros(0)
+    aryBstXpos = np.zeros(0, dtype=np.float32)
+    aryBstYpos = np.zeros(0, dtype=np.float32)
+    aryBstSd = np.zeros(0, dtype=np.float32)
+    aryBstR2 = np.zeros(0, dtype=np.float32)
     for idxRes in range(0, cfg.varPar):
         aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
         aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
