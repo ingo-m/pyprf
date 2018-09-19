@@ -84,49 +84,50 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     varNumVol = aryPixConv.shape[2]
 
     # Only fit pRF models if dimensions of pRF time course models are
-    # correct:
-    if not((tplVslSpcSze[0] / varNumX) == (tplVslSpcSze[1] / varNumY)):
-        # Error message:
-        strErrMsg = ('ERROR. Aspect ratio of visual space models does not '
-                     + 'agree with specified number of pRFs to model.')
-        raise ValueError(strErrMsg)
+    # correct.
+    strErrMsg = ('Aspect ratio of visual space models does not agree with'
+                 + ' specified number of pRFs to model.')
+    lgcAssert = ((float(tplVslSpcSze[0]) / float(varNumX))
+                 == (float(tplVslSpcSze[1]) / float(varNumY)))
+    assert lgcAssert, strErrMsg
 
     # Calculate the scaling factor from degrees of visual angle to pixels in
     # the upsampled visual space separately for the x- and the y-directions
     # (the two should be the same).
-    varDgr2PixUpX = tplVslSpcSze[0] / (varExtXmax - varExtXmin)
-    varDgr2PixUpY = tplVslSpcSze[1] / (varExtYmax - varExtYmin)
+    varDgr2PixUpX = float(tplVslSpcSze[0]) / float(varExtXmax - varExtXmin)
+    varDgr2PixUpY = float(tplVslSpcSze[1]) / float(varExtYmax - varExtYmin)
 
     # The factor relating pixels in the upsampled visual space to degrees of
     # visual angle should be roughly the same (allowing for some rounding error
-    # if the visual stimulus was not square):
-    if 0.5 < np.absolute((varDgr2PixUpX - varDgr2PixUpY)):
-        # Error message:
-        strErrMsg = ('---------ERROR. The ratio of X and Y dimensions in '
-                     + 'stimulus space (in degrees of visual angle) and the '
-                     + 'ratio of X and Y dimensions in the upsampled visual '
-                     + 'space do not agree')
-        raise ValueError(strErrMsg)
+    # if the visual stimulus was not square).
+    strErrMsg = ('The ratio of X and Y dimensions in stimulus space (in '
+                 + 'degrees of visual angle) and the ratio of X and Y '
+                 + 'dimensions in the upsampled visual space do not agree.')
+    lgcAssert = (np.absolute((varDgr2PixUpX - varDgr2PixUpY)) < 0.5)
+    assert lgcAssert, strErrMsg
 
     # Vector with the x-indicies of the positions in the super-sampled visual
     # space at which to create pRF models.
     vecX = np.linspace(0,
                        (tplVslSpcSze[0] - 1),
                        varNumX,
-                       endpoint=True)
+                       endpoint=True,
+                       dtype=np.float32)
 
     # Vector with the y-indicies of the positions in the super-sampled visual
     # space at which to create pRF models.
     vecY = np.linspace(0,
                        (tplVslSpcSze[1] - 1),
                        varNumY,
-                       endpoint=True)
+                       endpoint=True,
+                       dtype=np.float32)
 
     # Vector with pRF sizes to be modelled (still in degree of visual angle):
     vecPrfSd = np.linspace(varPrfStdMin,
                            varPrfStdMax,
                            varNumPrfSizes,
-                           endpoint=True)
+                           endpoint=True,
+                           dtype=np.float32)
 
     # We multiply the vector with the pRF sizes to be modelled with the scaling
     # factor (for the x-dimensions - as we have just found out, the scaling
@@ -134,7 +135,7 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     # error). Now the vector with the pRF sizes to be modelled is can directly
     # be used for the creation of Gaussian pRF models in upsampled visual
     # space.
-    vecPrfSd = np.multiply(vecPrfSd, varDgr2PixUpX)
+    vecPrfSd = np.multiply(vecPrfSd, varDgr2PixUpX, dtype=np.float32)
 
     # Number of pRF models to be created (i.e. number of possible combinations
     # of x-position, y-position, and standard deviation):
@@ -145,7 +146,7 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     # correspond to: (0) an index starting from zero, (1) the x-position, (2)
     # the y-position, and (3) the standard deviation. The parameters are in
     # units of the upsampled visual space.
-    aryMdlParams = np.zeros((varNumMdls, 4))
+    aryMdlParams = np.zeros((varNumMdls, 4), dtype=np.float32)
 
     # Counter for parameter array:
     varCntMdlPrms = 0
@@ -163,7 +164,7 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
             for idxSd in range(0, varNumPrfSizes):
 
                 # Place index and parameters in array:
-                aryMdlParams[varCntMdlPrms, 0] = varCntMdlPrms
+                aryMdlParams[varCntMdlPrms, 0] = float(varCntMdlPrms)
                 aryMdlParams[varCntMdlPrms, 1] = vecX[idxX]
                 aryMdlParams[varCntMdlPrms, 2] = vecY[idxY]
                 aryMdlParams[varCntMdlPrms, 3] = vecPrfSd[idxSd]
@@ -254,7 +255,8 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     aryPrfTc4D = np.zeros([varNumX,
                            varNumY,
                            varNumPrfSizes,
-                           varNumVol])
+                           varNumVol],
+                          dtype=np.float32)
 
     # We use the same loop structure for organising the pRF model time courses
     # that we used for creating the parameter array. Counter:

@@ -127,14 +127,17 @@ def crt_gauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
     """
     varSizeX = int(varSizeX)
     varSizeY = int(varSizeY)
+    varPosX = int(varPosX)
+    varPosY = int(varPosY)
+    varSd = float(varSd)
 
     aryX, aryY = sp.mgrid[0:varSizeX,
                           0:varSizeY]
 
     # The actual creation of the Gaussian array:
     aryGauss = (
-        (np.square((aryX - varPosX))
-         + np.square((aryY - varPosY))
+        (np.square((aryX - varPosX).astype(np.float32))
+         + np.square((aryY - varPosY).astype(np.float32))
          ) /
         (2.0 * np.square(varSd))
         )

@@ -104,7 +104,7 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     # output array (in order to be able to put the pRF model time courses into
     # the correct order after the parallelised function):
     aryOut = np.hstack((np.array(aryMdlParamsChnk[:, 0], ndmin=2).T,
-                        aryOut))
+                        aryOut)).astype(np.float32)
 
     # Put output to queue:
     queOut.put(aryOut)
