@@ -62,7 +62,7 @@ def prf_stim(dicParam):
 
     # On windows, the return value may be a string, not a bool. We need to
     # correct for this.
-    if not(type(lgcLogMde) == 'bool'):
+    if not(isinstance(lgcLogMde, bool)):
         if lgcLogMde == 'True':
             lgcLogMde = True
         else:
@@ -98,7 +98,7 @@ def prf_stim(dicParam):
 
     # On windows, the return value may be a string, not a bool. We need to
     # correct for this.
-    if not(type(lgcGrd) == 'bool'):
+    if not(isinstance(lgcGrd, bool)):
         if lgcGrd == 'True':
             lgcGrd = True
         else:
@@ -962,7 +962,7 @@ def prf_stim(dicParam):
         # Save stimulus frame array to npy file:
         np.savez_compressed((strPthFrm
                              + os.path.sep
-                             + 'stimFramesRun'),
+                             + 'stimulus_log'),
                             aryFrames=aryFrames)
 
         # Loop through volumes and save PNGs:

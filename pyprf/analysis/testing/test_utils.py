@@ -16,84 +16,88 @@ strDir = os.path.dirname(os.path.abspath(__file__))
 
 def test_main():
     """Run main pyprf function and compare results with template."""
-    # --------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # *** Preparations
 
     # Decimal places to round before comparing template and test results:
     varRnd = 3
 
-    # Load template result:
+    # Load template result - R2:
     aryTmplR2, _, _ = util.load_nii((strDir
                                      + '/exmpl_data_results_R2.nii.gz'))
 
+    # Load template result - eccentricity:
+    aryTmplEcc, _, _ = util.load_nii(
+        (strDir + '/exmpl_data_results_eccentricity.nii.gz'))
+
+    # Load template result - polar angle:
+    aryTmplPol, _, _ = util.load_nii(
+        (strDir + '/exmpl_data_results_polar_angle.nii.gz'))
+
+    # Load template result - SD:
+    aryTmplSd, _, _ = util.load_nii((strDir
+                                     + '/exmpl_data_results_SD.nii.gz'))
+
     # Round template reults:
-    aryTmplR2 = np.around(aryTmplR2.astype(np.float32), decimals=varRnd)
-    # --------------------------------------------------------------------------
+    aryTmplR2 = np.around(aryTmplR2, decimals=varRnd).astype(np.float32)
+    aryTmplEcc = np.around(aryTmplEcc, decimals=varRnd).astype(np.float32)
+    aryTmplPol = np.around(aryTmplPol, decimals=varRnd).astype(np.float32)
+    aryTmplSd = np.around(aryTmplSd, decimals=varRnd).astype(np.float32)
 
-    # --------------------------------------------------------------------------
-    # *** Test numpy version
+    # -------------------------------------------------------------------------
+    # *** Test pyprf main pipeline
 
-    # Path of config file for tests:
-    strCsvCnfgNp = (strDir + '/config_testing_numpy.csv')
+    # Test numpy, cython, and tensorflow version. List with version
+    # abbreviations:
+    lstVrsn = ['np', 'cy', 'tf']
 
-    # Call main pyprf function:
-    pyprf_main.pyprf(strCsvCnfgNp, lgcTest=True)
+    # Path of config file for tests (version abbreviation left open):
+    strCsvCnfg = (strDir + '/config_testing_{}.csv')
 
-    # Load result:
-    aryTestNpR2, _, _ = util.load_nii((strDir
-                                       + '/result/'
-                                       + 'pRF_test_results_np_R2.nii.gz'))
+    for strVrsn in lstVrsn:
 
-    # Round test results:
-    aryTestNpR2 = np.around(aryTestNpR2.astype(np.float32), decimals=varRnd)
+        # Call main pyprf function:
+        pyprf_main.pyprf(strCsvCnfg.format(strVrsn), lgcTest=True)
 
-    # Test whether the template and test results correspond:
-    lgcTestNp = np.all(np.equal(aryTmplR2, aryTestNpR2))
-    # --------------------------------------------------------------------------
+        # Load result - R2:
+        aryTestR2, _, _ = util.load_nii(
+            (strDir + '/result/'
+             + 'pRF_test_results_{}_R2.nii.gz'.format(strVrsn)))
 
-    # --------------------------------------------------------------------------
-    # *** Test cython version
+        # Load result - eccentricity:
+        aryTestEcc, _, _ = util.load_nii(
+            (strDir + '/result/'
+             + 'pRF_test_results_{}_eccentricity.nii.gz'.format(strVrsn)))
 
-    # Path of config file for tests:
-    strCsvCnfgCy = (strDir + '/config_testing_cython.csv')
+        # Load result - polar angle:
+        aryTestPol, _, _ = util.load_nii(
+            (strDir + '/result/'
+             + 'pRF_test_results_{}_polar_angle.nii.gz'.format(strVrsn)))
 
-    # Call main pyprf function:
-    pyprf_main.pyprf(strCsvCnfgCy, lgcTest=True)
+        # Load result - SD:
+        aryTestSd, _, _ = util.load_nii(
+            (strDir + '/result/'
+             + 'pRF_test_results_{}_SD.nii.gz'.format(strVrsn)))
 
-    # Load result:
-    aryTestCyR2, _, _ = util.load_nii((strDir
-                                       + '/result/'
-                                       + 'pRF_test_results_cy_R2.nii.gz'))
+        # Round test results:
+        aryTestR2 = np.around(aryTestR2, decimals=varRnd).astype(np.float32)
+        aryTestEcc = np.around(aryTestEcc, decimals=varRnd).astype(np.float32)
+        aryTestPol = np.around(aryTestPol, decimals=varRnd).astype(np.float32)
+        aryTestSd = np.around(aryTestSd, decimals=varRnd).astype(np.float32)
 
-    # Round test results:
-    aryTestCyR2 = np.around(aryTestCyR2.astype(np.float32), decimals=varRnd)
+        # Test whether the template and test results correspond:
+        lgcTestR2 = np.all(np.equal(aryTmplR2, aryTestR2))
+        lgcTestEcc = np.all(np.equal(aryTmplEcc, aryTestEcc))
+        lgcTestPol = np.all(np.equal(aryTmplPol, aryTestPol))
+        lgcTestSd = np.all(np.equal(aryTmplSd, aryTestSd))
 
-    # Test whether the template and test results correspond:
-    lgcTestCy = np.all(np.equal(aryTmplR2, aryTestCyR2))
-    # --------------------------------------------------------------------------
+        # Did cython version pass the test?
+        assert lgcTestR2
+        assert lgcTestEcc
+        assert lgcTestPol
+        assert lgcTestSd
 
-    # --------------------------------------------------------------------------
-    # *** Test tensorflow version
-
-    # Path of config file for tests:
-    strCsvCnfgTf = (strDir + '/config_testing_tensorflow.csv')
-
-    # Call main pyprf function:
-    pyprf_main.pyprf(strCsvCnfgTf, lgcTest=True)
-
-    # Load result:
-    aryTestTfR2, _, _ = util.load_nii((strDir
-                                       + '/result/'
-                                       + 'pRF_test_results_tf_R2.nii.gz'))
-
-    # Round test results:
-    aryTestTfR2 = np.around(aryTestTfR2.astype(np.float32), decimals=varRnd)
-
-    # Test whether the template and test results correspond:
-    lgcTestTf = np.all(np.equal(aryTmplR2, aryTestTfR2))
-    # --------------------------------------------------------------------------
-
-    # --------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # *** Clean up
 
     # Path of directory with results:
@@ -110,18 +114,16 @@ def test_main():
         elif '.npy' in strTmp:
             # print(strTmp)
             os.remove((strDirRes + '/' + strTmp))
-    # --------------------------------------------------------------------------
-
-    assert (lgcTestNp and lgcTestCy and lgcTestTf)
+    # -------------------------------------------------------------------------
 
 
 def test_load_large_nii():
     """Test nii-loading function for large nii files."""
     # Load example functional data in normal mode:
-    aryFunc01, _, _ = util.load_nii((strDir + '/exmpl_data_func.nii.gz'))
+    aryFunc01, _, _ = util.load_nii((strDir + '/exmpl_data_func_3vols.nii.gz'))
 
     # Load example functional data in large-file mode:
-    aryFunc02, _, _ = util.load_nii((strDir + '/exmpl_data_func.nii.gz'),
+    aryFunc02, _, _ = util.load_nii((strDir + '/exmpl_data_func_3vols.nii.gz'),
                                     varSzeThr=0.0)
 
     assert np.all(np.equal(aryFunc01, aryFunc02))

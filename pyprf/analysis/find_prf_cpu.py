@@ -98,10 +98,10 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     varNumVol = aryFuncChnk.shape[1]
 
     # Vectors for pRF finding results [number-of-voxels times one]:
-    vecBstXpos = np.zeros(varNumVoxChnk)
-    vecBstYpos = np.zeros(varNumVoxChnk)
-    vecBstSd = np.zeros(varNumVoxChnk)
-    # vecBstR2 = np.zeros(varNumVoxChnk)
+    vecBstXpos = np.zeros(varNumVoxChnk, dtype=np.float32)
+    vecBstYpos = np.zeros(varNumVoxChnk, dtype=np.float32)
+    vecBstSd = np.zeros(varNumVoxChnk, dtype=np.float32)
+    # vecBstR2 = np.zeros(varNumVoxChnk, dtype=np.float32)
 
     # Vector for best R-square value. For each model fit, the R-square value is
     # compared to this, and updated if it is lower than the best-fitting
@@ -131,10 +131,6 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     elif strVersion == 'numpy':
         # Constant term for the model:
         vecConst = np.ones((varNumVol), dtype=np.float32)
-
-    # Change type to float 32:
-    aryFuncChnk = aryFuncChnk.astype(np.float32)
-    aryPrfTc = aryPrfTc.astype(np.float32)
 
     # Prepare status indicator if this is the first of the parallel processes:
     if idxPrc == 0:
@@ -232,7 +228,7 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                                              vecConst]).T
 
                         # Change type to float32:
-                        aryDsgn = aryDsgn.astype(np.float32)
+                        # aryDsgn = aryDsgn.astype(np.float32)
 
                         # Calculate the least-squares solution for all voxels:
                         vecTmpRes = np.linalg.lstsq(aryDsgn,
