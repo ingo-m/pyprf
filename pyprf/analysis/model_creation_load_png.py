@@ -66,7 +66,7 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
     # aryPngData[x-pixel, y-pixel, PngNumber].
     aryPngData = np.zeros((tplVslSpcSze[0],
                            tplVslSpcSze[1],
-                           varNumVol))
+                           varNumVol)).astype(np.uint8)
 
     # Open first image in order to check dimensions (greyscale or RGB, i.e. 2D
     # or 3D).
