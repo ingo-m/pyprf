@@ -91,7 +91,7 @@ def test_main():
         lgcTestPol = np.all(np.equal(aryTmplPol, aryTestPol))
         lgcTestSd = np.all(np.equal(aryTmplSd, aryTestSd))
 
-        # Did cython version pass the test?
+        # Did version pass the test?
         assert lgcTestR2
         assert lgcTestEcc
         assert lgcTestPol
