@@ -118,7 +118,10 @@ def load_png(varNumVol, lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
         aryTmp = np.rot90(aryTmp, k=3, axes=(0, 1))
         aryPngData[:, :, idxPng] = np.copy(aryTmp)
 
-    # Convert RGB values (0 to 255) to integer ones and zeros:
-    aryPngData = (aryPngData > 200).astype(np.int8)
+    # Output array is of uint8 datatype (0 to 255). Higher precision is not
+    # necessary and not possible, because stimulus screenshots (created in
+    # `~/pyprf/pyprf/stimulus_presentation/code/stimulus.py`) are of uint8
+    # type.
+    aryPngData = aryPngData.astype(np.uint8)
 
     return aryPngData

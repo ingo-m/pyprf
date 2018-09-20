@@ -32,9 +32,9 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     Parameters
     ----------
     aryPixConv : np.array
-        3D numpy array containing the pixel-wise, HRF-convolved design matrix,
-        with the following structure: `aryPixConv[x-pixel-index, y-pixel-index,
-        PngNumber]`
+        4D numpy array containing the pixel-wise, HRF-convolved design matrix,
+        with the following structure: `aryPixConv[aryPixConv[x-pixels,
+        y-pixels, conditions, volumes]`.
     tplVslSpcSze : tuple
         Pixel size of visual space model in which the pRF models are created
         (x- and y-dimension).
@@ -80,8 +80,11 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     This function creates the pRF time course models, from which the best-
     fitting model for each voxel will be selected.
     """
+    # Number of conditions:
+    varNumCon = aryPixConv.shape[2]
+
     # Number of volumes:
-    varNumVol = aryPixConv.shape[2]
+    varNumVol = aryPixConv.shape[3]
 
     # Only fit pRF models if dimensions of pRF time course models are
     # correct.

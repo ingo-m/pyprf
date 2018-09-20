@@ -39,9 +39,9 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     varNumVol : int
         Number of time points (volumes).
     aryPixConv : np.array
-        3D numpy array containing the pixel-wise, HRF-convolved design matrix,
-        with the following structure: `aryPixConv[x-pixel-index, y-pixel-index,
-        PngNumber]`
+        4D numpy array containing the pixel-wise, HRF-convolved design matrix,
+        with the following structure: `aryPixConv[aryPixConv[x-pixels,
+        y-pixels, conditions, volumes]`.
     queOut : multiprocessing.queues.Queue
         Queue to put the results on.
 
@@ -60,6 +60,15 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     The list with results is not returned directly, but placed on a
     multiprocessing queue.
     """
+
+
+
+    # NOTE DELETE THIS LINE - only for testing purposes.
+    aryPixConv = aryPixConv[:, :, 0, :]
+
+
+
+
     # Number of combinations of model parameters in the current chunk:
     varChnkSze = np.size(aryMdlParamsChnk, axis=0)
 
