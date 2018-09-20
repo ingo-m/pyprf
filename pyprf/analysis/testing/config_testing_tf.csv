@@ -62,8 +62,8 @@ varSdSmthSpt = 1.0
 # Perform linear trend removal on fMRI data?
 lgcLinTrnd = True
 
-# Number of fMRI volumes and png files to load:
-varNumVol = 400
+# Number of fMRI volumes per run:
+varNumVol = 200
 
 # Number of processes to run in parallel:
 varPar = 3
@@ -80,7 +80,7 @@ varVslSpcSzeY = 100
 # Path(s) of functional data. List of strings with paths of one or more
 # functional runs. The order of functional volumes, and their number, has to
 # correspond to the order and number of PNG files containing the stimulus
-# information. Note: Do not insert a line break.
+# information. Note: Do not insert a line break (i.e. all runs on one line).
 lstPathNiiFunc = ['/testing/exmpl_data_func.nii.gz']
 
 # Path of mask (to restrict pRF model finding):
@@ -99,10 +99,12 @@ lgcCrteMdl = False
 # If we create new pRF time course models, the following parameters have to
 # be provided:
 
-# Basename of the 'binary stimulus files'. The files need to be in png
-# format and number in the order of their presentation during the
-# experiment.
-strPathPng = '/testing/stimuli/run_01_frame_'
+# Basename of the screenshots (PNG images) of pRF stimuli. A list with one path
+# per experimental run. Can be created by running
+# `~/pyprf/stimulus_presentation/code/stimulus.py` with 'Logging mode' set to
+# 'True'. (Number & order of entries in `lstPathNiiFunc` and `lstPathPng` has
+# to match). Note: Do not insert a line break (i.e. all runs on one line).
+lstPathPng = ['/testing/stimuli/run_01_frame_', '/testing/stimuli/run_02_frame_']
 
 # Start index of PNG files. For instance, `varStrtIdx = 0` if the name of
 # the first PNG file is `file_000.png`, or `varStrtIdx = 1` if it is

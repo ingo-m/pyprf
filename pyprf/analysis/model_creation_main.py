@@ -55,7 +55,7 @@ def model_creation(dicCnfg):
         print('------Load stimulus information from PNG files')
 
         aryPngData = load_png(cfg.varNumVol,
-                              cfg.strPathPng,
+                              cfg.lstPathPng,
                               cfg.tplVslSpcSze,
                               varStrtIdx=cfg.varStrtIdx,
                               varZfill=cfg.varZfill)
@@ -131,9 +131,7 @@ def model_creation(dicCnfg):
                   and
                   (vecPrfTcShp[1] == cfg.varNumY)
                   and
-                  (vecPrfTcShp[2] == cfg.varNumPrfSizes)
-                  and
-                  (vecPrfTcShp[3] == cfg.varNumVol))
+                  (vecPrfTcShp[2] == cfg.varNumPrfSizes))
 
         # Only fit pRF models if dimensions of pRF time course models are
         # correct.

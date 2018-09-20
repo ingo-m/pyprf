@@ -21,18 +21,23 @@ import numpy as np
 from PIL import Image
 
 
-def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
+def load_png(varNumVol, lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
              varZfill=3):
     """
     Load PNGs with stimulus information for pRF model creation.
 
     Parameters
     ----------
+
     varNumVol : int
         Number of PNG files.
-    strPathPng : str
-        Parent directory of PNG files. PNG files need to be organsied in
-        numerical order (e.g. `file_001.png`, `file_002.png`, etc.).
+
+    lstPathPng : lst
+        Basename of the screenshots (PNG images) of pRF stimuli. List of
+        strings with one path per experimental run. PNG files can be created by
+        running `~/pyprf/stimulus_presentation/code/stimulus.py` with 'Logging
+        mode' set to 'True'. E.g.: `lstPathPng = ['~/stimuli/run_01_frame_',
+        '~/stimuli/run_02_frame_']`.
     tplVslSpcSze : tuple
         Pixel size (x, y) at which PNGs are sampled. In case of large PNGs it
         is useful to sample at a lower than the original resolution.
@@ -55,36 +60,45 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
     -----
     Part of py_pRF_mapping library.
     """
-    # Create list of png files to load:
-    lstPngPaths = [None] * varNumVol
-    for idx01 in range(0, varNumVol):
-        lstPngPaths[idx01] = (strPathPng
-                              + str(idx01 + varStrtIdx).zfill(varZfill)
-                              + '.png')
+    # Number of runs:
+    varNumRun = len(lstPathPng)
+
+    # Total number of PNGs (i.e. total number of frames in all runs):
+    varNumPng = int(varNumVol) * varNumRun
+
+    # Create list with complete path & file names of all of png files to load.
+    lstAllPngs = [None] * varNumPng
+    varCntPng = 0
+    for idxRun in range(varNumRun):
+        for idxVol in range(varNumVol):
+            lstAllPngs[varCntPng] = (lstPathPng[idxRun]
+                                     + str(idxVol + varStrtIdx).zfill(varZfill)
+                                     + '.png')
+            varCntPng += 1
 
     # The png data will be saved in a numpy array of the following order:
     # aryPngData[x-pixel, y-pixel, PngNumber].
     aryPngData = np.zeros((tplVslSpcSze[0],
                            tplVslSpcSze[1],
-                           varNumVol)).astype(np.uint8)
+                           varNumPng)).astype(np.uint8)
 
-    # Open first image in order to check dimensions (greyscale or RGB, i.e. 2D
-    # or 3D).
-    objIm = Image.open(lstPngPaths[0])
-    aryTest = np.array(objIm.resize((objIm.size[0], objIm.size[1]),
-                                    Image.ANTIALIAS))
-    varNumDim = aryTest.ndim
-    del(aryTest)
+    # # Open first image in order to check dimensions (greyscale or RGB, i.e. 2D
+    # # or 3D).
+    # objIm = Image.open(lstAllPngs[0])
+    # aryTest = np.array(objIm.resize((objIm.size[0], objIm.size[1]),
+    #                                 Image.ANTIALIAS))
+    # varNumDim = aryTest.ndim
+    # del(aryTest)
 
     # Loop trough PNG files:
-    for idx01 in range(0, varNumVol):
+    for idxPng in range(varNumPng):
 
         # Old version of reading images with scipy
-        # aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :, 0]
-        # aryPngData[:, :, idx01] = sp.misc.imread(lstPngPaths[idx01])[:, :]
+        # aryPngData[:, :, idxVol] = sp.misc.imread(lstAllPngs[idxVol])[:, :, 0]
+        # aryPngData[:, :, idxVol] = sp.misc.imread(lstAllPngs[idxVol])[:, :]
 
         # Load & resize image:
-        objIm = Image.open(lstPngPaths[idx01])
+        objIm = Image.open(lstAllPngs[idxPng])
 
         # Rescale png image to size of visual space model:
         aryTmp = np.array(objIm.resize((tplVslSpcSze[0], tplVslSpcSze[1]),
@@ -108,7 +122,7 @@ def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
         # x and y dimension of png image and data array do not match, we
         # turn the image to fit:
         aryTmp = np.rot90(aryTmp, k=3, axes=(0, 1))
-        aryPngData[:, :, idx01] = np.copy(aryTmp)
+        aryPngData[:, :, idxPng] = np.copy(aryTmp)
 
     # Convert RGB values (0 to 255) to integer ones and zeros:
     aryPngData = (aryPngData > 200).astype(np.int8)
