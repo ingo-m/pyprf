@@ -47,7 +47,7 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
 
             # Skip comments (i.e. lines starting with '#') and empty lines.
             # Note: Indexing the list (i.e. lstTmp[0][0]) does not work for
-            # empty lines. However, if the first condition is no fullfilled
+            # empty lines. However, if the first condition is not fullfilled
             # (i.e. line is empty and 'if lstTmp' evaluates to false), the
             # second logical test (after the 'and') is not actually carried
             # out.
@@ -218,13 +218,14 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
     # be provided:
     if dicCnfg['lgcCrteMdl']:
 
-        # Basename of the 'binary stimulus files'. The files need to be in png
-        # format and number in the order of their presentation during the
-        # experiment.
-        dicCnfg['strPathPng'] = ast.literal_eval(dicCnfg['strPathPng'])
+        # Basename of the screenshots (PNG images) of pRF stimuli. A list with
+        # one path per experimental run. (Number & order of entries in
+        # `lstPathNiiFunc` and `lstPathPng` has to match).
+        dicCnfg['lstPathPng'] = ast.literal_eval(dicCnfg['lstPathPng'])
         if lgcPrint:
-            print('---Basename of PNG stimulus files: '
-                  + str(dicCnfg['strPathPng']))
+            print('---Basename(s) of PNG stimulus files: ')
+            for strTmp in dicCnfg['lstPathPng']:
+                print('   ' + str(strTmp))
 
         # Start index of PNG files. For instance, `varStrtIdx = 0` if the name
         # of the first PNG file is `file_000.png`, or `varStrtIdx = 1` if it is
@@ -245,18 +246,29 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
     # Is this a test?
     if lgcTest:
 
-        # Prepend absolute path of this file to config file paths:
+        # Preprend absolute parent path of testing folder to config file paths:
         dicCnfg['strPathNiiMask'] = (strDir + dicCnfg['strPathNiiMask'])
         dicCnfg['strPathOut'] = (strDir + dicCnfg['strPathOut'])
-        dicCnfg['strPathPng'] = (strDir + dicCnfg['strPathPng'])
         dicCnfg['strPathMdl'] = (strDir + dicCnfg['strPathMdl'])
 
-        # Loop through functional runs:
+        # Loop through functional runs & prepend absolute path:
         varNumRun = len(dicCnfg['lstPathNiiFunc'])
         for idxRun in range(varNumRun):
             dicCnfg['lstPathNiiFunc'][idxRun] = (
                 strDir
                 + dicCnfg['lstPathNiiFunc'][idxRun]
                 )
+
+        # Preprend absolute parent path of testing folder to config file paths
+        # if new models are supposed to be created:
+        if dicCnfg['lgcCrteMdl']:
+
+            # Loop through functional runs & prepend absolute path:
+            varNumRun = len(dicCnfg['lstPathPng'])
+            for idxRun in range(varNumRun):
+                dicCnfg['lstPathPng'][idxRun] = (
+                    strDir
+                    + dicCnfg['lstPathPng'][idxRun]
+                    )
 
     return dicCnfg
