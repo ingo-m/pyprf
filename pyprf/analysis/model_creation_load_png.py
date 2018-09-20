@@ -82,20 +82,11 @@ def load_png(varNumVol, lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
                            tplVslSpcSze[1],
                            varNumPng)).astype(np.uint8)
 
-    # # Open first image in order to check dimensions (greyscale or RGB, i.e. 2D
-    # # or 3D).
-    # objIm = Image.open(lstAllPngs[0])
-    # aryTest = np.array(objIm.resize((objIm.size[0], objIm.size[1]),
-    #                                 Image.ANTIALIAS))
-    # varNumDim = aryTest.ndim
-    # del(aryTest)
+    # Error message if image is not of expected type:
+    strErr = 'Image is not of expected type (not uint8).'
 
     # Loop trough PNG files:
     for idxPng in range(varNumPng):
-
-        # Old version of reading images with scipy
-        # aryPngData[:, :, idxVol] = sp.misc.imread(lstAllPngs[idxVol])[:, :, 0]
-        # aryPngData[:, :, idxVol] = sp.misc.imread(lstAllPngs[idxVol])[:, :]
 
         # Load & resize image:
         objIm = Image.open(lstAllPngs[idxPng])
@@ -118,6 +109,9 @@ def load_png(varNumVol, lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
             # In case of RGB image, reduce number of dimensions (stimuli are
             # greyscale, so all three RGB values are assumed to be the same).
             aryTmp = aryTmp[:, :, 0]
+
+        # Images are expected to have uint8 type.
+        assert (type(aryTmp[0, 0]) is np.uint8), strErr
 
         # x and y dimension of png image and data array do not match, we
         # turn the image to fit:
