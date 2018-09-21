@@ -21,7 +21,7 @@ import numpy as np
 from pyprf.analysis.utilities import crt_gauss
 
 
-def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
+def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
     """
     Create pRF time course models.
 
@@ -36,12 +36,10 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     tplVslSpcSze : tuple
         Pixel size of visual space model in which the pRF models are created
         (x- and y-dimension).
-    varNumVol : int
-        Number of time points (volumes).
     aryPixConv : np.array
         4D numpy array containing the pixel-wise, HRF-convolved design matrix,
-        with the following structure: `aryPixConv[aryPixConv[x-pixels,
-        y-pixels, conditions, volumes]`.
+        with the following structure: `aryPixConv[x-pixels, y-pixels,
+        conditions, volumes]`.
     queOut : multiprocessing.queues.Queue
         Queue to put the results on.
 
@@ -49,34 +47,36 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     -------
     lstOut : list
         List containing the following object:
-        aryOut : np.array
-            2D numpy array, where each row corresponds to one model time
-            course, the first column corresponds to the index number of the
-            model time course, and the remaining columns correspond to time
-            points).
+        vecMdlIdx : np.array
+            1D numpy array with model indices (for sorting of models after
+            parallel function. Shape: vecMdlIdx[varNumMdls].
+        aryPrfTc : np.array
+            3D numpy array with pRF model time courses, shape:
+            aryPrfTc[varNumMdls, varNumCon, varNumVol].
 
     Notes
     -----
     The list with results is not returned directly, but placed on a
     multiprocessing queue.
     """
+    # Number of models (i.e., number of combinations of model parameters in the
+    # parallel processing current chunk):
+    varNumMdls = aryMdlParamsChnk.shape[0]
 
+    # Number of conditions:
+    varNumCon = aryPixConv.shape[2]
 
-
-    # NOTE DELETE THIS LINE - only for testing purposes.
-    aryPixConv = aryPixConv[:, :, 0, :]
-
-
-
+    # Number of volumes:
+    varNumVol = aryPixConv.shape[3]
 
     # Number of combinations of model parameters in the current chunk:
-    varChnkSze = np.size(aryMdlParamsChnk, axis=0)
+    varNumMdls = np.size(aryMdlParamsChnk, axis=0)
 
     # Output array with pRF model time courses:
-    aryOut = np.zeros([varChnkSze, varNumVol])
+    aryPrfTc = np.zeros([varNumMdls, varNumCon, varNumVol], dtype=np.float32)
 
     # Loop through combinations of model parameters:
-    for idxMdl in range(0, varChnkSze):
+    for idxMdl in range(varNumMdls):
 
         # Spatial parameters of current model:
         varTmpX = aryMdlParamsChnk[idxMdl, 1]
@@ -91,29 +91,28 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
                              varTmpSd)
 
         # Multiply super-sampled pixel-time courses with Gaussian pRF models:
-        aryPrfTcTmp = np.multiply(aryPixConv, aryGauss[:, :, None])
+        aryPrfTcTmp = np.multiply(aryPixConv, aryGauss[:, :, None, None])
+        # Shape: aryPrfTcTmp[x-pixels, y-pixels, conditions, volumes]
 
         # Calculate sum across x- and y-dimensions - the 'area under the
-        # Gaussian surface'. This is essentially an unscaled version of the pRF
-        # time course model (i.e. not yet scaled for the size of the pRF).
-        aryPrfTcTmp = np.sum(aryPrfTcTmp, axis=(0, 1))
-
-        # Normalise the pRF time course model to the size of the pRF. This
-        # gives us the ratio of 'activation' of the pRF at each time point, or,
-        # in other words, the pRF time course model. REMOVED - normalisation
-        # has been moved to funcGauss(); pRF models are normalised when to have
-        # an area under the curve of one when they are created.
-        # aryPrfTcTmp = np.divide(aryPrfTcTmp,
-        #                         np.sum(aryGauss, axis=(0, 1)))
+        # Gaussian surface'. This gives us the ratio of 'activation' of the pRF
+        # at each time point, or, in other words, the pRF time course model.
+        # Note: Normalisation of pRFs takes at funcGauss(); pRF models are
+        # normalised to have an area under the curve of one when they are
+        # created.
+        aryPrfTcTmp = np.sum(aryPrfTcTmp, axis=(0, 1), dtype=np.float32)
+        # New shape: aryPrfTcTmp[conditions, volumes]
 
         # Put model time courses into the function's output array:
-        aryOut[idxMdl, :] = aryPrfTcTmp
+        aryPrfTc[idxMdl, :, :] = np.copy(aryPrfTcTmp)
 
     # Put column with the indicies of model-parameter-combinations into the
-    # output array (in order to be able to put the pRF model time courses into
+    # output list (in order to be able to put the pRF model time courses into
     # the correct order after the parallelised function):
-    aryOut = np.hstack((np.array(aryMdlParamsChnk[:, 0], ndmin=2).T,
-                        aryOut)).astype(np.float32)
+    vecMdlIdx = aryMdlParamsChnk[:, 0]
+
+    # Output list:
+    lstOut = [vecMdlIdx, aryPrfTc]
 
     # Put output to queue:
-    queOut.put(aryOut)
+    queOut.put(lstOut)

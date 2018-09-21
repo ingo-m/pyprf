@@ -71,9 +71,9 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
 
     Returns
     -------
-    aryPrfTc4D : np.array
-        4D numpy array with pRF time course models, with following dimensions:
-        `aryPrfTc4D[x-position, y-position, SD, volume]`.
+    aryPrfTc5D : np.array
+        5D numpy array with pRF time course models, with following dimensions:
+        `aryPrfTc5D[x-position, y-position, SD, condition, volume]`.
 
     Notes
     -----
@@ -200,7 +200,7 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
 
     # Empty list for results from parallel processes (for pRF model time course
     # results):
-    lstPrfTc = [None] * varPar
+    lstOut = [None] * varPar
 
     # Empty list for processes:
     lstPrcs = [None] * varPar
@@ -208,14 +208,14 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     # Create a queue to put the results in:
     queOut = mp.Queue()
 
-    # print('---------Creating parallel processes')
+    # Make sure datatype of pixeltimecourses is float32:
+    aryPixConv = aryPixConv.astype(np.float32)
 
     # Create processes:
-    for idxPrc in range(0, varPar):
+    for idxPrc in range(varPar):
         lstPrcs[idxPrc] = mp.Process(target=prf_par,
                                      args=(lstMdlParams[idxPrc],
                                            tplVslSpcSze,
-                                           varNumVol,
                                            aryPixConv,
                                            queOut)
                                      )
@@ -223,41 +223,51 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
         lstPrcs[idxPrc].Daemon = True
 
     # Start processes:
-    for idxPrc in range(0, varPar):
+    for idxPrc in range(varPar):
         lstPrcs[idxPrc].start()
 
     # Collect results from queue:
-    for idxPrc in range(0, varPar):
-        lstPrfTc[idxPrc] = queOut.get(True)
+    for idxPrc in range(varPar):
+        lstOut[idxPrc] = queOut.get(True)
 
     # Join processes:
-    for idxPrc in range(0, varPar):
+    for idxPrc in range(varPar):
         lstPrcs[idxPrc].join()
 
-    # print('---------Collecting results from parallel processes')
+    # lstOut:
+    #        vecMdlIdx : np.array
+    #            1D numpy array with model indices (for sorting of models after
+    #            parallel function. Shape: vecMdlIdx[varNumMdls].
+    #        aryPrfTc : np.array
+    #            3D numpy array with pRF model time courses, shape:
+    #            aryPrfTc[varNumMdls, varNumCon, varNumVol].
 
-    # Put output arrays from parallel process into one big array (where each
-    # row corresponds to one model time course, the first column corresponds to
-    # the index number of the model time course, and the remaining columns
-    # correspond to time points):
-    aryPrfTc = np.vstack(lstPrfTc)
+    # Combine model time courses from parallel processes.
+    lstMdlIdx = [None] * varPar
+    lstPrfTc = [None] * varPar
+
+    # List to array, concatenating along model-index-dimension:
+    vecMdlIdx = np.concatenate(lstMdlIdx, axis=0)
+    aryPrfTc = np.concatenate(lstPrfTc, axis=0)
 
     # Clean up:
     del(aryMdlParams)
     del(lstMdlParams)
     del(lstPrfTc)
+    del(lstMdlIdx)
 
     # Sort output along the first column (which contains the indicies), so that
     # the output is in the same order as the list of combination of model
     # parameters which we created before the parallelisation:
-    aryPrfTc = aryPrfTc[np.argsort(aryPrfTc[:, 0])]
+    aryPrfTc = aryPrfTc[np.argsort(vecMdlIdx, axis=0), :, :]
 
     # Array representing the low-resolution visual space, of the form
-    # aryPrfTc[x-position, y-position, pRF-size, varNum Vol], which will hold
-    # the pRF model time courses.
-    aryPrfTc4D = np.zeros([varNumX,
+    # aryPrfTc[x-position, y-position, pRF-size, varNumCon, varNumVol], which
+    # will hold the pRF model time courses.
+    aryPrfTc5D = np.zeros([varNumX,
                            varNumY,
                            varNumPrfSizes,
+                           varNumCon,
                            varNumVol],
                           dtype=np.float32)
 
@@ -269,21 +279,21 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     # into the array:
 
     # Loop through x-positions:
-    for idxX in range(0, varNumX):
+    for idxX in range(varNumX):
 
         # Loop through y-positions:
-        for idxY in range(0, varNumY):
+        for idxY in range(varNumY):
 
             # Loop through standard deviations (of Gaussian pRF models):
-            for idxSd in range(0, varNumPrfSizes):
+            for idxSd in range(varNumPrfSizes):
 
                 # Put the pRF model time course into its correct position in
-                # the 4D array, leaving out the first column (which contains
-                # the index):
-                aryPrfTc4D[idxX, idxY, idxSd, :] = aryPrfTc[varCntMdlPrms, 1:]
+                # the 5D array:
+                aryPrfTc5D[idxX, idxY, idxSd, :, :] = \
+                    aryPrfTc[varCntMdlPrms, :, :]
 
                 # Increment parameter index:
                 varCntMdlPrms = varCntMdlPrms + 1
 
     # Return
-    return aryPrfTc4D
+    return aryPrfTc5D

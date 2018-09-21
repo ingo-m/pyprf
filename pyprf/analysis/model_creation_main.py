@@ -103,13 +103,20 @@ def model_creation(dicCnfg):
 
         print('------Save pRF time course models to disk')
 
-        # Save the 4D array as '*.npy' file:
+        # Array with pRF time course models, shape:
+        # aryPrfTc[x-position, y-position, SD, condition, volume].
+
+        # Save the 5D array as '*.npy' file:
         np.save(cfg.strPathMdl,
                 aryPrfTc)
 
-        # Save 4D array as '*.nii' file (for debugging purposes):
-        niiPrfTc = nb.Nifti1Image(aryPrfTc, np.eye(4))
-        nb.save(niiPrfTc, cfg.strPathMdl)
+        # Save model time courses as '*.nii' file (for debugging purposes).
+        # Nii file can be inspected visually, e.g. using fsleyes. We save one
+        # 4D nii file per stimulus condition.
+        varNumCon = aryPrfTc.shape[3]
+        for idxCon in range(varNumCon):
+            niiPrfTc = nb.Nifti1Image(aryPrfTc[:, :, :, idxCon, :], np.eye(4))
+            nb.save(niiPrfTc, (cfg.strPathMdl + '_condition_' + str(idxCon)))
         # *********************************************************************
 
     else:
@@ -139,5 +146,12 @@ def model_creation(dicCnfg):
                      + 'agree with specified model parameters')
         assert lgcDim, strErrMsg
         # *********************************************************************
+
+
+
+    # REMOVE THIS LINE - ONLY FOR DEVELOPMENT PURPOSES
+    aryPrfTc = aryPrfTc[:, :, :, 0, :]
+
+
 
     return aryPrfTc

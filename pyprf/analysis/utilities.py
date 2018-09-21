@@ -143,7 +143,7 @@ def crt_gauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
         )
     aryGauss = np.exp(-aryGauss) / (2.0 * np.pi * np.square(varSd))
 
-    return aryGauss
+    return aryGauss.astype(np.float32)
 
 
 def crt_hrf(varNumVol, varTr):
