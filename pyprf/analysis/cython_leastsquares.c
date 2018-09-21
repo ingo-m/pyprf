@@ -1126,6 +1126,20 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  * cdef inline object PyArray_MultiIterNew1(a):
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
+struct __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice;
+typedef struct __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice;
+
+/* "pyprf/analysis/cython_leastsquares.pyx":117
+ * # *** Function for fast calculation of residuals
+ * 
+ * cdef (float[:], float[:]) funcCyRes(float[:] vecPrfTc_view,             # <<<<<<<<<<<<<<
+ *                                     float[:, :] aryFuncChnk_view,
+ *                                     float[:] vecRes_view,
+ */
+struct __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice {
+  __Pyx_memviewslice f0;
+  __Pyx_memviewslice f1;
+};
 
 /* "View.MemoryView":103
  * 
@@ -1479,6 +1493,11 @@ static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *nam
 /* BufferIndexError.proto */
 static void __Pyx_RaiseBufferIndexError(int axis);
 
+/* WriteUnraisableException.proto */
+static void __Pyx_WriteUnraisable(const char *name, int clineno,
+                                  int lineno, const char *filename,
+                                  int full_traceback, int nogil);
+
 /* RaiseException.proto */
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject *cause);
 
@@ -1684,11 +1703,6 @@ static CYTHON_INLINE void __Pyx_RaiseUnboundLocalError(const char *varname);
 
 /* None.proto */
 static CYTHON_INLINE long __Pyx_div_long(long, long);
-
-/* WriteUnraisableException.proto */
-static void __Pyx_WriteUnraisable(const char *name, int clineno,
-                                  int lineno, const char *filename,
-                                  int full_traceback, int nogil);
 
 /* ImportFrom.proto */
 static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
@@ -2011,8 +2025,8 @@ static PyObject *contiguous = 0;
 static PyObject *indirect_contiguous = 0;
 static int __pyx_memoryview_thread_locks_used;
 static PyThread_type_lock __pyx_memoryview_thread_locks[8];
-static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(PyArrayObject *, PyArrayObject *, int __pyx_skip_dispatch); /*proto*/
-static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyRes(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, unsigned long, unsigned int, float); /*proto*/
+static PyObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(PyArrayObject *, PyArrayObject *, int __pyx_skip_dispatch); /*proto*/
+static __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyRes(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, unsigned long, unsigned int, float); /*proto*/
 static struct __pyx_array_obj *__pyx_array_new(PyObject *, Py_ssize_t, char *, char *, char *); /*proto*/
 static void *__pyx_align_pointer(void *, size_t); /*proto*/
 static PyObject *__pyx_memoryview_new(PyObject *, int, int, __Pyx_TypeInfo *); /*proto*/
@@ -2357,28 +2371,32 @@ static PyObject *__pyx_codeobj__35;
 /* "pyprf/analysis/cython_leastsquares.pyx":38
  * # *** Main function for least squares solution
  * 
- * cpdef np.ndarray[np.float32_t, ndim=1] cy_lst_sq(             # <<<<<<<<<<<<<<
- *     np.ndarray[np.float32_t, ndim=1] vecPrfTc,
- *     np.ndarray[np.float32_t, ndim=2] aryFuncChnk):
+ * cpdef tuple cy_lst_sq(np.ndarray[np.float32_t, ndim=1] vecPrfTc,             # <<<<<<<<<<<<<<
+ *                       np.ndarray[np.float32_t, ndim=2] aryFuncChnk):
+ *     """
  */
 
 static PyObject *__pyx_pw_5pyprf_8analysis_19cython_leastsquares_1cy_lst_sq(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(PyArrayObject *__pyx_v_vecPrfTc, PyArrayObject *__pyx_v_aryFuncChnk, CYTHON_UNUSED int __pyx_skip_dispatch) {
+static PyObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(PyArrayObject *__pyx_v_vecPrfTc, PyArrayObject *__pyx_v_aryFuncChnk, CYTHON_UNUSED int __pyx_skip_dispatch) {
   float __pyx_v_varVarY;
   __Pyx_memviewslice __pyx_v_vecPrfTc_view = { 0, 0, { 0 }, { 0 }, { 0 } };
   unsigned long __pyx_v_varNumVoxChnk;
   unsigned int __pyx_v_idxVol;
   unsigned int __pyx_v_varNumVols;
   PyArrayObject *__pyx_v_vecRes = 0;
+  PyArrayObject *__pyx_v_vecPe = 0;
   __Pyx_memviewslice __pyx_v_vecRes_view = { 0, 0, { 0 }, { 0 }, { 0 } };
+  __Pyx_memviewslice __pyx_v_vecPe_view = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_memviewslice __pyx_v_aryFuncChnk_view = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_LocalBuf_ND __pyx_pybuffernd_aryFuncChnk;
   __Pyx_Buffer __pyx_pybuffer_aryFuncChnk;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_vecPe;
+  __Pyx_Buffer __pyx_pybuffer_vecPe;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_vecPrfTc;
   __Pyx_Buffer __pyx_pybuffer_vecPrfTc;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_vecRes;
   __Pyx_Buffer __pyx_pybuffer_vecRes;
-  PyArrayObject *__pyx_r = NULL;
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   __Pyx_memviewslice __pyx_t_1 = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_t_2 = NULL;
@@ -2387,19 +2405,26 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(P
   PyObject *__pyx_t_5 = NULL;
   PyObject *__pyx_t_6 = NULL;
   PyArrayObject *__pyx_t_7 = NULL;
-  __Pyx_memviewslice __pyx_t_8 = { 0, 0, { 0 }, { 0 }, { 0 } };
-  unsigned int __pyx_t_9;
+  PyArrayObject *__pyx_t_8 = NULL;
+  __Pyx_memviewslice __pyx_t_9 = { 0, 0, { 0 }, { 0 }, { 0 } };
   unsigned int __pyx_t_10;
-  size_t __pyx_t_11;
-  int __pyx_t_12;
-  PyObject *__pyx_t_13 = NULL;
-  PyObject *__pyx_t_14 = NULL;
-  PyObject *__pyx_t_15 = NULL;
+  unsigned int __pyx_t_11;
+  size_t __pyx_t_12;
+  __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice __pyx_t_13;
+  __Pyx_memviewslice __pyx_t_14 = { 0, 0, { 0 }, { 0 }, { 0 } };
+  int __pyx_t_15;
+  PyObject *__pyx_t_16 = NULL;
+  PyObject *__pyx_t_17 = NULL;
+  PyObject *__pyx_t_18 = NULL;
   __Pyx_RefNannySetupContext("cy_lst_sq", 0);
   __pyx_pybuffer_vecRes.pybuffer.buf = NULL;
   __pyx_pybuffer_vecRes.refcount = 0;
   __pyx_pybuffernd_vecRes.data = NULL;
   __pyx_pybuffernd_vecRes.rcbuffer = &__pyx_pybuffer_vecRes;
+  __pyx_pybuffer_vecPe.pybuffer.buf = NULL;
+  __pyx_pybuffer_vecPe.refcount = 0;
+  __pyx_pybuffernd_vecPe.data = NULL;
+  __pyx_pybuffernd_vecPe.rcbuffer = &__pyx_pybuffer_vecPe;
   __pyx_pybuffer_vecPrfTc.pybuffer.buf = NULL;
   __pyx_pybuffer_vecPrfTc.refcount = 0;
   __pyx_pybuffernd_vecPrfTc.data = NULL;
@@ -2419,7 +2444,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(P
   }
   __pyx_pybuffernd_aryFuncChnk.diminfo[0].strides = __pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_aryFuncChnk.diminfo[0].shape = __pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_aryFuncChnk.diminfo[1].strides = __pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_aryFuncChnk.diminfo[1].shape = __pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer.shape[1];
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":68
+  /* "pyprf/analysis/cython_leastsquares.pyx":67
  *     """
  * 
  *     cdef float varVarY = 0             # <<<<<<<<<<<<<<
@@ -2428,7 +2453,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(P
  */
   __pyx_v_varVarY = 0.0;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":69
+  /* "pyprf/analysis/cython_leastsquares.pyx":68
  * 
  *     cdef float varVarY = 0
  *     cdef float[:] vecPrfTc_view = vecPrfTc             # <<<<<<<<<<<<<<
@@ -2436,76 +2461,76 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(P
  *     cdef unsigned int idxVol, varNumVols
  */
   __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_float(((PyObject *)__pyx_v_vecPrfTc));
-  if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 69, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 68, __pyx_L1_error)
   __pyx_v_vecPrfTc_view = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":74
+  /* "pyprf/analysis/cython_leastsquares.pyx":73
  * 
  *     # Number of voxels in the input data chunk:
  *     varNumVoxChnk = int(aryFuncChnk.shape[1])             # <<<<<<<<<<<<<<
  * 
- *     # Define 1D array for results (i.e. for residuals of least squares
+ *     # Define 1D array for results - residuals of least squares solution:
  */
   __pyx_v_varNumVoxChnk = ((unsigned long)(__pyx_v_aryFuncChnk->dimensions[1]));
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":78
- *     # Define 1D array for results (i.e. for residuals of least squares
- *     # solution):
+  /* "pyprf/analysis/cython_leastsquares.pyx":76
+ * 
+ *     # Define 1D array for results - residuals of least squares solution:
  *     cdef np.ndarray[np.float32_t, ndim=1] vecRes = np.zeros(varNumVoxChnk,             # <<<<<<<<<<<<<<
  *                                                             dtype=np.float32)
- *     # Memory view on array for results:
+ * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_long(__pyx_v_varNumVoxChnk); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_long(__pyx_v_varNumVoxChnk); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":79
- *     # solution):
+  /* "pyprf/analysis/cython_leastsquares.pyx":77
+ *     # Define 1D array for results - residuals of least squares solution:
  *     cdef np.ndarray[np.float32_t, ndim=1] vecRes = np.zeros(varNumVoxChnk,
  *                                                             dtype=np.float32)             # <<<<<<<<<<<<<<
- *     # Memory view on array for results:
- *     cdef float[:] vecRes_view = vecRes
+ * 
+ *     # Define 1D array for results - parameter estimates (betas):
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 77, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 77, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_float32); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_float32); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 77, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(0, 79, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(0, 77, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":78
- *     # Define 1D array for results (i.e. for residuals of least squares
- *     # solution):
+  /* "pyprf/analysis/cython_leastsquares.pyx":76
+ * 
+ *     # Define 1D array for results - residuals of least squares solution:
  *     cdef np.ndarray[np.float32_t, ndim=1] vecRes = np.zeros(varNumVoxChnk,             # <<<<<<<<<<<<<<
  *                                                             dtype=np.float32)
- *     # Memory view on array for results:
+ * 
  */
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 76, __pyx_L1_error)
   __pyx_t_7 = ((PyArrayObject *)__pyx_t_6);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_vecRes.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_vecRes = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_vecRes.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 78, __pyx_L1_error)
+      __PYX_ERR(0, 76, __pyx_L1_error)
     } else {__pyx_pybuffernd_vecRes.diminfo[0].strides = __pyx_pybuffernd_vecRes.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_vecRes.diminfo[0].shape = __pyx_pybuffernd_vecRes.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -2513,33 +2538,109 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(P
   __pyx_v_vecRes = ((PyArrayObject *)__pyx_t_6);
   __pyx_t_6 = 0;
 
+  /* "pyprf/analysis/cython_leastsquares.pyx":80
+ * 
+ *     # Define 1D array for results - parameter estimates (betas):
+ *     cdef np.ndarray[np.float32_t, ndim=1] vecPe = np.zeros(varNumVoxChnk,             # <<<<<<<<<<<<<<
+ *                                                            dtype=np.float32)
+ * 
+ */
+  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __pyx_t_6 = __Pyx_PyInt_From_unsigned_long(__pyx_v_varNumVoxChnk); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_6);
+  PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6);
+  __pyx_t_6 = 0;
+
   /* "pyprf/analysis/cython_leastsquares.pyx":81
- *                                                             dtype=np.float32)
+ *     # Define 1D array for results - parameter estimates (betas):
+ *     cdef np.ndarray[np.float32_t, ndim=1] vecPe = np.zeros(varNumVoxChnk,
+ *                                                            dtype=np.float32)             # <<<<<<<<<<<<<<
+ * 
+ *     # Memory view on array for results:
+ */
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 81, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 81, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float32); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 81, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 81, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+  /* "pyprf/analysis/cython_leastsquares.pyx":80
+ * 
+ *     # Define 1D array for results - parameter estimates (betas):
+ *     cdef np.ndarray[np.float32_t, ndim=1] vecPe = np.zeros(varNumVoxChnk,             # <<<<<<<<<<<<<<
+ *                                                            dtype=np.float32)
+ * 
+ */
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_8 = ((PyArrayObject *)__pyx_t_5);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_vecPe.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
+      __pyx_v_vecPe = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_vecPe.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 80, __pyx_L1_error)
+    } else {__pyx_pybuffernd_vecPe.diminfo[0].strides = __pyx_pybuffernd_vecPe.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_vecPe.diminfo[0].shape = __pyx_pybuffernd_vecPe.rcbuffer->pybuffer.shape[0];
+    }
+  }
+  __pyx_t_8 = 0;
+  __pyx_v_vecPe = ((PyArrayObject *)__pyx_t_5);
+  __pyx_t_5 = 0;
+
+  /* "pyprf/analysis/cython_leastsquares.pyx":84
+ * 
  *     # Memory view on array for results:
  *     cdef float[:] vecRes_view = vecRes             # <<<<<<<<<<<<<<
  * 
- *     # Memory view on numpy array with functional data:
+ *     # Memory view on array for parameter estimates:
  */
   __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_float(((PyObject *)__pyx_v_vecRes));
-  if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 81, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 84, __pyx_L1_error)
   __pyx_v_vecRes_view = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":84
+  /* "pyprf/analysis/cython_leastsquares.pyx":87
+ * 
+ *     # Memory view on array for parameter estimates:
+ *     cdef float[:] vecPe_view = vecPe             # <<<<<<<<<<<<<<
+ * 
+ *     # Memory view on numpy array with functional data:
+ */
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_float(((PyObject *)__pyx_v_vecPe));
+  if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_v_vecPe_view = __pyx_t_1;
+  __pyx_t_1.memview = NULL;
+  __pyx_t_1.data = NULL;
+
+  /* "pyprf/analysis/cython_leastsquares.pyx":90
  * 
  *     # Memory view on numpy array with functional data:
  *     cdef float [:, :] aryFuncChnk_view = aryFuncChnk             # <<<<<<<<<<<<<<
  * 
- * 
+ *     # Calculate variance of pRF model time course (i.e. variance in the model):
  */
-  __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(((PyObject *)__pyx_v_aryFuncChnk));
-  if (unlikely(!__pyx_t_8.memview)) __PYX_ERR(0, 84, __pyx_L1_error)
-  __pyx_v_aryFuncChnk_view = __pyx_t_8;
-  __pyx_t_8.memview = NULL;
-  __pyx_t_8.data = NULL;
+  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(((PyObject *)__pyx_v_aryFuncChnk));
+  if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 90, __pyx_L1_error)
+  __pyx_v_aryFuncChnk_view = __pyx_t_9;
+  __pyx_t_9.memview = NULL;
+  __pyx_t_9.data = NULL;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":88
+  /* "pyprf/analysis/cython_leastsquares.pyx":93
  * 
  *     # Calculate variance of pRF model time course (i.e. variance in the model):
  *     varNumVols = int(vecPrfTc.shape[0])             # <<<<<<<<<<<<<<
@@ -2548,142 +2649,241 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(P
  */
   __pyx_v_varNumVols = ((unsigned int)(__pyx_v_vecPrfTc->dimensions[0]));
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":89
+  /* "pyprf/analysis/cython_leastsquares.pyx":94
  *     # Calculate variance of pRF model time course (i.e. variance in the model):
  *     varNumVols = int(vecPrfTc.shape[0])
  *     for idxVol in range(varNumVols):             # <<<<<<<<<<<<<<
  *         varVarY += vecPrfTc_view[idxVol] ** 2
  * 
  */
-  __pyx_t_9 = __pyx_v_varNumVols;
-  for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
-    __pyx_v_idxVol = __pyx_t_10;
+  __pyx_t_10 = __pyx_v_varNumVols;
+  for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
+    __pyx_v_idxVol = __pyx_t_11;
 
-    /* "pyprf/analysis/cython_leastsquares.pyx":90
+    /* "pyprf/analysis/cython_leastsquares.pyx":95
  *     varNumVols = int(vecPrfTc.shape[0])
  *     for idxVol in range(varNumVols):
  *         varVarY += vecPrfTc_view[idxVol] ** 2             # <<<<<<<<<<<<<<
  * 
- * 
+ *     # Call optimised cdef function for calculation of residuals & PEs:
  */
-    __pyx_t_11 = __pyx_v_idxVol;
-    __pyx_v_varVarY = (__pyx_v_varVarY + powf((*((float *) ( /* dim=0 */ (__pyx_v_vecPrfTc_view.data + __pyx_t_11 * __pyx_v_vecPrfTc_view.strides[0]) ))), 2.0));
+    __pyx_t_12 = __pyx_v_idxVol;
+    __pyx_v_varVarY = (__pyx_v_varVarY + powf((*((float *) ( /* dim=0 */ (__pyx_v_vecPrfTc_view.data + __pyx_t_12 * __pyx_v_vecPrfTc_view.strides[0]) ))), 2.0));
   }
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":95
+  /* "pyprf/analysis/cython_leastsquares.pyx":98
  * 
- *     # Call optimised cdef function for calculation of residuals:
- *     vecRes_view = funcCyRes(vecPrfTc_view,             # <<<<<<<<<<<<<<
- *                             aryFuncChnk_view,
- *                             vecRes_view,
+ *     # Call optimised cdef function for calculation of residuals & PEs:
+ *     vecRes_view, vecPe_view = funcCyRes(vecPrfTc_view,             # <<<<<<<<<<<<<<
+ *                                         aryFuncChnk_view,
+ *                                         vecRes_view,
  */
-  __pyx_t_1 = __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyRes(__pyx_v_vecPrfTc_view, __pyx_v_aryFuncChnk_view, __pyx_v_vecRes_view, __pyx_v_varNumVoxChnk, __pyx_v_varNumVols, __pyx_v_varVarY); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 95, __pyx_L1_error)
+  __pyx_t_13 = __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyRes(__pyx_v_vecPrfTc_view, __pyx_v_aryFuncChnk_view, __pyx_v_vecRes_view, __pyx_v_vecPe_view, __pyx_v_varNumVoxChnk, __pyx_v_varNumVols, __pyx_v_varVarY);
+  __pyx_t_1 = __pyx_t_13.f0;
+  __PYX_INC_MEMVIEW(&__pyx_t_1, 1);
+  __pyx_t_14 = __pyx_t_13.f1;
+  __PYX_INC_MEMVIEW(&__pyx_t_14, 1);
   __PYX_XDEC_MEMVIEW(&__pyx_v_vecRes_view, 1);
   __pyx_v_vecRes_view = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
+  __PYX_XDEC_MEMVIEW(&__pyx_v_vecPe_view, 1);
+  __pyx_v_vecPe_view = __pyx_t_14;
+  __pyx_t_14.memview = NULL;
+  __pyx_t_14.data = NULL;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":103
+  /* "pyprf/analysis/cython_leastsquares.pyx":107
  * 
  *     # Convert memory view to numpy array before returning it:
  *     vecRes = np.asarray(vecRes_view)             # <<<<<<<<<<<<<<
+ *     vecPe = np.asarray(vecPe_view)
  * 
- *     return vecRes
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 103, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 103, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 107, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_asarray); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 107, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_vecRes_view, 1, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 103, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = NULL;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __pyx_t_6 = __pyx_memoryview_fromslice(__pyx_v_vecRes_view, 1, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 107, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_2 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_3)) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_4);
+    if (likely(__pyx_t_2)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_2);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_4, function);
     }
   }
-  if (!__pyx_t_3) {
-    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 103, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_GOTREF(__pyx_t_6);
+  if (!__pyx_t_2) {
+    __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 107, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_GOTREF(__pyx_t_5);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_2};
-      __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 103, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_6};
+      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 107, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     } else
     #endif
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_2};
-      __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 103, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_6};
+      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 107, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     } else
     #endif
     {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 103, __pyx_L1_error)
+      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 107, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2); __pyx_t_2 = NULL;
+      __Pyx_GIVEREF(__pyx_t_6);
+      PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_t_6);
+      __pyx_t_6 = 0;
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 107, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
-      __Pyx_GIVEREF(__pyx_t_2);
-      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
-      __pyx_t_2 = 0;
-      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 103, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 103, __pyx_L1_error)
-  __pyx_t_7 = ((PyArrayObject *)__pyx_t_6);
+  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 107, __pyx_L1_error)
+  __pyx_t_7 = ((PyArrayObject *)__pyx_t_5);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_vecRes.rcbuffer->pybuffer);
-    __pyx_t_12 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_vecRes.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack);
-    if (unlikely(__pyx_t_12 < 0)) {
-      PyErr_Fetch(&__pyx_t_13, &__pyx_t_14, &__pyx_t_15);
+    __pyx_t_15 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_vecRes.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack);
+    if (unlikely(__pyx_t_15 < 0)) {
+      PyErr_Fetch(&__pyx_t_16, &__pyx_t_17, &__pyx_t_18);
       if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_vecRes.rcbuffer->pybuffer, (PyObject*)__pyx_v_vecRes, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
-        Py_XDECREF(__pyx_t_13); Py_XDECREF(__pyx_t_14); Py_XDECREF(__pyx_t_15);
+        Py_XDECREF(__pyx_t_16); Py_XDECREF(__pyx_t_17); Py_XDECREF(__pyx_t_18);
         __Pyx_RaiseBufferFallbackError();
       } else {
-        PyErr_Restore(__pyx_t_13, __pyx_t_14, __pyx_t_15);
+        PyErr_Restore(__pyx_t_16, __pyx_t_17, __pyx_t_18);
       }
-      __pyx_t_13 = __pyx_t_14 = __pyx_t_15 = 0;
+      __pyx_t_16 = __pyx_t_17 = __pyx_t_18 = 0;
     }
     __pyx_pybuffernd_vecRes.diminfo[0].strides = __pyx_pybuffernd_vecRes.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_vecRes.diminfo[0].shape = __pyx_pybuffernd_vecRes.rcbuffer->pybuffer.shape[0];
-    if (unlikely(__pyx_t_12 < 0)) __PYX_ERR(0, 103, __pyx_L1_error)
+    if (unlikely(__pyx_t_15 < 0)) __PYX_ERR(0, 107, __pyx_L1_error)
   }
   __pyx_t_7 = 0;
-  __Pyx_DECREF_SET(__pyx_v_vecRes, ((PyArrayObject *)__pyx_t_6));
-  __pyx_t_6 = 0;
+  __Pyx_DECREF_SET(__pyx_v_vecRes, ((PyArrayObject *)__pyx_t_5));
+  __pyx_t_5 = 0;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":105
+  /* "pyprf/analysis/cython_leastsquares.pyx":108
+ *     # Convert memory view to numpy array before returning it:
  *     vecRes = np.asarray(vecRes_view)
+ *     vecPe = np.asarray(vecPe_view)             # <<<<<<<<<<<<<<
  * 
- *     return vecRes             # <<<<<<<<<<<<<<
+ *     return vecRes, vecPe
+ */
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_vecPe_view, 1, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+    }
+  }
+  if (!__pyx_t_6) {
+    __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_GOTREF(__pyx_t_5);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
+      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
+      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6); __pyx_t_6 = NULL;
+      __Pyx_GIVEREF(__pyx_t_4);
+      PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_4);
+      __pyx_t_4 = 0;
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 108, __pyx_L1_error)
+  __pyx_t_8 = ((PyArrayObject *)__pyx_t_5);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_vecPe.rcbuffer->pybuffer);
+    __pyx_t_15 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_vecPe.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack);
+    if (unlikely(__pyx_t_15 < 0)) {
+      PyErr_Fetch(&__pyx_t_18, &__pyx_t_17, &__pyx_t_16);
+      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_vecPe.rcbuffer->pybuffer, (PyObject*)__pyx_v_vecPe, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
+        Py_XDECREF(__pyx_t_18); Py_XDECREF(__pyx_t_17); Py_XDECREF(__pyx_t_16);
+        __Pyx_RaiseBufferFallbackError();
+      } else {
+        PyErr_Restore(__pyx_t_18, __pyx_t_17, __pyx_t_16);
+      }
+      __pyx_t_18 = __pyx_t_17 = __pyx_t_16 = 0;
+    }
+    __pyx_pybuffernd_vecPe.diminfo[0].strides = __pyx_pybuffernd_vecPe.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_vecPe.diminfo[0].shape = __pyx_pybuffernd_vecPe.rcbuffer->pybuffer.shape[0];
+    if (unlikely(__pyx_t_15 < 0)) __PYX_ERR(0, 108, __pyx_L1_error)
+  }
+  __pyx_t_8 = 0;
+  __Pyx_DECREF_SET(__pyx_v_vecPe, ((PyArrayObject *)__pyx_t_5));
+  __pyx_t_5 = 0;
+
+  /* "pyprf/analysis/cython_leastsquares.pyx":110
+ *     vecPe = np.asarray(vecPe_view)
+ * 
+ *     return vecRes, vecPe             # <<<<<<<<<<<<<<
  * # *****************************************************************************
  * 
  */
-  __Pyx_XDECREF(((PyObject *)__pyx_r));
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 110, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_INCREF(((PyObject *)__pyx_v_vecRes));
-  __pyx_r = ((PyArrayObject *)__pyx_v_vecRes);
+  __Pyx_GIVEREF(((PyObject *)__pyx_v_vecRes));
+  PyTuple_SET_ITEM(__pyx_t_5, 0, ((PyObject *)__pyx_v_vecRes));
+  __Pyx_INCREF(((PyObject *)__pyx_v_vecPe));
+  __Pyx_GIVEREF(((PyObject *)__pyx_v_vecPe));
+  PyTuple_SET_ITEM(__pyx_t_5, 1, ((PyObject *)__pyx_v_vecPe));
+  __pyx_r = ((PyObject*)__pyx_t_5);
+  __pyx_t_5 = 0;
   goto __pyx_L0;
 
   /* "pyprf/analysis/cython_leastsquares.pyx":38
  * # *** Main function for least squares solution
  * 
- * cpdef np.ndarray[np.float32_t, ndim=1] cy_lst_sq(             # <<<<<<<<<<<<<<
- *     np.ndarray[np.float32_t, ndim=1] vecPrfTc,
- *     np.ndarray[np.float32_t, ndim=2] aryFuncChnk):
+ * cpdef tuple cy_lst_sq(np.ndarray[np.float32_t, ndim=1] vecPrfTc,             # <<<<<<<<<<<<<<
+ *                       np.ndarray[np.float32_t, ndim=2] aryFuncChnk):
+ *     """
  */
 
   /* function exit code */
@@ -2694,12 +2894,14 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(P
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __PYX_XDEC_MEMVIEW(&__pyx_t_8, 1);
+  __PYX_XDEC_MEMVIEW(&__pyx_t_9, 1);
+  __PYX_XDEC_MEMVIEW(&__pyx_t_14, 1);
   { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
     __Pyx_PyThreadState_declare
     __Pyx_PyThreadState_assign
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_vecPe.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_vecPrfTc.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_vecRes.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
@@ -2708,14 +2910,17 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(P
   goto __pyx_L2;
   __pyx_L0:;
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_vecPe.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_vecPrfTc.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_vecRes.rcbuffer->pybuffer);
   __pyx_L2:;
   __PYX_XDEC_MEMVIEW(&__pyx_v_vecPrfTc_view, 1);
   __Pyx_XDECREF((PyObject *)__pyx_v_vecRes);
+  __Pyx_XDECREF((PyObject *)__pyx_v_vecPe);
   __PYX_XDEC_MEMVIEW(&__pyx_v_vecRes_view, 1);
+  __PYX_XDEC_MEMVIEW(&__pyx_v_vecPe_view, 1);
   __PYX_XDEC_MEMVIEW(&__pyx_v_aryFuncChnk_view, 1);
-  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -2775,8 +2980,8 @@ static PyObject *__pyx_pw_5pyprf_8analysis_19cython_leastsquares_1cy_lst_sq(PyOb
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_vecPrfTc), __pyx_ptype_5numpy_ndarray, 1, "vecPrfTc", 0))) __PYX_ERR(0, 39, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_aryFuncChnk), __pyx_ptype_5numpy_ndarray, 1, "aryFuncChnk", 0))) __PYX_ERR(0, 40, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_vecPrfTc), __pyx_ptype_5numpy_ndarray, 1, "vecPrfTc", 0))) __PYX_ERR(0, 38, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_aryFuncChnk), __pyx_ptype_5numpy_ndarray, 1, "aryFuncChnk", 0))) __PYX_ERR(0, 39, __pyx_L1_error)
   __pyx_r = __pyx_pf_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(__pyx_self, __pyx_v_vecPrfTc, __pyx_v_aryFuncChnk);
 
   /* function exit code */
@@ -2816,7 +3021,7 @@ static PyObject *__pyx_pf_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(CYTHO
   }
   __pyx_pybuffernd_aryFuncChnk.diminfo[0].strides = __pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_aryFuncChnk.diminfo[0].shape = __pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_aryFuncChnk.diminfo[1].strides = __pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_aryFuncChnk.diminfo[1].shape = __pyx_pybuffernd_aryFuncChnk.rcbuffer->pybuffer.shape[1];
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((PyObject *)__pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(__pyx_v_vecPrfTc, __pyx_v_aryFuncChnk, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(__pyx_v_vecPrfTc, __pyx_v_aryFuncChnk, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -2844,22 +3049,22 @@ static PyObject *__pyx_pf_5pyprf_8analysis_19cython_leastsquares_cy_lst_sq(CYTHO
   return __pyx_r;
 }
 
-/* "pyprf/analysis/cython_leastsquares.pyx":112
+/* "pyprf/analysis/cython_leastsquares.pyx":117
  * # *** Function for fast calculation of residuals
  * 
- * cdef float[:] funcCyRes(float[:] vecPrfTc_view,             # <<<<<<<<<<<<<<
- *                         float[:, :] aryFuncChnk_view,
- *                         float[:] vecRes_view,
+ * cdef (float[:], float[:]) funcCyRes(float[:] vecPrfTc_view,             # <<<<<<<<<<<<<<
+ *                                     float[:, :] aryFuncChnk_view,
+ *                                     float[:] vecRes_view,
  */
 
-static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyRes(__Pyx_memviewslice __pyx_v_vecPrfTc_view, __Pyx_memviewslice __pyx_v_aryFuncChnk_view, __Pyx_memviewslice __pyx_v_vecRes_view, unsigned long __pyx_v_varNumVoxChnk, unsigned int __pyx_v_varNumVols, float __pyx_v_varVarY) {
+static __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyRes(__Pyx_memviewslice __pyx_v_vecPrfTc_view, __Pyx_memviewslice __pyx_v_aryFuncChnk_view, __Pyx_memviewslice __pyx_v_vecRes_view, __Pyx_memviewslice __pyx_v_vecPe_view, unsigned long __pyx_v_varNumVoxChnk, unsigned int __pyx_v_varNumVols, float __pyx_v_varVarY) {
   float __pyx_v_varCovXy;
   float __pyx_v_varRes;
   float __pyx_v_varSlope;
   float __pyx_v_varXhat;
   unsigned int __pyx_v_idxVol;
   unsigned long __pyx_v_idxVox;
-  __Pyx_memviewslice __pyx_r = { 0, 0, { 0 }, { 0 }, { 0 } };
+  __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice __pyx_r;
   __Pyx_RefNannyDeclarations
   unsigned long __pyx_t_1;
   unsigned long __pyx_t_2;
@@ -2873,9 +3078,11 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
   size_t __pyx_t_10;
   size_t __pyx_t_11;
   size_t __pyx_t_12;
+  size_t __pyx_t_13;
+  __pyx_ctuple___dunderPyx_memviewslice__and___dunderPyx_memviewslice __pyx_t_14;
   __Pyx_RefNannySetupContext("funcCyRes", 0);
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":124
+  /* "pyprf/analysis/cython_leastsquares.pyx":130
  * 
  *     # Loop through voxels:
  *     for idxVox in range(varNumVoxChnk):             # <<<<<<<<<<<<<<
@@ -2886,7 +3093,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_idxVox = __pyx_t_2;
 
-    /* "pyprf/analysis/cython_leastsquares.pyx":127
+    /* "pyprf/analysis/cython_leastsquares.pyx":133
  * 
  *         # Covariance and residuals of current voxel:
  *         varCovXy = 0             # <<<<<<<<<<<<<<
@@ -2895,7 +3102,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
  */
     __pyx_v_varCovXy = 0.0;
 
-    /* "pyprf/analysis/cython_leastsquares.pyx":128
+    /* "pyprf/analysis/cython_leastsquares.pyx":134
  *         # Covariance and residuals of current voxel:
  *         varCovXy = 0
  *         varRes = 0             # <<<<<<<<<<<<<<
@@ -2904,7 +3111,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
  */
     __pyx_v_varRes = 0.0;
 
-    /* "pyprf/analysis/cython_leastsquares.pyx":132
+    /* "pyprf/analysis/cython_leastsquares.pyx":138
  *         # Loop through volumes and calculate covariance between the model and
  *         # the current voxel:
  *         for idxVol in range(varNumVols):             # <<<<<<<<<<<<<<
@@ -2915,7 +3122,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_idxVol = __pyx_t_4;
 
-      /* "pyprf/analysis/cython_leastsquares.pyx":133
+      /* "pyprf/analysis/cython_leastsquares.pyx":139
  *         # the current voxel:
  *         for idxVol in range(varNumVols):
  *             varCovXy += (aryFuncChnk_view[idxVol, idxVox]             # <<<<<<<<<<<<<<
@@ -2929,10 +3136,10 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
       if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_aryFuncChnk_view.shape[1])) __pyx_t_7 = 1;
       if (unlikely(__pyx_t_7 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_7);
-        __PYX_ERR(0, 133, __pyx_L1_error)
+        __PYX_ERR(0, 139, __pyx_L1_error)
       }
 
-      /* "pyprf/analysis/cython_leastsquares.pyx":134
+      /* "pyprf/analysis/cython_leastsquares.pyx":140
  *         for idxVol in range(varNumVols):
  *             varCovXy += (aryFuncChnk_view[idxVol, idxVox]
  *                          * vecPrfTc_view[idxVol])             # <<<<<<<<<<<<<<
@@ -2944,10 +3151,10 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
       if (unlikely(__pyx_t_8 >= (size_t)__pyx_v_vecPrfTc_view.shape[0])) __pyx_t_7 = 0;
       if (unlikely(__pyx_t_7 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_7);
-        __PYX_ERR(0, 134, __pyx_L1_error)
+        __PYX_ERR(0, 140, __pyx_L1_error)
       }
 
-      /* "pyprf/analysis/cython_leastsquares.pyx":133
+      /* "pyprf/analysis/cython_leastsquares.pyx":139
  *         # the current voxel:
  *         for idxVol in range(varNumVols):
  *             varCovXy += (aryFuncChnk_view[idxVol, idxVox]             # <<<<<<<<<<<<<<
@@ -2957,7 +3164,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
       __pyx_v_varCovXy = (__pyx_v_varCovXy + ((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryFuncChnk_view.data + __pyx_t_5 * __pyx_v_aryFuncChnk_view.strides[0]) ) + __pyx_t_6 * __pyx_v_aryFuncChnk_view.strides[1]) ))) * (*((float *) ( /* dim=0 */ (__pyx_v_vecPrfTc_view.data + __pyx_t_8 * __pyx_v_vecPrfTc_view.strides[0]) )))));
     }
 
-    /* "pyprf/analysis/cython_leastsquares.pyx":136
+    /* "pyprf/analysis/cython_leastsquares.pyx":142
  *                          * vecPrfTc_view[idxVol])
  *         # Obtain the slope of the regression of the model on the data:
  *         varSlope = varCovXy / varVarY             # <<<<<<<<<<<<<<
@@ -2966,11 +3173,11 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
  */
     if (unlikely(__pyx_v_varVarY == 0)) {
       PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-      __PYX_ERR(0, 136, __pyx_L1_error)
+      __PYX_ERR(0, 142, __pyx_L1_error)
     }
     __pyx_v_varSlope = (__pyx_v_varCovXy / __pyx_v_varVarY);
 
-    /* "pyprf/analysis/cython_leastsquares.pyx":140
+    /* "pyprf/analysis/cython_leastsquares.pyx":146
  *         # Loop through volumes again in order to calculate the error in the
  *         # prediction:
  *         for idxVol in range(varNumVols):             # <<<<<<<<<<<<<<
@@ -2981,7 +3188,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_idxVol = __pyx_t_4;
 
-      /* "pyprf/analysis/cython_leastsquares.pyx":142
+      /* "pyprf/analysis/cython_leastsquares.pyx":148
  *         for idxVol in range(varNumVols):
  *             # The predicted voxel time course value:
  *             varXhat = vecPrfTc_view[idxVol] * varSlope             # <<<<<<<<<<<<<<
@@ -2993,11 +3200,11 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
       if (unlikely(__pyx_t_9 >= (size_t)__pyx_v_vecPrfTc_view.shape[0])) __pyx_t_7 = 0;
       if (unlikely(__pyx_t_7 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_7);
-        __PYX_ERR(0, 142, __pyx_L1_error)
+        __PYX_ERR(0, 148, __pyx_L1_error)
       }
       __pyx_v_varXhat = ((*((float *) ( /* dim=0 */ (__pyx_v_vecPrfTc_view.data + __pyx_t_9 * __pyx_v_vecPrfTc_view.strides[0]) ))) * __pyx_v_varSlope);
 
-      /* "pyprf/analysis/cython_leastsquares.pyx":144
+      /* "pyprf/analysis/cython_leastsquares.pyx":150
  *             varXhat = vecPrfTc_view[idxVol] * varSlope
  *             # Mismatch between prediction and actual voxel value (variance):
  *             varRes += (aryFuncChnk_view[idxVol, idxVox] - varXhat) ** 2             # <<<<<<<<<<<<<<
@@ -3011,58 +3218,68 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_leastsquares_funcCyR
       if (unlikely(__pyx_t_11 >= (size_t)__pyx_v_aryFuncChnk_view.shape[1])) __pyx_t_7 = 1;
       if (unlikely(__pyx_t_7 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_7);
-        __PYX_ERR(0, 144, __pyx_L1_error)
+        __PYX_ERR(0, 150, __pyx_L1_error)
       }
       __pyx_v_varRes = (__pyx_v_varRes + powf(((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryFuncChnk_view.data + __pyx_t_10 * __pyx_v_aryFuncChnk_view.strides[0]) ) + __pyx_t_11 * __pyx_v_aryFuncChnk_view.strides[1]) ))) - __pyx_v_varXhat), 2.0));
     }
 
-    /* "pyprf/analysis/cython_leastsquares.pyx":146
+    /* "pyprf/analysis/cython_leastsquares.pyx":152
  *             varRes += (aryFuncChnk_view[idxVol, idxVox] - varXhat) ** 2
  * 
  *         vecRes_view[idxVox] = varRes             # <<<<<<<<<<<<<<
+ *         vecPe_view[idxVox] = varSlope
  * 
- *     # Return memory view:
  */
     __pyx_t_12 = __pyx_v_idxVox;
     __pyx_t_7 = -1;
     if (unlikely(__pyx_t_12 >= (size_t)__pyx_v_vecRes_view.shape[0])) __pyx_t_7 = 0;
     if (unlikely(__pyx_t_7 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_7);
-      __PYX_ERR(0, 146, __pyx_L1_error)
+      __PYX_ERR(0, 152, __pyx_L1_error)
     }
     *((float *) ( /* dim=0 */ (__pyx_v_vecRes_view.data + __pyx_t_12 * __pyx_v_vecRes_view.strides[0]) )) = __pyx_v_varRes;
+
+    /* "pyprf/analysis/cython_leastsquares.pyx":153
+ * 
+ *         vecRes_view[idxVox] = varRes
+ *         vecPe_view[idxVox] = varSlope             # <<<<<<<<<<<<<<
+ * 
+ *     # Return memory views:
+ */
+    __pyx_t_13 = __pyx_v_idxVox;
+    __pyx_t_7 = -1;
+    if (unlikely(__pyx_t_13 >= (size_t)__pyx_v_vecPe_view.shape[0])) __pyx_t_7 = 0;
+    if (unlikely(__pyx_t_7 != -1)) {
+      __Pyx_RaiseBufferIndexError(__pyx_t_7);
+      __PYX_ERR(0, 153, __pyx_L1_error)
+    }
+    *((float *) ( /* dim=0 */ (__pyx_v_vecPe_view.data + __pyx_t_13 * __pyx_v_vecPe_view.strides[0]) )) = __pyx_v_varSlope;
   }
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":149
+  /* "pyprf/analysis/cython_leastsquares.pyx":156
  * 
- *     # Return memory view:
- *     return vecRes_view             # <<<<<<<<<<<<<<
+ *     # Return memory views:
+ *     return vecRes_view, vecPe_view             # <<<<<<<<<<<<<<
  * # *****************************************************************************
  */
-  __PYX_INC_MEMVIEW(&__pyx_v_vecRes_view, 0);
-  __pyx_r = __pyx_v_vecRes_view;
+  __pyx_t_14.f0 = __pyx_v_vecRes_view;
+  __pyx_t_14.f1 = __pyx_v_vecPe_view;
+  __pyx_r = __pyx_t_14;
   goto __pyx_L0;
 
-  /* "pyprf/analysis/cython_leastsquares.pyx":112
+  /* "pyprf/analysis/cython_leastsquares.pyx":117
  * # *** Function for fast calculation of residuals
  * 
- * cdef float[:] funcCyRes(float[:] vecPrfTc_view,             # <<<<<<<<<<<<<<
- *                         float[:, :] aryFuncChnk_view,
- *                         float[:] vecRes_view,
+ * cdef (float[:], float[:]) funcCyRes(float[:] vecPrfTc_view,             # <<<<<<<<<<<<<<
+ *                                     float[:, :] aryFuncChnk_view,
+ *                                     float[:] vecRes_view,
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __pyx_r.data = NULL;
-  __pyx_r.memview = NULL;
-  __Pyx_AddTraceback("pyprf.analysis.cython_leastsquares.funcCyRes", __pyx_clineno, __pyx_lineno, __pyx_filename);
-
-  goto __pyx_L2;
+  __Pyx_WriteUnraisable("pyprf.analysis.cython_leastsquares.funcCyRes", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
+  __Pyx_pretend_to_initialize(&__pyx_r);
   __pyx_L0:;
-  if (unlikely(!__pyx_r.memview)) {
-    PyErr_SetString(PyExc_TypeError, "Memoryview return value is not initialized");
-  }
-  __pyx_L2:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -19270,7 +19487,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 89, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 94, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 235, __pyx_L1_error)
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 823, __pyx_L1_error)
   __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(1, 1013, __pyx_L1_error)
@@ -21248,6 +21465,48 @@ bad:
      "Out of bounds on buffer access (axis %d)", axis);
 }
 
+/* WriteUnraisableException */
+    static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
+                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
+                                  int full_traceback, CYTHON_UNUSED int nogil) {
+    PyObject *old_exc, *old_val, *old_tb;
+    PyObject *ctx;
+    __Pyx_PyThreadState_declare
+#ifdef WITH_THREAD
+    PyGILState_STATE state;
+    if (nogil)
+        state = PyGILState_Ensure();
+#ifdef _MSC_VER
+    else state = (PyGILState_STATE)-1;
+#endif
+#endif
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
+    if (full_traceback) {
+        Py_XINCREF(old_exc);
+        Py_XINCREF(old_val);
+        Py_XINCREF(old_tb);
+        __Pyx_ErrRestore(old_exc, old_val, old_tb);
+        PyErr_PrintEx(1);
+    }
+    #if PY_MAJOR_VERSION < 3
+    ctx = PyString_FromString(name);
+    #else
+    ctx = PyUnicode_FromString(name);
+    #endif
+    __Pyx_ErrRestore(old_exc, old_val, old_tb);
+    if (!ctx) {
+        PyErr_WriteUnraisable(Py_None);
+    } else {
+        PyErr_WriteUnraisable(ctx);
+        Py_DECREF(ctx);
+    }
+#ifdef WITH_THREAD
+    if (nogil)
+        PyGILState_Release(state);
+#endif
+}
+
 /* RaiseException */
     #if PY_MAJOR_VERSION < 3
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb,
@@ -22054,48 +22313,6 @@ static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED
     long r = a - q*b;
     q -= ((r != 0) & ((r ^ b) < 0));
     return q;
-}
-
-/* WriteUnraisableException */
-      static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
-                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
-                                  int full_traceback, CYTHON_UNUSED int nogil) {
-    PyObject *old_exc, *old_val, *old_tb;
-    PyObject *ctx;
-    __Pyx_PyThreadState_declare
-#ifdef WITH_THREAD
-    PyGILState_STATE state;
-    if (nogil)
-        state = PyGILState_Ensure();
-#ifdef _MSC_VER
-    else state = (PyGILState_STATE)-1;
-#endif
-#endif
-    __Pyx_PyThreadState_assign
-    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
-    if (full_traceback) {
-        Py_XINCREF(old_exc);
-        Py_XINCREF(old_val);
-        Py_XINCREF(old_tb);
-        __Pyx_ErrRestore(old_exc, old_val, old_tb);
-        PyErr_PrintEx(1);
-    }
-    #if PY_MAJOR_VERSION < 3
-    ctx = PyString_FromString(name);
-    #else
-    ctx = PyUnicode_FromString(name);
-    #endif
-    __Pyx_ErrRestore(old_exc, old_val, old_tb);
-    if (!ctx) {
-        PyErr_WriteUnraisable(Py_None);
-    } else {
-        PyErr_WriteUnraisable(ctx);
-        Py_DECREF(ctx);
-    }
-#ifdef WITH_THREAD
-    if (nogil)
-        PyGILState_Release(state);
-#endif
 }
 
 /* ImportFrom */

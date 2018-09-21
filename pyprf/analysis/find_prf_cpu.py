@@ -78,10 +78,10 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     using numpy or cython (depending on the value of `strVersion`).
     """
     # Load config parameters from dictionary into namespace:
-    cfg = cls_set_config(dicCnfg)
+    # cfg = cls_set_config(dicCnfg)
 
     # Conditional imports:
-    #if cfg.strVersion == 'cython':
+    # if cfg.strVersion == 'cython':
     #    from cython_leastsquares import cy_lst_sq
 
     # Number of modelled x-positions in the visual space:
@@ -96,6 +96,9 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
 
     # Number of volumes:
     varNumVol = aryFuncChnk.shape[1]
+
+    # Number of conditions / GLM predictors:
+    varNumCon = aryPrfTc.shape[3]
 
     # Vectors for pRF finding results [number-of-voxels times one]:
     vecBstXpos = np.zeros(varNumVoxChnk, dtype=np.float32)
@@ -212,7 +215,7 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
 
                         # A cython function is used to calculate the residuals
                         # of the current model:
-                        vecTmpRes = cy_lst_sq(
+                        vecTmpRes, _ = cy_lst_sq(
                             aryPrfTc[idxX, idxY, idxSd, :].flatten(),
                             aryFuncChnk)
 
