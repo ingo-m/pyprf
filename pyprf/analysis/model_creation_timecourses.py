@@ -261,6 +261,7 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     del(lstMdlParams)
     del(lstPrfTc)
     del(lstMdlIdx)
+    del(lstOut)
 
     # Sort output along the first column (which contains the indicies), so that
     # the output is in the same order as the list of combination of model

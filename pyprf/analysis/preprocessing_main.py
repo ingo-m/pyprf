@@ -195,8 +195,8 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
     Parameters
     ----------
     aryPrfTc : np.array
-        4D numpy array with pRF time course models, with following dimensions:
-        `aryPrfTc[x-position, y-position, SD, volume]`.
+        Array with pRF time course models, shape:
+        aryPrfTc[x-position, y-position, SD, condition, volume].
     varSdSmthTmp : float
         Extent of temporal smoothing that is applied to functional data and
         pRF time course models, [SD of Gaussian kernel, in seconds]. If `zero`,
@@ -207,20 +207,25 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
     Returns
     -------
     aryPrfTc : np.array
-        4D numpy array with preprocessed pRF time course models, same
-        dimensions as input (`aryPrfTc[x-position, y-position, SD, volume]`).
+        Array with preprocessed pRF time course models, same shape as input
+        (aryPrfTc[x-position, y-position, SD, condition, volume]).
 
     Notes
     -----
     Only temporal smoothing is applied to the pRF model time courses.
     """
     print('------Preprocess pRF time course models')
-    # Preprocessing of pRF time course models:
-    aryPrfTc = pre_pro_par(aryPrfTc,
-                           aryMask=np.array([]),
-                           lgcLinTrnd=False,
-                           varSdSmthTmp=varSdSmthTmp,
-                           varSdSmthSpt=0.0,
-                           varPar=varPar)
+    # Loop through stimulus conditions, because the array needs to the 4D, with
+    # time as last dimension, for the preprocessing. Otherwise the same
+    # functions could not be used for the functional data and model time
+    # courses (which would increase redundancy).
+    varNumCon = aryPrfTc.shape[3]
+    for idxCon in range(varNumCon):
+
+        # Preprocessing of pRF time course models:
+        aryPrfTc[:, :, :, idxCon, :] = pre_pro_par(
+            aryPrfTc[:, :, :, idxCon, :], aryMask=np.array([]),
+            lgcLinTrnd=False, varSdSmthTmp=varSdSmthTmp, varSdSmthSpt=0.0,
+            varPar=varPar)
 
     return aryPrfTc

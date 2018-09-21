@@ -79,6 +79,8 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *************************************************************************
     # *** Create or load pRF time course models
 
+    # Array with pRF time course models, shape:
+    # aryPrfTc[x-position, y-position, SD, condition, volume].
     aryPrfTc = model_creation(dicCnfg)
     # *************************************************************************
 
@@ -157,6 +159,13 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                               num=cfg.varPar,
                               endpoint=False)
     vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
+
+
+
+    # REMOVE THIS LINE - FOR DEVELOPMENT ONLY
+    aryPrfTc = aryPrfTc[:, :, :, 0, :]
+
+
 
     # Make sure type is float32:
     aryFunc = aryFunc.astype(np.float32)

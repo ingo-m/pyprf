@@ -34,6 +34,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     ----------
     aryFunc : np.array
         Array with fMRI data or pRF time course models (four-dimensional).
+        Time has to be last dimension (e.g. [x, y, z, time]).
     aryMask : np.array
         If temporal smoothing is supposed to be restricted to a subset of
         voxels, a mask can be provided (e.g. brain mask). 3D, with same spatial

@@ -126,14 +126,15 @@ def model_creation(dicCnfg):
 
         print('------Load pRF time course models from disk')
 
-        # Load the file:
+        # Load the file. Array with pRF time course models, shape:
+        # aryPrfTc[x-position, y-position, SD, condition, volume].
         aryPrfTc = np.load((cfg.strPathMdl + '.npy'))
 
-        # Check whether pRF time course model matrix has the expected
-        # dimensions:
+        # Check whether pRF time course model array has the expected
+        # dimensions.
         vecPrfTcShp = aryPrfTc.shape
 
-        # Logical test for correct dimensions:
+        # Logical test for dimensions of parameter space:
         lgcDim = ((vecPrfTcShp[0] == cfg.varNumX)
                   and
                   (vecPrfTcShp[1] == cfg.varNumY)
@@ -141,17 +142,10 @@ def model_creation(dicCnfg):
                   (vecPrfTcShp[2] == cfg.varNumPrfSizes))
 
         # Only fit pRF models if dimensions of pRF time course models are
-        # correct.
+        # as expected.
         strErrMsg = ('Dimensions of specified pRF time course models do not '
                      + 'agree with specified model parameters')
         assert lgcDim, strErrMsg
         # *********************************************************************
-
-
-
-    # REMOVE THIS LINE - ONLY FOR DEVELOPMENT PURPOSES
-    aryPrfTc = aryPrfTc[:, :, :, 0, :]
-
-
 
     return aryPrfTc
