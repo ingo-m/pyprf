@@ -74,7 +74,7 @@ def conv_par(idxPrc, aryPngData, vecCon, vecHrf, queOut):
     # Array for function output (convolved pixel-wise time courses), shape:
     # aryPixConv[(x*y pixels), conditions, volumes].
     aryPixConv = np.zeros((varNumPix,
-                           varNumCon
+                           varNumCon,
                            varNumVol), dtype=np.float32)
 
     # Binarise stimulus condition information. `aryPngData` contains pixel
