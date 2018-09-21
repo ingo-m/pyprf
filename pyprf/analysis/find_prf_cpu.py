@@ -43,9 +43,21 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
         1D array with pRF model sizes (SD of Gaussian).
     aryFunc : np.array
         2D array with functional MRI data, with shape aryFunc[voxel, time].
+
+
+
+
     aryPrfTc : np.array
         Array with pRF model time courses, with shape
         aryPrfTc[x-pos, y-pos, SD, time]
+TO BE REPALCED BY:
+    aryPrfTc : np.array
+        Array with pRF model time courses, with shape
+        aryPrfTc[x-position, y-position, SD, condition, volume]
+
+
+
+
     strVersion : str
         Which version to use for pRF finding; 'numpy' or 'cython'.
     queOut : multiprocessing.queues.Queue
@@ -97,14 +109,23 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     # Number of volumes:
     varNumVol = aryFuncChnk.shape[1]
 
+
+
+    # WORK IN PROFGESS
+
+
     # Number of conditions / GLM predictors:
-    varNumCon = aryPrfTc.shape[3]
+    # varNumCon = aryPrfTc.shape[3]
+    varNumCon = 2  # REPLACE BY ABOVE LINE AFTER REMOVING THIS: aryPrfTc = aryPrfTc[:, :, :, 0, :] FROM pyprf_main.py
+
+
 
     # Vectors for pRF finding results [number-of-voxels times one]:
     vecBstXpos = np.zeros(varNumVoxChnk, dtype=np.float32)
     vecBstYpos = np.zeros(varNumVoxChnk, dtype=np.float32)
     vecBstSd = np.zeros(varNumVoxChnk, dtype=np.float32)
     # vecBstR2 = np.zeros(varNumVoxChnk, dtype=np.float32)
+    aryBstPe = np.zeros((varNumCon, varNumVoxChnk), dtype=np.float32)
 
     # Vector for best R-square value. For each model fit, the R-square value is
     # compared to this, and updated if it is lower than the best-fitting
@@ -234,9 +255,9 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                         # aryDsgn = aryDsgn.astype(np.float32)
 
                         # Calculate the least-squares solution for all voxels:
-                        vecTmpRes = np.linalg.lstsq(aryDsgn,
-                                                    aryFuncChnk,
-                                                    rcond=None)[1]
+                        aryTmpPe, vecTmpRes, _, _ = np.linalg.lstsq(
+                            aryDsgn, aryFuncChnk, rcond=None)
+                        # aryTmpPe: [varNumCon, varNumVox]
 
                     # Check whether current residuals are lower than previously
                     # calculated ones:
@@ -247,8 +268,19 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                     vecBstYpos[vecLgcTmpRes] = vecMdlYpos[idxY]
                     vecBstSd[vecLgcTmpRes] = vecMdlSd[idxSd]
 
-                    # Replace best residual values:
-                    vecBstRes[vecLgcTmpRes] = vecTmpRes[vecLgcTmpRes]
+                    # Replace best residual values & parameter estimates:
+                    vecBstRes[vecLgcTmpRes] = \
+                        vecTmpRes[vecLgcTmpRes].astype(np.float32)
+
+
+
+                    # WORK IN PROGRESS !!!
+
+                    if strVersion == 'numpy':
+                        aryBstPe[:, vecLgcTmpRes] = \
+                            aryTmpPe[:, vecLgcTmpRes].astype(np.float32)
+
+
 
                 # Status indicator (only used in the first of the parallel
                 # processes):
