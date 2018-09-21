@@ -246,6 +246,12 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     lstMdlIdx = [None] * varPar
     lstPrfTc = [None] * varPar
 
+    # Get vectors with model indicies (vecMdlIdx) and pRF model time courses
+    #  from parallel output list.
+    for idxPrc in range(varPar):
+        lstMdlIdx[idxPrc] = lstOut[idxPrc][0]
+        lstPrfTc[idxPrc] = lstOut[idxPrc][1]
+
     # List to array, concatenating along model-index-dimension:
     vecMdlIdx = np.concatenate(lstMdlIdx, axis=0)
     aryPrfTc = np.concatenate(lstPrfTc, axis=0)
