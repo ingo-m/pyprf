@@ -4,18 +4,18 @@
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Omer Faruk Gulban & Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation, either version 3 of the License, or (at your option) any later
-# version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License along with
-# this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 # *****************************************************************************
@@ -54,10 +54,7 @@ cpdef tuple cy_lst_sq(np.ndarray[np.float32_t, ndim=1] vecPrfTc,
     -------
     vecRes : np.array
         1D numpy array with model residuals for all voxels in the chunk of
-        functional data. Dimensionality: vecRes[voxel].
-    vecPe : np.array
-        1D numpy array with parameter estimates (betas) for all voxels in the
-        chunk of functional data. Dimensionality: vecPe[voxel].
+        functional data. Dimensionality: vecRes[voxel]
 
     Notes
     -----
@@ -66,6 +63,7 @@ cpdef tuple cy_lst_sq(np.ndarray[np.float32_t, ndim=1] vecPrfTc,
     the functional data and the model. Needs to be compiled before execution
     (see `cython_leastsquares_setup.py`).
     """
+
     cdef float varVarY = 0
     cdef float[:] vecPrfTc_view = vecPrfTc
     cdef unsigned long varNumVoxChnk, idxVox
