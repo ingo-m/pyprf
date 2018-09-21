@@ -191,7 +191,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         print('---------Creating parallel processes')
 
         # Create processes:
-        for idxPrc in range(0, cfg.varPar):
+        for idxPrc in range(cfg.varPar):
             lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu,
                                          args=(idxPrc,
                                                dicCnfg,
@@ -212,7 +212,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         print('---------pRF finding on GPU')
 
         # Create processes:
-        for idxPrc in range(0, cfg.varPar):
+        for idxPrc in range(cfg.varPar):
             lstPrcs[idxPrc] = mp.Process(target=find_prf_gpu,
                                          args=(idxPrc,
                                                vecMdlXpos,
@@ -226,7 +226,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
             lstPrcs[idxPrc].Daemon = True
 
     # Start processes:
-    for idxPrc in range(0, cfg.varPar):
+    for idxPrc in range(cfg.varPar):
         lstPrcs[idxPrc].start()
 
     # Delete reference to list with function data (the data continues to exists
@@ -234,11 +234,11 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     del(lstFunc)
 
     # Collect results from queue:
-    for idxPrc in range(0, cfg.varPar):
+    for idxPrc in range(cfg.varPar):
         lstPrfRes[idxPrc] = queOut.get(True)
 
     # Join processes:
-    for idxPrc in range(0, cfg.varPar):
+    for idxPrc in range(cfg.varPar):
         lstPrcs[idxPrc].join()
 
     print('---------Prepare pRF finding results for export')
@@ -251,7 +251,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     lstResR2 = [None] * cfg.varPar
 
     # Put output into correct order:
-    for idxRes in range(0, cfg.varPar):
+    for idxRes in range(cfg.varPar):
 
         # Index of results (first item in output list):
         varTmpIdx = lstPrfRes[idxRes][0]
@@ -268,7 +268,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     aryBstYpos = np.zeros(0, dtype=np.float32)
     aryBstSd = np.zeros(0, dtype=np.float32)
     aryBstR2 = np.zeros(0, dtype=np.float32)
-    for idxRes in range(0, cfg.varPar):
+    for idxRes in range(cfg.varPar):
         aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
         aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
         aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
@@ -344,7 +344,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     print('---------Exporting results')
 
     # Save nii results:
-    for idxOut in range(0, 6):
+    for idxOut in range(6):
         # Create nii object for results:
         niiOut = nb.Nifti1Image(aryPrfRes[:, :, :, idxOut],
                                 aryAff,
