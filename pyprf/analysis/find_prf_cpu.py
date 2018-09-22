@@ -95,22 +95,14 @@ TO BE REPALCED BY:
     # Number of modelled pRF sizes:
     varNumPrfSizes = aryPrfTc.shape[2]
 
+    # Number of conditions / GLM predictors:
+    varNumCon = aryPrfTc.shape[3]
+
     # Number of voxels to be fitted in this chunk:
     varNumVoxChnk = aryFuncChnk.shape[0]
 
     # Number of volumes:
     varNumVol = aryFuncChnk.shape[1]
-
-
-
-    # WORK IN PROFGESS
-
-
-    # Number of conditions / GLM predictors:
-    # varNumCon = aryPrfTc.shape[3]
-    varNumCon = 2  # REPLACE BY ABOVE LINE AFTER REMOVING THIS: aryPrfTc = aryPrfTc[:, :, :, 0, :] FROM pyprf_main.py
-
-
 
     # Vectors for pRF finding results [number-of-voxels times one]:
     vecBstXpos = np.zeros(varNumVoxChnk, dtype=np.float32)
@@ -139,10 +131,9 @@ TO BE REPALCED BY:
         aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
         aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[0, None])
         # Secondly, we subtract the mean over time form the pRF model time
-        # courses. The array has four dimensions, the 4th is time (one to three
-        # are x-position, y-position, and pRF size (SD)).
-        aryPrfTcTmean = np.mean(aryPrfTc, axis=3)
-        aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, None])
+        # courses.
+        aryPrfTcTmean = np.mean(aryPrfTc, axis=4)
+        aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, :, None])
     # Otherwise, create constant term for numpy least squares finding:
     elif strVersion == 'numpy':
         # Constant term for the model:
@@ -180,10 +171,10 @@ TO BE REPALCED BY:
         varCntSts02 = 0
 
     # There can be pRF model time courses with a variance of zero (i.e. pRF
-    # models that are not actually responsive to the stimuli). For time
-    # efficiency, and in order to avoid division by zero, we ignore these
-    # model time courses.
-    aryPrfTcVar = np.var(aryPrfTc, axis=3)
+    # models that are not actually responsive to the stimuli). For
+    # computational efficiency, and in order to avoid division by zero, we
+    # ignore these model time courses.
+    aryPrfTcVar = np.var(aryPrfTc, axis=4)
 
     # Zero with float32 precision for comparison:
     varZero32 = np.array(([0.0])).astype(np.float32)[0]
@@ -217,8 +208,10 @@ TO BE REPALCED BY:
                         if varCntSts01 < varStsStpSze:
                             varCntSts01 = varCntSts01 + int(1)
 
-                # Only fit pRF model if variance is not zero:
-                if np.greater(aryPrfTcVar[idxX, idxY, idxSd], varZero32):
+                # Only fit pRF model if variance greater than zero for all
+                # predictors:
+                if np.greater(np.min(aryPrfTcVar[idxX, idxY, idxSd, :]),
+                              varZero32):
 
                     # Calculation of the ratio of the explained variance (R
                     # square) for the current model for all voxel time courses.
@@ -226,17 +219,21 @@ TO BE REPALCED BY:
                     # Cython version:
                     if strVersion == 'cython':
 
+
+                        # NOTE --- TWO DIFFERENT CYTHON FUNCTIONS NEEDED FOR ONE/TWO PREDICTORS
+
+
                         # A cython function is used to calculate the residuals
                         # of the current model:
                         vecTmpRes, _ = cy_lst_sq(
-                            aryPrfTc[idxX, idxY, idxSd, :].flatten(),
+                            aryPrfTc[idxX, idxY, idxSd, 0, :].flatten(),
                             aryFuncChnk)
 
                     # Numpy version:
                     elif strVersion == 'numpy':
 
                         # Current pRF time course model:
-                        vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :].flatten()
+                        vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :, :]
 
                         # We create a design matrix including the current pRF
                         # time course model, and a constant term:
@@ -249,7 +246,9 @@ TO BE REPALCED BY:
                         # Calculate the least-squares solution for all voxels:
                         aryTmpPe, vecTmpRes, _, _ = np.linalg.lstsq(
                             aryDsgn, aryFuncChnk, rcond=None)
-                        # aryTmpPe: [varNumCon, varNumVox]
+                        # Output shape:
+                        # Parameter estimates: aryTmpPe[varNumCon, varNumVox]
+                        # Residuals: vecTmpRes[varNumVox]
 
                     # Check whether current residuals are lower than previously
                     # calculated ones:
@@ -267,10 +266,13 @@ TO BE REPALCED BY:
 
 
                     # WORK IN PROGRESS !!!
-
                     if strVersion == 'numpy':
+                        # The last row contains the constant term, we skip it.
                         aryBstPe[:, vecLgcTmpRes] = \
-                            aryTmpPe[:, vecLgcTmpRes].astype(np.float32)
+                            aryTmpPe[:-1, vecLgcTmpRes].astype(np.float32)
+                    #if strVersion == 'cython':
+                    #    aryBstPe[:, vecLgcTmpRes] = \
+                    #        vecTmpPe[vecLgcTmpRes].astype(np.float32)
 
 
 

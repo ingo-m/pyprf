@@ -163,7 +163,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
 
     # REMOVE THIS LINE - FOR DEVELOPMENT ONLY
-    aryPrfTc = aryPrfTc[:, :, :, 0, :]
+    # aryPrfTc = aryPrfTc[:, :, :, 0, :]
 
 
 
@@ -207,6 +207,13 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     # GPU version (using tensorflow for pRF finding):
     elif cfg.strVersion == 'gpu':
+
+
+
+        # REMOVE THIS LINE - FOR DEVELOPMENT ONLY
+        aryPrfTc = aryPrfTc[:, :, :, 0, :]
+
+
 
         print('---------pRF finding on GPU')
 
