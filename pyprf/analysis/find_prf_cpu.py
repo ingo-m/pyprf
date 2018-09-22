@@ -18,12 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-from pyprf.analysis.utilities import cls_set_config
 from pyprf.analysis.cython_leastsquares import cy_lst_sq
 
 
-def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
-                 aryFuncChnk, aryPrfTc, strVersion, queOut):
+def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
+                 aryPrfTc, strVersion, queOut):
     """
     Find best fitting pRF model for voxel time course, using the CPU.
 
@@ -89,13 +88,6 @@ TO BE REPALCED BY:
     multiprocessing queue. This version performs the model finding on the CPU,
     using numpy or cython (depending on the value of `strVersion`).
     """
-    # Load config parameters from dictionary into namespace:
-    # cfg = cls_set_config(dicCnfg)
-
-    # Conditional imports:
-    # if cfg.strVersion == 'cython':
-    #    from cython_leastsquares import cy_lst_sq
-
     # Number of modelled x-positions in the visual space:
     varNumX = aryPrfTc.shape[0]
     # Number of modelled y-positions in the visual space:

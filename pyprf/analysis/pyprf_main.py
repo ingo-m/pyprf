@@ -194,7 +194,6 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         for idxPrc in range(0, cfg.varPar):
             lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu,
                                          args=(idxPrc,
-                                               dicCnfg,
                                                vecMdlXpos,
                                                vecMdlYpos,
                                                vecMdlSd,
