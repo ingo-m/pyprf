@@ -42,21 +42,9 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
         1D array with pRF model sizes (SD of Gaussian).
     aryFunc : np.array
         2D array with functional MRI data, with shape aryFunc[voxel, time].
-
-
-
-
-    aryPrfTc : np.array
-        Array with pRF model time courses, with shape
-        aryPrfTc[x-pos, y-pos, SD, time]
-TO BE REPALCED BY:
     aryPrfTc : np.array
         Array with pRF model time courses, with shape
         aryPrfTc[x-position, y-position, SD, condition, volume]
-
-
-
-
     strVersion : str
         Which version to use for pRF finding; 'numpy' or 'cython'.
     queOut : multiprocessing.queues.Queue
@@ -225,7 +213,7 @@ TO BE REPALCED BY:
 
                         # A cython function is used to calculate the residuals
                         # of the current model:
-                        vecTmpRes, _ = cy_lst_sq(
+                        vecTmpRes, vecTmpPe = cy_lst_sq(
                             aryPrfTc[idxX, idxY, idxSd, 0, :].flatten(),
                             aryFuncChnk)
 
@@ -270,9 +258,9 @@ TO BE REPALCED BY:
                         # The last row contains the constant term, we skip it.
                         aryBstPe[:, vecLgcTmpRes] = \
                             aryTmpPe[:-1, vecLgcTmpRes].astype(np.float32)
-                    #if strVersion == 'cython':
-                    #    aryBstPe[:, vecLgcTmpRes] = \
-                    #        vecTmpPe[vecLgcTmpRes].astype(np.float32)
+                    if strVersion == 'cython':
+                        aryBstPe[:, vecLgcTmpRes] = \
+                            vecTmpPe[vecLgcTmpRes].astype(np.float32)
 
 
 
