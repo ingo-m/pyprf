@@ -22,3 +22,8 @@ def setup_cython():
     sp.call(['python cython_leastsquares_setup.py build_ext --inplace'],
             cwd=strDir,
             shell=True)
+
+
+if __name__ == '__main__':
+
+    setup_cython()

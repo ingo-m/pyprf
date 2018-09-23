@@ -227,10 +227,10 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                                 aryPrfTc[idxX, idxY, idxSd, 0, :].flatten(),
                                 aryFuncChnk)
 
-                        elif varNumCon == 2:
+                        #elif varNumCon == 2:
 
                             # Cythonised model fitting with two predictors:
-                            #vecTmpRes, vecTmpPe = 
+                            #vecTmpRes, vecTmpPe =
 
                     # Numpy version:
                     elif strVersion == 'numpy':
