@@ -4,21 +4,22 @@
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 from pyprf.analysis.cython_leastsquares import cy_lst_sq
+from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
 
 
 def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
@@ -218,7 +219,9 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                     # Cython version:
                     if strVersion == 'cython':
 
-                        # NOTE --- TWO DIFFERENT CYTHON FUNCTIONS NEEDED FOR ONE/TWO PREDICTORS
+                        # Two different cython functions are needed for data
+                        # with one / two predictors. Models with more than two
+                        # predictors have to be solved with numpy.
 
                         if varNumCon == 1:
 
@@ -226,11 +229,19 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                             vecTmpRes, vecTmpPe = cy_lst_sq(
                                 aryPrfTc[idxX, idxY, idxSd, 0, :].flatten(),
                                 aryFuncChnk)
+                            # Output shape:
+                            # Parameter estimates: vecTmpPe[varNumVox]
+                            # Residuals: vecTmpRes[varNumVox]
 
-                        #elif varNumCon == 2:
+                        elif varNumCon == 2:
 
                             # Cythonised model fitting with two predictors:
-                            #vecTmpRes, vecTmpPe =
+                            vecTmpRes, aryTmpPe = cy_lst_sq_two(
+                                aryPrfTc[idxX, idxY, idxSd, :, :],
+                                aryFuncChnk)
+                            # Output shape:
+                            # Parameter estimates: aryTmpPe[2, varNumVox]
+                            # Residuals: vecTmpRes[varNumVox]
 
                     # Numpy version:
                     elif strVersion == 'numpy':
@@ -269,13 +280,26 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
 
                     # WORK IN PROGRESS !!!
+
                     if strVersion == 'numpy':
+
                         # The last row contains the constant term, we skip it.
                         aryBstPe[:, vecLgcTmpRes] = \
-                            aryTmpPe[:-1, vecLgcTmpRes].astype(np.float32)
+                            aryTmpPe[:-1, vecLgcTmpRes]  # .astype(np.float32)
+
                     if strVersion == 'cython':
-                        aryBstPe[:, vecLgcTmpRes] = \
-                            vecTmpPe[vecLgcTmpRes].astype(np.float32)
+
+                        # One predictor (i.e. PEs are 1D).
+                        if varNumCon == 1:
+
+                            aryBstPe[:, vecLgcTmpRes] = \
+                                vecTmpPe[vecLgcTmpRes]  # .astype(np.float32)
+
+                        # Two predictors (i.e. PEs are 2D).
+                        elif varNumCon == 2:
+
+                            aryBstPe[:, vecLgcTmpRes] = \
+                                aryTmpPe[:, vecLgcTmpRes]  # .astype(np.float32)
 
 
 
