@@ -1,27 +1,26 @@
 # -*- coding: utf-8 -*-
 """Cythonised least squares GLM model fitting with 2 predictors."""
 
-# Part of pyprf_feature library
+# Part of pyprf library
 # Copyright (C) 2018  Omer Faruk Gulban & Ingo Marquardt & Marian Schneider
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 # *****************************************************************************
 # *** Import modules & adjust cython settings for speedup
 
-import time
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -70,8 +69,6 @@ cpdef tuple cy_lst_sq_two(
     (see `cython_leastsquares_setup.py`).
 
     """
-    ### Timing
-    varTme01 = time.time()
     cdef:
         float varVarX1, varVarX2, varVarX1X2
         unsigned long varNumVoxChnk, idxVox
@@ -131,8 +128,6 @@ cpdef tuple cy_lst_sq_two(
     aryPe = np.asarray(aryPe_view).T
 
     return aryPe, vecRes
-
-
 # *****************************************************************************
 
 # *****************************************************************************

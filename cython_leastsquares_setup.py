@@ -28,6 +28,10 @@ from Cython.Build import cythonize
 
 # print('-Compiling cython function')
 
-# Compile the code:
+# Compile the cython code for model fitting with one predictor:
 setup(ext_modules=cythonize('pyprf/analysis/cython_leastsquares.pyx'),
+      include_dirs=[np.get_include()])
+
+# Compile the cython code for model fitting with two predictors:
+setup(ext_modules=cythonize('pyprf/analysis/cython_leastsquares_two.pyx'),
       include_dirs=[np.get_include()])

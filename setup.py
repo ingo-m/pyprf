@@ -41,6 +41,10 @@ setup(name='pyprf',
       ext_modules=[Extension('pyprf.analysis.cython_leastsquares',
                              ['pyprf/analysis/cython_leastsquares.c'],
                              include_dirs=[np.get_include()]
+                             ),
+                   Extension('pyprf.analysis.cython_leastsquares_two',
+                             ['pyprf/analysis/cython_leastsquares_two.c'],
+                             include_dirs=[np.get_include()]
                              )],
       )
 
