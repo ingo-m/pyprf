@@ -24,6 +24,6 @@ def setup_cython():
             shell=True)
 
 
-if __name__ == '__main__':
-
-    setup_cython()
+# if __name__ == '__main__':
+#
+#     setup_cython()
