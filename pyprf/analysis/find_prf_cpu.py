@@ -86,6 +86,17 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     # Number of conditions / GLM predictors:
     varNumCon = aryPrfTc.shape[3]
 
+    # Cython model fitting is only implemented for one or two predictors. If
+    # there are more than two predictors, issue warning and shift to numpy.
+    if (strVersion == 'cython' and 2 < varNumCon):
+        strVersion = 'numpy'
+        # Only print warning if this is the first parallel process.
+        if idxPrc == 0:
+            strWrng = ('WARNING: cython model fitting only implemented for '
+                       + 'one or two predictors. Will use numpy version '
+                       + 'instead.')
+            print(strWrng)
+
     # Number of voxels to be fitted in this chunk:
     varNumVoxChnk = aryFuncChnk.shape[0]
 
@@ -207,15 +218,14 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                     # Cython version:
                     if strVersion == 'cython':
 
-
                         # NOTE --- TWO DIFFERENT CYTHON FUNCTIONS NEEDED FOR ONE/TWO PREDICTORS
 
+                        if varNumCon == 1:
 
-                        # A cython function is used to calculate the residuals
-                        # of the current model:
-                        vecTmpRes, vecTmpPe = cy_lst_sq(
-                            aryPrfTc[idxX, idxY, idxSd, 0, :].flatten(),
-                            aryFuncChnk)
+                            # Cythonised model fitting with one predictor:
+                            vecTmpRes, vecTmpPe = cy_lst_sq(
+                                aryPrfTc[idxX, idxY, idxSd, 0, :].flatten(),
+                                aryFuncChnk)
 
                     # Numpy version:
                     elif strVersion == 'numpy':
