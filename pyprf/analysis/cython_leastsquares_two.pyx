@@ -33,19 +33,21 @@ from libc.math cimport pow, sqrt
 
 
 # *****************************************************************************
-# *** Main function least squares solution, no cross-validation, 2 predictors
+# *** Main function least squares solution, two predictors
 
 cpdef tuple cy_lst_sq_two(
     np.ndarray[np.float32_t, ndim=2] aryPrfTc,
     np.ndarray[np.float32_t, ndim=2] aryFuncChnk):
     """
-    Cythonised least squares GLM model fitting.
+    Cythonised least squares GLM model fitting with two predictors.
 
     Parameters
     ----------
     aryPrfTc : np.array
-        2D numpy array, at float32 precision, containing two pRF model
-        time courses as two columns. Dimensionality: aryPrfTc[time, 2].
+        2D numpy array, at float32 precision, containing two pRF model time
+        courses as two columns. E.g. model time courses for one pRF position &
+        size, for two stimulus conditions (such as luminance contrast).
+        Dimensionality: aryPrfTc[time, 2].
     aryFuncChnk : np.array
         2D numpy array, at float32 precision, containing a chunk of functional
         data (i.e. voxel time courses). Dimensionality: aryFuncChnk[time,
@@ -74,7 +76,7 @@ cpdef tuple cy_lst_sq_two(
         unsigned long varNumVoxChnk, idxVox
         unsigned int idxVol, varNumVols
 
-    # Initial variances and covariances
+    # Initial variances and covariance:
     varVarX1 = 0
     varVarX2 = 0
     varVarX1X2 = 0
@@ -106,7 +108,7 @@ cpdef tuple cy_lst_sq_two(
     # Calculate variance of pRF model time course (i.e. variance in the model):
     varNumVols = int(aryPrfTc.shape[0])
 
-    # get the variance for x1
+    # Calculate variances and covariances of the two pRF model time courses:
     for idxVol in range(varNumVols):
         varVarX1 += aryPrfTc_view[idxVol, 0] ** 2
         varVarX2 += aryPrfTc_view[idxVol, 1] ** 2
@@ -131,7 +133,7 @@ cpdef tuple cy_lst_sq_two(
 # *****************************************************************************
 
 # *****************************************************************************
-# *** Function fast calculation residuals, no cross-validation, 2 predictors
+# *** Fast calculation residuals, two predictors
 
 cdef (float[:], float[:, :]) func_cy_res_two(float[:, :] aryPrfTc_view,
                                              float[:, :] aryFuncChnk_view,
@@ -164,8 +166,10 @@ cdef (float[:], float[:, :]) func_cy_res_two(float[:, :] aryPrfTc_view,
                           * aryPrfTc_view[idxVol, 0])
             varCovX2y += (aryFuncChnk_view[idxVol, idxVox]
                           * aryPrfTc_view[idxVol, 1])
-        # calculate denominator
+
+        # Calculate denominator:
         varDen = varVarX1 * varVarX2 - varVarX1X2 ** 2
+
         # Obtain the slope of the regression of the model on the data:
         varSlope1 = (varVarX2 * varCovX1y - varVarX1X2 * varCovX2y) / varDen
         varSlope2 = (varVarX1 * varCovX2y - varVarX1X2 * varCovX1y) / varDen
@@ -174,8 +178,8 @@ cdef (float[:], float[:, :]) func_cy_res_two(float[:, :] aryPrfTc_view,
         # prediction:
         for idxVol in range(varNumVols):
             # The predicted voxel time course value:
-            varXhat = (aryPrfTc_view[idxVol, 0] * varSlope1 +
-                       aryPrfTc_view[idxVol, 1] * varSlope2)
+            varXhat = (aryPrfTc_view[idxVol, 0] * varSlope1
+                       + aryPrfTc_view[idxVol, 1] * varSlope2)
             # Mismatch between prediction and actual voxel value (variance):
             varRes += (aryFuncChnk_view[idxVol, idxVox] - varXhat) ** 2
 
