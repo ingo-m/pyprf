@@ -509,7 +509,7 @@ if __name__ == "__main__":
 
     # Dictionary with experiment parameters.
     dicParam = {'Output file name': 'Run_01',
-                'TR [s]': 1.944,
+                'TR [s]': 1.8,
                 'Number of bar orientations': [4, 2],
                 'Number of bar positions on x-axis': 14,
                 'Number of bar positions on y-axis': 8,

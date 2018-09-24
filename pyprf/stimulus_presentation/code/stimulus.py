@@ -890,7 +890,7 @@ def prf_stim(dicParam):
                            + ' targets out of '
                            + str(varCntHit + varCntMis)
                            + '\n'
-                           + 'There is still room for improvement.')
+                           + 'There is still room for improvement ;)')
         else:
             # Low performance:
             strFeedback = ('You have detected '
@@ -898,7 +898,7 @@ def prf_stim(dicParam):
                            + ' targets out of '
                            + str(varCntHit + varCntMis)
                            + '\n'
-                           + 'Please try to focus more.')
+                           + 'Please try to focus more :(')
 
         # Create text object:
         objTxtTmr = visual.TextStim(objWin,
