@@ -160,19 +160,12 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                               endpoint=False)
     vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
 
-
-
-    # REMOVE THIS LINE - FOR DEVELOPMENT ONLY
-    # aryPrfTc = aryPrfTc[:, :, :, 0, :]
-
-
-
     # Make sure type is float32:
     aryFunc = aryFunc.astype(np.float32)
     aryPrfTc = aryPrfTc.astype(np.float32)
 
     # Put functional data into chunks:
-    for idxChnk in range(0, cfg.varPar):
+    for idxChnk in range(cfg.varPar):
         # Index of first voxel to be included in current chunk:
         varTmpChnkSrt = int(vecIdxChnks[idxChnk])
         # Index of last voxel to be included in current chunk:
@@ -191,7 +184,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         print('---------Creating parallel processes')
 
         # Create processes:
-        for idxPrc in range(0, cfg.varPar):
+        for idxPrc in range(cfg.varPar):
             lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu,
                                          args=(idxPrc,
                                                vecMdlXpos,
@@ -218,7 +211,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         print('---------pRF finding on GPU')
 
         # Create processes:
-        for idxPrc in range(0, cfg.varPar):
+        for idxPrc in range(cfg.varPar):
             lstPrcs[idxPrc] = mp.Process(target=find_prf_gpu,
                                          args=(idxPrc,
                                                vecMdlXpos,
@@ -232,7 +225,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
             lstPrcs[idxPrc].Daemon = True
 
     # Start processes:
-    for idxPrc in range(0, cfg.varPar):
+    for idxPrc in range(cfg.varPar):
         lstPrcs[idxPrc].start()
 
     # Delete reference to list with function data (the data continues to exists
@@ -240,12 +233,16 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     del(lstFunc)
 
     # Collect results from queue:
-    for idxPrc in range(0, cfg.varPar):
+    for idxPrc in range(cfg.varPar):
         lstPrfRes[idxPrc] = queOut.get(True)
 
     # Join processes:
-    for idxPrc in range(0, cfg.varPar):
+    for idxPrc in range(cfg.varPar):
         lstPrcs[idxPrc].join()
+    # *************************************************************************
+
+    # *************************************************************************
+    # *** Merge results from parallel processes
 
     print('---------Prepare pRF finding results for export')
 
@@ -258,7 +255,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     lstResPe = [None] * cfg.varPar
 
     # Put output into correct order:
-    for idxRes in range(0, cfg.varPar):
+    for idxRes in range(cfg.varPar):
 
         # Index of results (first item in output list):
         varTmpIdx = lstPrfRes[idxRes][0]
@@ -272,18 +269,22 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     # Concatenate output vectors (into the same order as the voxels that were
     # included in the fitting):
-    aryBstXpos = np.zeros(0, dtype=np.float32)
-    aryBstYpos = np.zeros(0, dtype=np.float32)
-    aryBstSd = np.zeros(0, dtype=np.float32)
-    aryBstR2 = np.zeros(0, dtype=np.float32)
-    for idxRes in range(0, cfg.varPar):
-        aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
-        aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
-        aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
-        aryBstR2 = np.append(aryBstR2, lstResR2[idxRes])
+    aryBstXpos = np.concatenate(lstResXpos, axis=0).astype(np.float32)
+    aryBstYpos = np.concatenate(lstResYpos, axis=0).astype(np.float32)
+    aryBstSd = np.concatenate(lstResSd, axis=0).astype(np.float32)
+    aryBstR2 = np.concatenate(lstResR2, axis=0).astype(np.float32)
+    # aryBstXpos = np.zeros(0, dtype=np.float32)
+    # aryBstYpos = np.zeros(0, dtype=np.float32)
+    # aryBstSd = np.zeros(0, dtype=np.float32)
+    # aryBstR2 = np.zeros(0, dtype=np.float32)
+    # for idxRes in range(0, cfg.varPar):
+    #     aryBstXpos = np.append(aryBstXpos, lstResXpos[idxRes])
+    #     aryBstYpos = np.append(aryBstYpos, lstResYpos[idxRes])
+    #     aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
+    #     aryBstR2 = np.append(aryBstR2, lstResR2[idxRes])
 
     # Concatenate PEs, shape: aryBstPe[varNumVox, varNumCon].
-    aryBstPe = np.concatenate(lstResPe, axis=0)
+    aryBstPe = np.concatenate(lstResPe, axis=0).astype(np.float32)
     varNumCon = aryBstPe.shape[1]
 
     # Delete unneeded large objects:
@@ -293,6 +294,10 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     del(lstResSd)
     del(lstResR2)
     del(lstResPe)
+    # *************************************************************************
+
+    # *************************************************************************
+    # *** Reshape spatial parameters
 
     # Put results form pRF finding into array (they originally needed to be
     # saved in a list due to parallelisation). Voxels were selected for pRF
@@ -335,10 +340,10 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     del(aryPrfRes01)
     del(aryPrfRes02)
+    # *************************************************************************
 
-
-    # ***
-
+    # *************************************************************************
+    # *** Reshape parameter estimates (betas)
 
     # Bring PEs into original data shape. First, account for binary (brain)
     # mask:
@@ -362,12 +367,10 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     del(aryPrfRes01)
     del(aryPrfRes02)
+    # *************************************************************************
 
-
-
-    # ***
-
-
+    # *************************************************************************
+    # *** Export results
 
     # Calculate polar angle map:
     aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
