@@ -177,7 +177,8 @@ cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,
                                 unsigned int varNumY):
 
     cdef float varPosX, varPosY, varSd, varPi, varSum, varTmp
-    cdef unsigned int idxX, idxY
+    cdef unsigned int idxX, idxY, idxVol, idxCon
+    cdef unsigned long idxMdl
 
     varPi = 3.14159265
 
