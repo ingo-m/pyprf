@@ -5,7 +5,7 @@ import os
 import subprocess as sp
 
 
-def setup_cython():
+def setup_cython_conv():
     """
     Cython setup.
 
@@ -24,6 +24,6 @@ def setup_cython():
             shell=True)
 
 
-if __name__ == '__main__':
-
-    setup_cython()
+# if __name__ == '__main__':
+#
+#     setup_cython()

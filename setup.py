@@ -53,7 +53,9 @@ setup(name='pyprf',
       )
 
 # Load module to setup python:
-# from cython_leastsquares_setup_call import setup_cython  #noqa
+# from pyprf.analysis.cython_leastsquares_setup_call import setup_cython_lstsq
+# from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
 
 # Compile cython code:
-# setup_cython()
+# setup_cython_lstsq()
+# setup_cython_conv()
