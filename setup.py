@@ -45,6 +45,10 @@ setup(name='pyprf',
                    Extension('pyprf.analysis.cython_leastsquares_two',
                              ['pyprf/analysis/cython_leastsquares_two.c'],
                              include_dirs=[np.get_include()]
+                             ),
+                   Extension('pyprf.analysis.cython_prf_convolve',
+                             ['pyprf/analysis/cython_prf_convolve.c'],
+                             include_dirs=[np.get_include()]
                              )],
       )
 

@@ -20,6 +20,7 @@
 import numpy as np
 from pyprf.analysis.cython_leastsquares import cy_lst_sq
 from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
+from pyprf.analysis.cython_prf_convolve import prf_conv
 
 
 def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,

@@ -8,7 +8,9 @@ from pyprf.analysis import utilities as util
 from pyprf.analysis.cython_leastsquares_setup_call import setup_cython_lstsq
 from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
 
-
+# Compile cython code:
+setup_cython_lstsq()
+setup_cython_conv()
 
 # Get directory of this file:
 strDir = os.path.dirname(os.path.abspath(__file__))
@@ -18,10 +20,6 @@ def test_main():
     """Run main pyprf function and compare results with template."""
     # -------------------------------------------------------------------------
     # *** Preparations
-
-    # Compile cython code:
-    setup_cython_lstsq()
-    setup_cython_conv()
 
     # Decimal places to round before comparing template and test results:
     varRnd = 3
