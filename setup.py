@@ -7,7 +7,7 @@ For development installation:
 
 import numpy as np
 from setuptools import setup, Extension
-# from setuptools.command.build_ext import build_ext
+from setuptools.command.build_ext import build_ext
 
 with open('README.rst') as f:
     long_description = f.read()
@@ -53,9 +53,9 @@ setup(name='pyprf',
       )
 
 # Load module to setup python:
-# from pyprf.analysis.cython_leastsquares_setup_call import setup_cython_lstsq
-# from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
+from pyprf.analysis.cython_leastsquares_setup_call import setup_cython_lstsq
+from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
 
 # Compile cython code:
-# setup_cython_lstsq()
-# setup_cython_conv()
+setup_cython_lstsq()
+setup_cython_conv()
