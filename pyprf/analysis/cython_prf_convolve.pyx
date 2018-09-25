@@ -38,7 +38,7 @@ from libc.math cimport pow, sqrt, exp
 cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
     np.ndarray[np.float32_t, ndim=2] aryX,
     np.ndarray[np.float32_t, ndim=2] aryY,
-    np.ndarray[np.float32_t, ndim=2] aryMdlParamsChnk,
+    np.ndarray[np.float32_t, ndim=2] aryMdlParams,
     np.ndarray[np.float32_t, ndim=4] aryPixConv):
     """
     Cythonised calculation of pRF model time courses.
@@ -51,9 +51,9 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
     aryY : np.array
         2D array meshgrid array, representing y dimension of the visual field.
         Can be created with `scipy.mgrid`.
-    aryMdlParamsChnk : np.array
+    aryMdlParams : np.array
         2D numpy array containing the parameters for the pRF models to be
-        created. Dimensionality: `aryMdlParamsChnk[model-ID, parameter-value]`.
+        created. Dimensionality: `aryMdlParams[model-ID, parameter-value]`.
         For each model there are four values: (0) an index starting from zero,
         (1) the x-position, (2) the y-position, and (3) the standard deviation.
         Parameters 1, 2 , and 3 are in units of the upsampled visual space.
@@ -85,7 +85,7 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
 
     # Number of models (i.e., number of combinations of model parameters) in
     # the input data chunk:
-    varNumMdls = int(aryMdlParamsChnk.shape[0])
+    varNumMdls = int(aryMdlParams.shape[0])
 
     # Number of pixels in X and Y dimensions:
     varNumX = int(aryPixConv.shape[0])
@@ -120,8 +120,12 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
                                                              varNumVol),
                                                             dtype=np.float32)
 
-    # Memory view on array for Gaussian models:
+    # Memory view on array for intermediate results:
     cdef float[:, :, :] aryTmp_view = aryTmp
+
+
+    # Memory view on array for pRF model parameters:
+    cdef float[:, :] aryMdlParams_view = aryMdlParams
 
     # Call optimised cdef function for calculation of residuals:
     aryPrfTc_view = cy_prf_conv(aryX_view,
@@ -148,7 +152,7 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
 # *****************************************************************************
 # *** Function for fast calculation of residuals
 
-# aryMdlParamsChnk[model-ID, parameter-value]
+# aryMdlParams[model-ID, parameter-value]
 # aryPixConv[x-pixels, y-pixels, conditions, volumes]
 
 cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,
@@ -166,7 +170,6 @@ cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,
 
     cdef float varPosX, varPosY, varSd, varPi, varSum, varTmp
     cdef unsigned int idxX, idxY
-    cdef unsigned long
 
     varPi = 3.14159265
 
@@ -196,7 +199,7 @@ cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,
 
                     # Scale Gaussian:
                     aryGauss_view[idxX, idxY] = (
-                        c_exp(-varTmp)
+                        exp(-varTmp)
                         / (2 * varPi * (varSd ** 2))
                         )
 

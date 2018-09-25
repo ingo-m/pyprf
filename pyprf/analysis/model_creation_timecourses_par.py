@@ -18,7 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-from pyprf.analysis.utilities import crt_gauss
+import scipy as sp
+# from pyprf.analysis.utilities import crt_gauss
+from pyprf.analysis.cython_prf_convolve import prf_conv
 
 
 def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
@@ -75,36 +77,46 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
     # Output array with pRF model time courses:
     aryPrfTc = np.zeros([varNumMdls, varNumCon, varNumVol], dtype=np.float32)
 
-    # Loop through combinations of model parameters:
-    for idxMdl in range(varNumMdls):
+    ## Loop through combinations of model parameters:
+    #for idxMdl in range(varNumMdls):
 
-        # Spatial parameters of current model:
-        varTmpX = aryMdlParamsChnk[idxMdl, 1]
-        varTmpY = aryMdlParamsChnk[idxMdl, 2]
-        varTmpSd = aryMdlParamsChnk[idxMdl, 3]
+    #    # Spatial parameters of current model:
+    #    varTmpX = aryMdlParamsChnk[idxMdl, 1]
+    #    varTmpY = aryMdlParamsChnk[idxMdl, 2]
+    #    varTmpSd = aryMdlParamsChnk[idxMdl, 3]
 
-        # Create pRF model (2D):
-        aryGauss = crt_gauss(tplVslSpcSze[0],
-                             tplVslSpcSze[1],
-                             varTmpX,
-                             varTmpY,
-                             varTmpSd)
+    #    # Create pRF model (2D):
+    #    aryGauss = crt_gauss(tplVslSpcSze[0],
+    #                         tplVslSpcSze[1],
+    #                         varTmpX,
+    #                         varTmpY,
+    #                         varTmpSd)
 
-        # Multiply super-sampled pixel-time courses with Gaussian pRF models:
-        aryPrfTcTmp = np.multiply(aryPixConv, aryGauss[:, :, None, None])
-        # Shape: aryPrfTcTmp[x-pixels, y-pixels, conditions, volumes]
+    #    # Multiply super-sampled pixel-time courses with Gaussian pRF models:
+    #    aryPrfTcTmp = np.multiply(aryPixConv, aryGauss[:, :, None, None])
+    #    # Shape: aryPrfTcTmp[x-pixels, y-pixels, conditions, volumes]
 
-        # Calculate sum across x- and y-dimensions - the 'area under the
-        # Gaussian surface'. This gives us the ratio of 'activation' of the pRF
-        # at each time point, or, in other words, the pRF time course model.
-        # Note: Normalisation of pRFs takes at funcGauss(); pRF models are
-        # normalised to have an area under the curve of one when they are
-        # created.
-        aryPrfTcTmp = np.sum(aryPrfTcTmp, axis=(0, 1), dtype=np.float32)
-        # New shape: aryPrfTcTmp[conditions, volumes]
+    #    # Calculate sum across x- and y-dimensions - the 'area under the
+    #    # Gaussian surface'. This gives us the ratio of 'activation' of the pRF
+    #    # at each time point, or, in other words, the pRF time course model.
+    #    # Note: Normalisation of pRFs takes at funcGauss(); pRF models are
+    #    # normalised to have an area under the curve of one when they are
+    #    # created.
+    #    aryPrfTcTmp = np.sum(aryPrfTcTmp, axis=(0, 1), dtype=np.float32)
+    #    # New shape: aryPrfTcTmp[conditions, volumes]
 
-        # Put model time courses into the function's output array:
-        aryPrfTc[idxMdl, :, :] = np.copy(aryPrfTcTmp)
+    #    # Put model time courses into the function's output array:
+    #    aryPrfTc[idxMdl, :, :] = np.copy(aryPrfTcTmp)
+
+    # Meshgrid for creation of Gaussian pRF models:
+    aryX, aryY = sp.mgrid[0:varSizeX,
+                          0:varSizeY]
+
+    aryPrfTc = prf_conv(
+        aryX,
+        aryY,
+        aryMdlParamsChnk,
+        aryPixConv)
 
     # Put column with the indicies of model-parameter-combinations into the
     # output list (in order to be able to put the pRF model time courses into
