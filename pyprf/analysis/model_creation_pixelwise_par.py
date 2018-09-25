@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+from scipy.signal import fftconvolve
 
 
 def conv_par(idxPrc, aryPngData, vecCon, vecHrf, queOut):
@@ -96,6 +97,12 @@ def conv_par(idxPrc, aryPngData, vecCon, vecHrf, queOut):
     # float64 to avoid errors.
     vecHrf = vecHrf.astype(np.float64)
 
+    # In order to avoid an artefact at the end of the time series, we have to
+    # concatenate an empty array to both the design matrix and the HRF model
+    # before convolution.
+    vecZeros = np.zeros([100, 1], dtype=np.float64).flatten()
+    vecHrf = np.concatenate((vecHrf, vecZeros))
+
     # Each pixel time course is convolved with the HRF separately, because the
     # numpy convolution function can only be used on one-dimensional data.
     # Thus, we have to loop through conditions & pixels.
@@ -108,14 +115,13 @@ def conv_par(idxPrc, aryPngData, vecCon, vecHrf, queOut):
 
             # In order to avoid an artefact at the end of the time series, we
             # have to concatenate an empty array to both the design matrix and
-            # the HRF model before convolution. NOTE: input to `np.convolve`
-            # function needs to be float64 to avoid errors.
-            vecZeros = np.zeros([100, 1], dtype=np.float64).flatten()
+            # the HRF model before convolution.
             vecDm = np.concatenate((vecDm, vecZeros))
-            vecHrf = np.concatenate((vecHrf, vecZeros))
 
             # Convolve design matrix with HRF model.
-            aryPixConv[idxPix, idxCon, :] = np.convolve(
+            # aryPixConv[idxPix, idxCon, :] = np.convolve(
+            #     vecDm, vecHrf, mode='full')[0:varNumVol].astype(np.float32)
+            aryPixConv[idxPix, idxCon, :] = fftconvolve(
                 vecDm, vecHrf, mode='full')[0:varNumVol].astype(np.float32)
 
     # Create list containing the convolved pixel-wise timecourses, and the
