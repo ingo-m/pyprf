@@ -38,15 +38,16 @@ setup(name='pyprf',
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
               ]},
-      ext_modules=[Extension('pyprf.analysis.cython_leastsquares',
+      ext_package='pyprf',
+      ext_modules=[Extension('analysis.cython_leastsquares',
                              ['pyprf/analysis/cython_leastsquares.c'],
                              include_dirs=[np.get_include()]
                              ),
-                   Extension('pyprf.analysis.cython_leastsquares_two',
+                   Extension('analysis.cython_leastsquares_two',
                              ['pyprf/analysis/cython_leastsquares_two.c'],
                              include_dirs=[np.get_include()]
                              ),
-                   Extension('pyprf.analysis.cython_prf_convolve',
+                   Extension('analysis.cython_prf_convolve',
                              ['pyprf/analysis/cython_prf_convolve.c'],
                              include_dirs=[np.get_include()]
                              )],
