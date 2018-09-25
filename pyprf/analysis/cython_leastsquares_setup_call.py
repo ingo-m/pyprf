@@ -19,13 +19,9 @@ def setup_cython_lstsq():
     strDir = os.path.split(strDir)[0]
 
     # Call the script that compiles the cython code:
-    objCmd = sp.call(['python cython_leastsquares_setup.py build_ext --inplace'],
-                     cwd=strDir,
-                     shell=True)
-
-    sp.check_output(objCmd, shell=True)
-
-    return True
+    sp.call(['python cython_leastsquares_setup.py build_ext --inplace'],
+            cwd=strDir,
+            shell=True)
 
 # if __name__ == '__main__':
 #
