@@ -14,14 +14,15 @@
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+from pyprf.analysis.cython_leastsquares import cy_lst_sq
+from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
+from pyprf.analysis.cython_prf_convolve import prf_conv
 import scipy as sp
 # from pyprf.analysis.utilities import crt_gauss
-from pyprf.analysis.cython_leastsquares import cy_lst_sq
-from pyprf.analysis.cython_prf_convolve import prf_conv
 
 
 def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
