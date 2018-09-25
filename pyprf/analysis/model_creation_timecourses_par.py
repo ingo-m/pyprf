@@ -109,8 +109,10 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
     #    aryPrfTc[idxMdl, :, :] = np.copy(aryPrfTcTmp)
 
     # Meshgrid for creation of Gaussian pRF models:
-    aryX, aryY = sp.mgrid[0:varSizeX,
-                          0:varSizeY]
+    aryX, aryY = sp.mgrid[0:tplVslSpcSze[0],
+                          0:tplVslSpcSze[1]]
+    aryX = aryX.astype(np.float32)
+    aryY = aryY.astype(np.float32)
 
     aryPrfTc = prf_conv(
         aryX,
