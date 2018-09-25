@@ -35,9 +35,10 @@ from pyprf.analysis.model_creation_main import model_creation
 from pyprf.analysis.preprocessing_main import pre_pro_models
 from pyprf.analysis.preprocessing_main import pre_pro_func
 
-from pyprf.analysis.cython_leastsquares import cy_lst_sq
-from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
-from pyprf.analysis.cython_prf_convolve import prf_conv
+from pyprf.analysis.model_creation_pixelwise_par import prf_par
+# from pyprf.analysis.cython_leastsquares import cy_lst_sq
+# from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
+# from pyprf.analysis.cython_prf_convolve import prf_conv
 
 
 def pyprf(strCsvCnfg, lgcTest=False):  #noqa
