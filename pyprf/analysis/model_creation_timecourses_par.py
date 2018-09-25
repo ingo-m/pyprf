@@ -20,6 +20,7 @@
 import numpy as np
 import scipy as sp
 # from pyprf.analysis.utilities import crt_gauss
+from pyprf.analysis.cython_leastsquares import cy_lst_sq
 from pyprf.analysis.cython_prf_convolve import prf_conv
 
 
