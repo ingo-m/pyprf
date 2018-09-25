@@ -70,7 +70,7 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
     varNumVol = aryPixConv.shape[3]
 
     # Number of combinations of model parameters in the current chunk:
-    varNumMdls = np.size(aryMdlParamsChnk, axis=0)
+    # varNumMdls = np.size(aryMdlParamsChnk, axis=0)
 
     # Output array with pRF model time courses:
     aryPrfTc = np.zeros([varNumMdls, varNumCon, varNumVol], dtype=np.float32)

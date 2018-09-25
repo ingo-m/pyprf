@@ -35,3 +35,8 @@ setup(ext_modules=cythonize('pyprf/analysis/cython_leastsquares.pyx'),
 # Compile the cython code for model fitting with two predictors:
 setup(ext_modules=cythonize('pyprf/analysis/cython_leastsquares_two.pyx'),
       include_dirs=[np.get_include()])
+
+# Compile the cython code for 2D Gaussian convolution of pRF model time
+# courses:
+setup(ext_modules=cythonize('pyprf/analysis/cython_prf_convolve.pyx'),
+      include_dirs=[np.get_include()])
