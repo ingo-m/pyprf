@@ -64,8 +64,8 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
 
     Returns
     -------
-    aryPrfTc : np.array
-        3D numpy array with pRF model time courses, shape:
+    aryPrfTcConv : np.array
+        3D numpy array with convolved pRF model time courses, shape:
         aryPrfTc[varNumMdls, varNumCon, varNumVol].
 
     Notes
@@ -97,14 +97,22 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
     # Number of volumes:
     varNumVol = int(aryPixConv.shape[3])
 
-    # Array for result - 3D numpy array with pRF model time courses:
+    # Temporary array for result - 3D numpy array with pRF model time courses:
     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTc = np.zeros((varNumMdls,
                                                                varNumCon,
                                                                varNumVol),
                                                               dtype=np.float32)
 
-    # Memory view on array for results (convolved pRF time courses):
+    # Memory view on temporary array for results (will be passed into cdef):
     cdef float[:, :, :] aryPrfTc_view = aryPrfTc
+
+    # Temporary array for convolution result - 3D numpy array with pRF model
+    # time courses:
+    cdef np.ndarray[np.float32_t, ndim=3] aryPrfTcConv = np.zeros(
+        (varNumMdls, varNumCon, varNumVol), dtype=np.float32)
+
+    # Memory view on temporary array for results (convolved pRF time courses):
+    cdef float[:, :, :] aryPrfTcConv_view = aryPrfTcConv
 
     # Array for Gaussian models (will be updated on each iteration):
     cdef np.ndarray[np.float32_t, ndim=2] aryGauss = np.zeros((varNumX,
@@ -127,25 +135,25 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
     # Memory view on array for pRF model parameters:
     cdef float[:, :] aryMdlParams_view = aryMdlParams
 
-    # Call optimised cdef function for calculation of residuals:
-    aryPrfTc_view = cy_prf_conv(aryX_view,
-                                aryY_view,
-                                aryMdlParams_view,
-                                aryPixConv_view,
-                                aryPrfTc_view,
-                                aryGauss_view,
-                                aryTmp_view,
-                                varNumMdls,
-                                varNumCon,
-                                varNumVol,
-                                varNumX,
-                                varNumY)
+    # Call optimised cdef function for 2D Gaussian convolution:
+    aryPrfTcConv_view = cy_prf_conv(aryX_view,
+                                    aryY_view,
+                                    aryMdlParams_view,
+                                    aryPixConv_view,
+                                    aryPrfTc_view,
+                                    aryGauss_view,
+                                    aryTmp_view,
+                                    varNumMdls,
+                                    varNumCon,
+                                    varNumVol,
+                                    varNumX,
+                                    varNumY)
 
     # Convert memory view to numpy array before returning it. Shape:
     # aryPrfTc[idxMdl, idxCon, idxVol].
-    aryPrfTc = np.asarray(aryPrfTc_view)
+    aryPrfTcConv = np.asarray(aryPrfTcConv_view)
 
-    return aryPrfTc
+    return aryPrfTcConv
 # *****************************************************************************
 
 

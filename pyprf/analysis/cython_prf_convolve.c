@@ -2383,6 +2383,8 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
   __Pyx_memviewslice __pyx_v_aryY_view = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyArrayObject *__pyx_v_aryPrfTc = 0;
   __Pyx_memviewslice __pyx_v_aryPrfTc_view = { 0, 0, { 0 }, { 0 }, { 0 } };
+  PyArrayObject *__pyx_v_aryPrfTcConv = 0;
+  __Pyx_memviewslice __pyx_v_aryPrfTcConv_view = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyArrayObject *__pyx_v_aryGauss = 0;
   __Pyx_memviewslice __pyx_v_aryGauss_view = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyArrayObject *__pyx_v_aryTmp = 0;
@@ -2396,6 +2398,8 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
   __Pyx_Buffer __pyx_pybuffer_aryPixConv;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_aryPrfTc;
   __Pyx_Buffer __pyx_pybuffer_aryPrfTc;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_aryPrfTcConv;
+  __Pyx_Buffer __pyx_pybuffer_aryPrfTcConv;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_aryTmp;
   __Pyx_Buffer __pyx_pybuffer_aryTmp;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_aryX;
@@ -2415,15 +2419,20 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
   __Pyx_memviewslice __pyx_t_9 = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyArrayObject *__pyx_t_10 = NULL;
   PyArrayObject *__pyx_t_11 = NULL;
-  int __pyx_t_12;
-  PyObject *__pyx_t_13 = NULL;
+  PyArrayObject *__pyx_t_12 = NULL;
+  int __pyx_t_13;
   PyObject *__pyx_t_14 = NULL;
   PyObject *__pyx_t_15 = NULL;
+  PyObject *__pyx_t_16 = NULL;
   __Pyx_RefNannySetupContext("prf_conv", 0);
   __pyx_pybuffer_aryPrfTc.pybuffer.buf = NULL;
   __pyx_pybuffer_aryPrfTc.refcount = 0;
   __pyx_pybuffernd_aryPrfTc.data = NULL;
   __pyx_pybuffernd_aryPrfTc.rcbuffer = &__pyx_pybuffer_aryPrfTc;
+  __pyx_pybuffer_aryPrfTcConv.pybuffer.buf = NULL;
+  __pyx_pybuffer_aryPrfTcConv.refcount = 0;
+  __pyx_pybuffernd_aryPrfTcConv.data = NULL;
+  __pyx_pybuffernd_aryPrfTcConv.rcbuffer = &__pyx_pybuffer_aryPrfTcConv;
   __pyx_pybuffer_aryGauss.pybuffer.buf = NULL;
   __pyx_pybuffer_aryGauss.refcount = 0;
   __pyx_pybuffernd_aryGauss.data = NULL;
@@ -2711,13 +2720,13 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
  *     # Number of volumes:
  *     varNumVol = int(aryPixConv.shape[3])             # <<<<<<<<<<<<<<
  * 
- *     # Array for result - 3D numpy array with pRF model time courses:
+ *     # Temporary array for result - 3D numpy array with pRF model time courses:
  */
   __pyx_v_varNumVol = ((unsigned long)(__pyx_v_aryPixConv->dimensions[3]));
 
   /* "pyprf/analysis/cython_prf_convolve.pyx":101
  * 
- *     # Array for result - 3D numpy array with pRF model time courses:
+ *     # Temporary array for result - 3D numpy array with pRF model time courses:
  *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTc = np.zeros((varNumMdls,             # <<<<<<<<<<<<<<
  *                                                                varNumCon,
  *                                                                varNumVol),
@@ -2731,7 +2740,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
   __Pyx_GOTREF(__pyx_t_1);
 
   /* "pyprf/analysis/cython_prf_convolve.pyx":102
- *     # Array for result - 3D numpy array with pRF model time courses:
+ *     # Temporary array for result - 3D numpy array with pRF model time courses:
  *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTc = np.zeros((varNumMdls,
  *                                                                varNumCon,             # <<<<<<<<<<<<<<
  *                                                                varNumVol),
@@ -2752,7 +2761,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
 
   /* "pyprf/analysis/cython_prf_convolve.pyx":101
  * 
- *     # Array for result - 3D numpy array with pRF model time courses:
+ *     # Temporary array for result - 3D numpy array with pRF model time courses:
  *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTc = np.zeros((varNumMdls,             # <<<<<<<<<<<<<<
  *                                                                varNumCon,
  *                                                                varNumVol),
@@ -2779,7 +2788,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
  *                                                                varNumVol),
  *                                                               dtype=np.float32)             # <<<<<<<<<<<<<<
  * 
- *     # Memory view on array for results (convolved pRF time courses):
+ *     # Memory view on temporary array for results (will be passed into cdef):
  */
   __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
@@ -2793,7 +2802,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
 
   /* "pyprf/analysis/cython_prf_convolve.pyx":101
  * 
- *     # Array for result - 3D numpy array with pRF model time courses:
+ *     # Temporary array for result - 3D numpy array with pRF model time courses:
  *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTc = np.zeros((varNumMdls,             # <<<<<<<<<<<<<<
  *                                                                varNumCon,
  *                                                                varNumVol),
@@ -2819,10 +2828,10 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
 
   /* "pyprf/analysis/cython_prf_convolve.pyx":107
  * 
- *     # Memory view on array for results (convolved pRF time courses):
+ *     # Memory view on temporary array for results (will be passed into cdef):
  *     cdef float[:, :, :] aryPrfTc_view = aryPrfTc             # <<<<<<<<<<<<<<
  * 
- *     # Array for Gaussian models (will be updated on each iteration):
+ *     # Temporary array for convolution result - 3D numpy array with pRF model
  */
   __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_aryPrfTc));
   if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 107, __pyx_L1_error)
@@ -2830,96 +2839,203 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":110
+  /* "pyprf/analysis/cython_prf_convolve.pyx":111
+ *     # Temporary array for convolution result - 3D numpy array with pRF model
+ *     # time courses:
+ *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTcConv = np.zeros(             # <<<<<<<<<<<<<<
+ *         (varNumMdls, varNumCon, varNumVol), dtype=np.float32)
+ * 
+ */
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "pyprf/analysis/cython_prf_convolve.pyx":112
+ *     # time courses:
+ *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTcConv = np.zeros(
+ *         (varNumMdls, varNumCon, varNumVol), dtype=np.float32)             # <<<<<<<<<<<<<<
+ * 
+ *     # Memory view on temporary array for results (convolved pRF time courses):
+ */
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_long(__pyx_v_varNumMdls); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_4 = __Pyx_PyInt_From_unsigned_long(__pyx_v_varNumCon); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_long(__pyx_v_varNumVol); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_t_2);
+  __pyx_t_1 = 0;
+  __pyx_t_4 = 0;
+  __pyx_t_2 = 0;
+
+  /* "pyprf/analysis/cython_prf_convolve.pyx":111
+ *     # Temporary array for convolution result - 3D numpy array with pRF model
+ *     # time courses:
+ *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTcConv = np.zeros(             # <<<<<<<<<<<<<<
+ *         (varNumMdls, varNumCon, varNumVol), dtype=np.float32)
+ * 
+ */
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_5);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_5);
+  __pyx_t_5 = 0;
+
+  /* "pyprf/analysis/cython_prf_convolve.pyx":112
+ *     # time courses:
+ *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTcConv = np.zeros(
+ *         (varNumMdls, varNumCon, varNumVol), dtype=np.float32)             # <<<<<<<<<<<<<<
+ * 
+ *     # Memory view on temporary array for results (convolved pRF time courses):
+ */
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float32); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 112, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "pyprf/analysis/cython_prf_convolve.pyx":111
+ *     # Temporary array for convolution result - 3D numpy array with pRF model
+ *     # time courses:
+ *     cdef np.ndarray[np.float32_t, ndim=3] aryPrfTcConv = np.zeros(             # <<<<<<<<<<<<<<
+ *         (varNumMdls, varNumCon, varNumVol), dtype=np.float32)
+ * 
+ */
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 111, __pyx_L1_error)
+  __pyx_t_10 = ((PyArrayObject *)__pyx_t_1);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer, (PyObject*)__pyx_t_10, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
+      __pyx_v_aryPrfTcConv = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 111, __pyx_L1_error)
+    } else {__pyx_pybuffernd_aryPrfTcConv.diminfo[0].strides = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_aryPrfTcConv.diminfo[0].shape = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_aryPrfTcConv.diminfo[1].strides = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_aryPrfTcConv.diminfo[1].shape = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_aryPrfTcConv.diminfo[2].strides = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_aryPrfTcConv.diminfo[2].shape = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.shape[2];
+    }
+  }
+  __pyx_t_10 = 0;
+  __pyx_v_aryPrfTcConv = ((PyArrayObject *)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "pyprf/analysis/cython_prf_convolve.pyx":115
+ * 
+ *     # Memory view on temporary array for results (convolved pRF time courses):
+ *     cdef float[:, :, :] aryPrfTcConv_view = aryPrfTcConv             # <<<<<<<<<<<<<<
+ * 
+ *     # Array for Gaussian models (will be updated on each iteration):
+ */
+  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_aryPrfTcConv));
+  if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 115, __pyx_L1_error)
+  __pyx_v_aryPrfTcConv_view = __pyx_t_9;
+  __pyx_t_9.memview = NULL;
+  __pyx_t_9.data = NULL;
+
+  /* "pyprf/analysis/cython_prf_convolve.pyx":118
  * 
  *     # Array for Gaussian models (will be updated on each iteration):
  *     cdef np.ndarray[np.float32_t, ndim=2] aryGauss = np.zeros((varNumX,             # <<<<<<<<<<<<<<
  *                                                                varNumY),
  *                                                               dtype=np.float32)
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 118, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 110, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 118, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_varNumX); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_varNumX); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 118, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":111
+  /* "pyprf/analysis/cython_prf_convolve.pyx":119
  *     # Array for Gaussian models (will be updated on each iteration):
  *     cdef np.ndarray[np.float32_t, ndim=2] aryGauss = np.zeros((varNumX,
  *                                                                varNumY),             # <<<<<<<<<<<<<<
  *                                                               dtype=np.float32)
  * 
  */
-  __pyx_t_4 = __Pyx_PyInt_From_unsigned_int(__pyx_v_varNumY); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 111, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_varNumY); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 119, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":110
+  /* "pyprf/analysis/cython_prf_convolve.pyx":118
  * 
  *     # Array for Gaussian models (will be updated on each iteration):
  *     cdef np.ndarray[np.float32_t, ndim=2] aryGauss = np.zeros((varNumX,             # <<<<<<<<<<<<<<
  *                                                                varNumY),
  *                                                               dtype=np.float32)
  */
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 110, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 118, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_4);
-  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_4);
-  __pyx_t_1 = 0;
-  __pyx_t_4 = 0;
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 110, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_2);
-  PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2);
+  __pyx_t_1 = 0;
   __pyx_t_2 = 0;
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 118, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_3);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
+  __pyx_t_3 = 0;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":112
+  /* "pyprf/analysis/cython_prf_convolve.pyx":120
  *     cdef np.ndarray[np.float32_t, ndim=2] aryGauss = np.zeros((varNumX,
  *                                                                varNumY),
  *                                                               dtype=np.float32)             # <<<<<<<<<<<<<<
  * 
  *     # Memory view on array for Gaussian models:
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 112, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float32); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 112, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float32); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 112, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 120, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":110
+  /* "pyprf/analysis/cython_prf_convolve.pyx":118
  * 
  *     # Array for Gaussian models (will be updated on each iteration):
  *     cdef np.ndarray[np.float32_t, ndim=2] aryGauss = np.zeros((varNumX,             # <<<<<<<<<<<<<<
  *                                                                varNumY),
  *                                                               dtype=np.float32)
  */
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 110, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 118, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 110, __pyx_L1_error)
-  __pyx_t_10 = ((PyArrayObject *)__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 118, __pyx_L1_error)
+  __pyx_t_11 = ((PyArrayObject *)__pyx_t_4);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryGauss.rcbuffer->pybuffer, (PyObject*)__pyx_t_10, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryGauss.rcbuffer->pybuffer, (PyObject*)__pyx_t_11, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {
       __pyx_v_aryGauss = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_aryGauss.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 110, __pyx_L1_error)
+      __PYX_ERR(0, 118, __pyx_L1_error)
     } else {__pyx_pybuffernd_aryGauss.diminfo[0].strides = __pyx_pybuffernd_aryGauss.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_aryGauss.diminfo[0].shape = __pyx_pybuffernd_aryGauss.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_aryGauss.diminfo[1].strides = __pyx_pybuffernd_aryGauss.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_aryGauss.diminfo[1].shape = __pyx_pybuffernd_aryGauss.rcbuffer->pybuffer.shape[1];
     }
   }
-  __pyx_t_10 = 0;
-  __pyx_v_aryGauss = ((PyArrayObject *)__pyx_t_5);
-  __pyx_t_5 = 0;
+  __pyx_t_11 = 0;
+  __pyx_v_aryGauss = ((PyArrayObject *)__pyx_t_4);
+  __pyx_t_4 = 0;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":115
+  /* "pyprf/analysis/cython_prf_convolve.pyx":123
  * 
  *     # Memory view on array for Gaussian models:
  *     cdef float[:, :] aryGauss_view = aryGauss             # <<<<<<<<<<<<<<
@@ -2927,114 +3043,114 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
  *     # Array for intermediate results (will be updated on each iteration):
  */
   __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(((PyObject *)__pyx_v_aryGauss));
-  if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(0, 115, __pyx_L1_error)
+  if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(0, 123, __pyx_L1_error)
   __pyx_v_aryGauss_view = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":118
+  /* "pyprf/analysis/cython_prf_convolve.pyx":126
  * 
  *     # Array for intermediate results (will be updated on each iteration):
  *     cdef np.ndarray[np.float32_t, ndim=3] aryTmp = np.zeros((varNumX,             # <<<<<<<<<<<<<<
  *                                                              varNumY,
  *                                                              varNumVol),
  */
-  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 118, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 118, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyInt_From_unsigned_int(__pyx_v_varNumX); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 118, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyInt_From_unsigned_int(__pyx_v_varNumX); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":119
+  /* "pyprf/analysis/cython_prf_convolve.pyx":127
  *     # Array for intermediate results (will be updated on each iteration):
  *     cdef np.ndarray[np.float32_t, ndim=3] aryTmp = np.zeros((varNumX,
  *                                                              varNumY,             # <<<<<<<<<<<<<<
  *                                                              varNumVol),
  *                                                             dtype=np.float32)
  */
-  __pyx_t_4 = __Pyx_PyInt_From_unsigned_int(__pyx_v_varNumY); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_varNumY); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 127, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":120
+  /* "pyprf/analysis/cython_prf_convolve.pyx":128
  *     cdef np.ndarray[np.float32_t, ndim=3] aryTmp = np.zeros((varNumX,
  *                                                              varNumY,
  *                                                              varNumVol),             # <<<<<<<<<<<<<<
  *                                                             dtype=np.float32)
  * 
  */
-  __pyx_t_3 = __Pyx_PyInt_From_unsigned_long(__pyx_v_varNumVol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 120, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyInt_From_unsigned_long(__pyx_v_varNumVol); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 128, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":118
+  /* "pyprf/analysis/cython_prf_convolve.pyx":126
  * 
  *     # Array for intermediate results (will be updated on each iteration):
  *     cdef np.ndarray[np.float32_t, ndim=3] aryTmp = np.zeros((varNumX,             # <<<<<<<<<<<<<<
  *                                                              varNumY,
  *                                                              varNumVol),
  */
-  __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 118, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_5);
-  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_4);
-  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_4);
-  __Pyx_GIVEREF(__pyx_t_3);
-  PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_t_3);
-  __pyx_t_5 = 0;
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_5);
+  PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_t_5);
   __pyx_t_4 = 0;
-  __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 118, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = 0;
+  __pyx_t_5 = 0;
+  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":121
+  /* "pyprf/analysis/cython_prf_convolve.pyx":129
  *                                                              varNumY,
  *                                                              varNumVol),
  *                                                             dtype=np.float32)             # <<<<<<<<<<<<<<
  * 
  *     # Memory view on array for intermediate results:
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 121, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 129, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 121, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_float32); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 129, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float32); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 121, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(0, 121, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":118
+  /* "pyprf/analysis/cython_prf_convolve.pyx":126
  * 
  *     # Array for intermediate results (will be updated on each iteration):
  *     cdef np.ndarray[np.float32_t, ndim=3] aryTmp = np.zeros((varNumX,             # <<<<<<<<<<<<<<
  *                                                              varNumY,
  *                                                              varNumVol),
  */
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 118, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 118, __pyx_L1_error)
-  __pyx_t_11 = ((PyArrayObject *)__pyx_t_5);
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 126, __pyx_L1_error)
+  __pyx_t_12 = ((PyArrayObject *)__pyx_t_4);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryTmp.rcbuffer->pybuffer, (PyObject*)__pyx_t_11, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryTmp.rcbuffer->pybuffer, (PyObject*)__pyx_t_12, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_aryTmp = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_aryTmp.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 118, __pyx_L1_error)
+      __PYX_ERR(0, 126, __pyx_L1_error)
     } else {__pyx_pybuffernd_aryTmp.diminfo[0].strides = __pyx_pybuffernd_aryTmp.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_aryTmp.diminfo[0].shape = __pyx_pybuffernd_aryTmp.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_aryTmp.diminfo[1].strides = __pyx_pybuffernd_aryTmp.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_aryTmp.diminfo[1].shape = __pyx_pybuffernd_aryTmp.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_aryTmp.diminfo[2].strides = __pyx_pybuffernd_aryTmp.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_aryTmp.diminfo[2].shape = __pyx_pybuffernd_aryTmp.rcbuffer->pybuffer.shape[2];
     }
   }
-  __pyx_t_11 = 0;
-  __pyx_v_aryTmp = ((PyArrayObject *)__pyx_t_5);
-  __pyx_t_5 = 0;
+  __pyx_t_12 = 0;
+  __pyx_v_aryTmp = ((PyArrayObject *)__pyx_t_4);
+  __pyx_t_4 = 0;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":124
+  /* "pyprf/analysis/cython_prf_convolve.pyx":132
  * 
  *     # Memory view on array for intermediate results:
  *     cdef float[:, :, :] aryTmp_view = aryTmp             # <<<<<<<<<<<<<<
@@ -3042,130 +3158,130 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
  * 
  */
   __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_aryTmp));
-  if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 124, __pyx_L1_error)
+  if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 132, __pyx_L1_error)
   __pyx_v_aryTmp_view = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":128
+  /* "pyprf/analysis/cython_prf_convolve.pyx":136
  * 
  *     # Memory view on array for pRF model parameters:
  *     cdef float[:, :] aryMdlParams_view = aryMdlParams             # <<<<<<<<<<<<<<
  * 
- *     # Call optimised cdef function for calculation of residuals:
+ *     # Call optimised cdef function for 2D Gaussian convolution:
  */
   __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(((PyObject *)__pyx_v_aryMdlParams));
-  if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(0, 128, __pyx_L1_error)
+  if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(0, 136, __pyx_L1_error)
   __pyx_v_aryMdlParams_view = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":131
+  /* "pyprf/analysis/cython_prf_convolve.pyx":139
  * 
- *     # Call optimised cdef function for calculation of residuals:
- *     aryPrfTc_view = cy_prf_conv(aryX_view,             # <<<<<<<<<<<<<<
- *                                 aryY_view,
- *                                 aryMdlParams_view,
+ *     # Call optimised cdef function for 2D Gaussian convolution:
+ *     aryPrfTcConv_view = cy_prf_conv(aryX_view,             # <<<<<<<<<<<<<<
+ *                                     aryY_view,
+ *                                     aryMdlParams_view,
  */
-  __pyx_t_9 = __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_conv(__pyx_v_aryX_view, __pyx_v_aryY_view, __pyx_v_aryMdlParams_view, __pyx_v_aryPixConv_view, __pyx_v_aryPrfTc_view, __pyx_v_aryGauss_view, __pyx_v_aryTmp_view, __pyx_v_varNumMdls, __pyx_v_varNumCon, __pyx_v_varNumVol, __pyx_v_varNumX, __pyx_v_varNumY); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 131, __pyx_L1_error)
-  __PYX_XDEC_MEMVIEW(&__pyx_v_aryPrfTc_view, 1);
-  __pyx_v_aryPrfTc_view = __pyx_t_9;
+  __pyx_t_9 = __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_conv(__pyx_v_aryX_view, __pyx_v_aryY_view, __pyx_v_aryMdlParams_view, __pyx_v_aryPixConv_view, __pyx_v_aryPrfTc_view, __pyx_v_aryGauss_view, __pyx_v_aryTmp_view, __pyx_v_varNumMdls, __pyx_v_varNumCon, __pyx_v_varNumVol, __pyx_v_varNumX, __pyx_v_varNumY); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __PYX_XDEC_MEMVIEW(&__pyx_v_aryPrfTcConv_view, 1);
+  __pyx_v_aryPrfTcConv_view = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":146
+  /* "pyprf/analysis/cython_prf_convolve.pyx":154
  *     # Convert memory view to numpy array before returning it. Shape:
  *     # aryPrfTc[idxMdl, idxCon, idxVol].
- *     aryPrfTc = np.asarray(aryPrfTc_view)             # <<<<<<<<<<<<<<
+ *     aryPrfTcConv = np.asarray(aryPrfTcConv_view)             # <<<<<<<<<<<<<<
  * 
- *     return aryPrfTc
+ *     return aryPrfTcConv
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 146, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 154, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 146, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_asarray); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 154, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_aryPrfTc_view, 3, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 146, __pyx_L1_error)
+  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_aryPrfTcConv_view, 3, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 154, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
+  __pyx_t_3 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_5);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_3);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __Pyx_DECREF_SET(__pyx_t_5, function);
     }
   }
-  if (!__pyx_t_2) {
-    __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 146, __pyx_L1_error)
+  if (!__pyx_t_3) {
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 154, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_GOTREF(__pyx_t_4);
   } else {
     #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_1};
-      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 146, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_5);
+    if (PyFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_1};
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 154, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     } else
     #endif
     #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_1};
-      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 146, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_5);
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_1};
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 154, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 146, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
+      __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 154, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_GIVEREF(__pyx_t_1);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_1);
+      PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_1);
       __pyx_t_1 = 0;
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 146, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_2, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 154, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     }
   }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 146, __pyx_L1_error)
-  __pyx_t_8 = ((PyArrayObject *)__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 154, __pyx_L1_error)
+  __pyx_t_10 = ((PyArrayObject *)__pyx_t_4);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer);
-    __pyx_t_12 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack);
-    if (unlikely(__pyx_t_12 < 0)) {
-      PyErr_Fetch(&__pyx_t_13, &__pyx_t_14, &__pyx_t_15);
-      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer, (PyObject*)__pyx_v_aryPrfTc, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
-        Py_XDECREF(__pyx_t_13); Py_XDECREF(__pyx_t_14); Py_XDECREF(__pyx_t_15);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer);
+    __pyx_t_13 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer, (PyObject*)__pyx_t_10, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack);
+    if (unlikely(__pyx_t_13 < 0)) {
+      PyErr_Fetch(&__pyx_t_14, &__pyx_t_15, &__pyx_t_16);
+      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer, (PyObject*)__pyx_v_aryPrfTcConv, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
+        Py_XDECREF(__pyx_t_14); Py_XDECREF(__pyx_t_15); Py_XDECREF(__pyx_t_16);
         __Pyx_RaiseBufferFallbackError();
       } else {
-        PyErr_Restore(__pyx_t_13, __pyx_t_14, __pyx_t_15);
+        PyErr_Restore(__pyx_t_14, __pyx_t_15, __pyx_t_16);
       }
-      __pyx_t_13 = __pyx_t_14 = __pyx_t_15 = 0;
+      __pyx_t_14 = __pyx_t_15 = __pyx_t_16 = 0;
     }
-    __pyx_pybuffernd_aryPrfTc.diminfo[0].strides = __pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_aryPrfTc.diminfo[0].shape = __pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_aryPrfTc.diminfo[1].strides = __pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_aryPrfTc.diminfo[1].shape = __pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_aryPrfTc.diminfo[2].strides = __pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_aryPrfTc.diminfo[2].shape = __pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer.shape[2];
-    if (unlikely(__pyx_t_12 < 0)) __PYX_ERR(0, 146, __pyx_L1_error)
+    __pyx_pybuffernd_aryPrfTcConv.diminfo[0].strides = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_aryPrfTcConv.diminfo[0].shape = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_aryPrfTcConv.diminfo[1].strides = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_aryPrfTcConv.diminfo[1].shape = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_aryPrfTcConv.diminfo[2].strides = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_aryPrfTcConv.diminfo[2].shape = __pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer.shape[2];
+    if (unlikely(__pyx_t_13 < 0)) __PYX_ERR(0, 154, __pyx_L1_error)
   }
-  __pyx_t_8 = 0;
-  __Pyx_DECREF_SET(__pyx_v_aryPrfTc, ((PyArrayObject *)__pyx_t_5));
-  __pyx_t_5 = 0;
+  __pyx_t_10 = 0;
+  __Pyx_DECREF_SET(__pyx_v_aryPrfTcConv, ((PyArrayObject *)__pyx_t_4));
+  __pyx_t_4 = 0;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":148
- *     aryPrfTc = np.asarray(aryPrfTc_view)
+  /* "pyprf/analysis/cython_prf_convolve.pyx":156
+ *     aryPrfTcConv = np.asarray(aryPrfTcConv_view)
  * 
- *     return aryPrfTc             # <<<<<<<<<<<<<<
+ *     return aryPrfTcConv             # <<<<<<<<<<<<<<
  * # *****************************************************************************
  * 
  */
   __Pyx_XDECREF(((PyObject *)__pyx_r));
-  __Pyx_INCREF(((PyObject *)__pyx_v_aryPrfTc));
-  __pyx_r = ((PyArrayObject *)__pyx_v_aryPrfTc);
+  __Pyx_INCREF(((PyObject *)__pyx_v_aryPrfTcConv));
+  __pyx_r = ((PyArrayObject *)__pyx_v_aryPrfTcConv);
   goto __pyx_L0;
 
   /* "pyprf/analysis/cython_prf_convolve.pyx":38
@@ -3194,6 +3310,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryMdlParams.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryPixConv.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryTmp.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryX.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryY.rcbuffer->pybuffer);
@@ -3206,6 +3323,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryMdlParams.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryPixConv.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryPrfTc.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryPrfTcConv.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryTmp.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryX.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_aryY.rcbuffer->pybuffer);
@@ -3215,6 +3333,8 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
   __PYX_XDEC_MEMVIEW(&__pyx_v_aryY_view, 1);
   __Pyx_XDECREF((PyObject *)__pyx_v_aryPrfTc);
   __PYX_XDEC_MEMVIEW(&__pyx_v_aryPrfTc_view, 1);
+  __Pyx_XDECREF((PyObject *)__pyx_v_aryPrfTcConv);
+  __PYX_XDEC_MEMVIEW(&__pyx_v_aryPrfTcConv_view, 1);
   __Pyx_XDECREF((PyObject *)__pyx_v_aryGauss);
   __PYX_XDEC_MEMVIEW(&__pyx_v_aryGauss_view, 1);
   __Pyx_XDECREF((PyObject *)__pyx_v_aryTmp);
@@ -3227,7 +3347,7 @@ static PyArrayObject *__pyx_f_5pyprf_8analysis_19cython_prf_convolve_prf_conv(Py
 
 /* Python wrapper */
 static PyObject *__pyx_pw_5pyprf_8analysis_19cython_prf_convolve_1prf_conv(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_5pyprf_8analysis_19cython_prf_convolve_prf_conv[] = "\n    Cythonised calculation of pRF model time courses.\n\n    Parameters\n    ----------\n    aryX : np.array\n        2D array meshgrid array, representing x dimension of the visual field.\n        Can be created with `scipy.mgrid`.\n    aryY : np.array\n        2D array meshgrid array, representing y dimension of the visual field.\n        Can be created with `scipy.mgrid`.\n    aryMdlParams : np.array\n        2D numpy array containing the parameters for the pRF models to be\n        created. Dimensionality: `aryMdlParams[model-ID, parameter-value]`.\n        For each model there are four values: (0) an index starting from zero,\n        (1) the x-position, (2) the y-position, and (3) the standard deviation.\n        Parameters 1, 2 , and 3 are in units of the upsampled visual space.\n    aryPixConv : np.array\n        4D numpy array containing the pixel-wise, HRF-convolved design matrix,\n        with the following structure: `aryPixConv[x-pixels, y-pixels,\n        conditions, volumes]`.\n\n    Returns\n    -------\n    aryPrfTc : np.array\n        3D numpy array with pRF model time courses, shape:\n        aryPrfTc[varNumMdls, varNumCon, varNumVol].\n\n    Notes\n    -----\n    Cythonised 2D convolution of model time courses with Gaussian pRF model.\n    ";
+static char __pyx_doc_5pyprf_8analysis_19cython_prf_convolve_prf_conv[] = "\n    Cythonised calculation of pRF model time courses.\n\n    Parameters\n    ----------\n    aryX : np.array\n        2D array meshgrid array, representing x dimension of the visual field.\n        Can be created with `scipy.mgrid`.\n    aryY : np.array\n        2D array meshgrid array, representing y dimension of the visual field.\n        Can be created with `scipy.mgrid`.\n    aryMdlParams : np.array\n        2D numpy array containing the parameters for the pRF models to be\n        created. Dimensionality: `aryMdlParams[model-ID, parameter-value]`.\n        For each model there are four values: (0) an index starting from zero,\n        (1) the x-position, (2) the y-position, and (3) the standard deviation.\n        Parameters 1, 2 , and 3 are in units of the upsampled visual space.\n    aryPixConv : np.array\n        4D numpy array containing the pixel-wise, HRF-convolved design matrix,\n        with the following structure: `aryPixConv[x-pixels, y-pixels,\n        conditions, volumes]`.\n\n    Returns\n    -------\n    aryPrfTcConv : np.array\n        3D numpy array with convolved pRF model time courses, shape:\n        aryPrfTc[varNumMdls, varNumCon, varNumVol].\n\n    Notes\n    -----\n    Cythonised 2D convolution of model time courses with Gaussian pRF model.\n    ";
 static PyObject *__pyx_pw_5pyprf_8analysis_19cython_prf_convolve_1prf_conv(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_aryX = 0;
   PyArrayObject *__pyx_v_aryY = 0;
@@ -3399,7 +3519,7 @@ static PyObject *__pyx_pf_5pyprf_8analysis_19cython_prf_convolve_prf_conv(CYTHON
   return __pyx_r;
 }
 
-/* "pyprf/analysis/cython_prf_convolve.pyx":158
+/* "pyprf/analysis/cython_prf_convolve.pyx":166
  * # aryPixConv[x-pixels, y-pixels, conditions, volumes]
  * 
  * cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,             # <<<<<<<<<<<<<<
@@ -3464,7 +3584,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
   size_t __pyx_t_41;
   __Pyx_RefNannySetupContext("cy_prf_conv", 0);
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":174
+  /* "pyprf/analysis/cython_prf_convolve.pyx":182
  *     cdef unsigned int idxX, idxY
  * 
  *     varPi = 3.14159265             # <<<<<<<<<<<<<<
@@ -3473,7 +3593,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
  */
   __pyx_v_varPi = 3.14159265;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":177
+  /* "pyprf/analysis/cython_prf_convolve.pyx":185
  * 
  *     # Loop through conditions and volumes, and call cdef:
  *     for idxCon in range(varNumCon):             # <<<<<<<<<<<<<<
@@ -3484,7 +3604,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_idxCon = __pyx_t_2;
 
-    /* "pyprf/analysis/cython_prf_convolve.pyx":180
+    /* "pyprf/analysis/cython_prf_convolve.pyx":188
  * 
  *         # Loop through combinations of model parameters:
  *         for idxMdl in range(varNumMdls):             # <<<<<<<<<<<<<<
@@ -3495,7 +3615,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_idxMdl = __pyx_t_4;
 
-      /* "pyprf/analysis/cython_prf_convolve.pyx":183
+      /* "pyprf/analysis/cython_prf_convolve.pyx":191
  * 
  *             # Spatial parameters of current model:
  *             varPosX = aryMdlParams_view[idxMdl, 1]             # <<<<<<<<<<<<<<
@@ -3512,11 +3632,11 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
       } else if (unlikely(__pyx_t_6 >= __pyx_v_aryMdlParams_view.shape[1])) __pyx_t_7 = 1;
       if (unlikely(__pyx_t_7 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_7);
-        __PYX_ERR(0, 183, __pyx_L1_error)
+        __PYX_ERR(0, 191, __pyx_L1_error)
       }
       __pyx_v_varPosX = (*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryMdlParams_view.data + __pyx_t_5 * __pyx_v_aryMdlParams_view.strides[0]) ) + __pyx_t_6 * __pyx_v_aryMdlParams_view.strides[1]) )));
 
-      /* "pyprf/analysis/cython_prf_convolve.pyx":184
+      /* "pyprf/analysis/cython_prf_convolve.pyx":192
  *             # Spatial parameters of current model:
  *             varPosX = aryMdlParams_view[idxMdl, 1]
  *             varPosY = aryMdlParams_view[idxMdl, 2]             # <<<<<<<<<<<<<<
@@ -3533,11 +3653,11 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
       } else if (unlikely(__pyx_t_9 >= __pyx_v_aryMdlParams_view.shape[1])) __pyx_t_7 = 1;
       if (unlikely(__pyx_t_7 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_7);
-        __PYX_ERR(0, 184, __pyx_L1_error)
+        __PYX_ERR(0, 192, __pyx_L1_error)
       }
       __pyx_v_varPosY = (*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryMdlParams_view.data + __pyx_t_8 * __pyx_v_aryMdlParams_view.strides[0]) ) + __pyx_t_9 * __pyx_v_aryMdlParams_view.strides[1]) )));
 
-      /* "pyprf/analysis/cython_prf_convolve.pyx":185
+      /* "pyprf/analysis/cython_prf_convolve.pyx":193
  *             varPosX = aryMdlParams_view[idxMdl, 1]
  *             varPosY = aryMdlParams_view[idxMdl, 2]
  *             varSd = aryMdlParams_view[idxMdl, 3]             # <<<<<<<<<<<<<<
@@ -3554,11 +3674,11 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
       } else if (unlikely(__pyx_t_11 >= __pyx_v_aryMdlParams_view.shape[1])) __pyx_t_7 = 1;
       if (unlikely(__pyx_t_7 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_7);
-        __PYX_ERR(0, 185, __pyx_L1_error)
+        __PYX_ERR(0, 193, __pyx_L1_error)
       }
       __pyx_v_varSd = (*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryMdlParams_view.data + __pyx_t_10 * __pyx_v_aryMdlParams_view.strides[0]) ) + __pyx_t_11 * __pyx_v_aryMdlParams_view.strides[1]) )));
 
-      /* "pyprf/analysis/cython_prf_convolve.pyx":188
+      /* "pyprf/analysis/cython_prf_convolve.pyx":196
  * 
  *             # Create Gaussian pRF model:
  *             for idxX in range(varNumX):             # <<<<<<<<<<<<<<
@@ -3569,7 +3689,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
       for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
         __pyx_v_idxX = __pyx_t_13;
 
-        /* "pyprf/analysis/cython_prf_convolve.pyx":189
+        /* "pyprf/analysis/cython_prf_convolve.pyx":197
  *             # Create Gaussian pRF model:
  *             for idxX in range(varNumX):
  *                 for idxY in range(varNumY):             # <<<<<<<<<<<<<<
@@ -3580,7 +3700,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
         for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
           __pyx_v_idxY = __pyx_t_15;
 
-          /* "pyprf/analysis/cython_prf_convolve.pyx":194
+          /* "pyprf/analysis/cython_prf_convolve.pyx":202
  *                     varTmp = (
  *                       (
  *                        (aryX_view[idxX, idxY] - varPosX) ** 2             # <<<<<<<<<<<<<<
@@ -3594,10 +3714,10 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
           if (unlikely(__pyx_t_17 >= (size_t)__pyx_v_aryX_view.shape[1])) __pyx_t_7 = 1;
           if (unlikely(__pyx_t_7 != -1)) {
             __Pyx_RaiseBufferIndexError(__pyx_t_7);
-            __PYX_ERR(0, 194, __pyx_L1_error)
+            __PYX_ERR(0, 202, __pyx_L1_error)
           }
 
-          /* "pyprf/analysis/cython_prf_convolve.pyx":195
+          /* "pyprf/analysis/cython_prf_convolve.pyx":203
  *                       (
  *                        (aryX_view[idxX, idxY] - varPosX) ** 2
  *                        + (aryY_view[idxX, idxY] - varPosY) ** 2             # <<<<<<<<<<<<<<
@@ -3611,11 +3731,11 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
           if (unlikely(__pyx_t_19 >= (size_t)__pyx_v_aryY_view.shape[1])) __pyx_t_7 = 1;
           if (unlikely(__pyx_t_7 != -1)) {
             __Pyx_RaiseBufferIndexError(__pyx_t_7);
-            __PYX_ERR(0, 195, __pyx_L1_error)
+            __PYX_ERR(0, 203, __pyx_L1_error)
           }
           __pyx_t_20 = (powf(((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryX_view.data + __pyx_t_16 * __pyx_v_aryX_view.strides[0]) ) + __pyx_t_17 * __pyx_v_aryX_view.strides[1]) ))) - __pyx_v_varPosX), 2.0) + powf(((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryY_view.data + __pyx_t_18 * __pyx_v_aryY_view.strides[0]) ) + __pyx_t_19 * __pyx_v_aryY_view.strides[1]) ))) - __pyx_v_varPosY), 2.0));
 
-          /* "pyprf/analysis/cython_prf_convolve.pyx":197
+          /* "pyprf/analysis/cython_prf_convolve.pyx":205
  *                        + (aryY_view[idxX, idxY] - varPosY) ** 2
  *                        )
  *                       / (2 * (varSd ** 2))             # <<<<<<<<<<<<<<
@@ -3625,11 +3745,11 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
           __pyx_t_21 = (2.0 * powf(__pyx_v_varSd, 2.0));
           if (unlikely(__pyx_t_21 == 0)) {
             PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-            __PYX_ERR(0, 197, __pyx_L1_error)
+            __PYX_ERR(0, 205, __pyx_L1_error)
           }
           __pyx_v_varTmp = (__pyx_t_20 / __pyx_t_21);
 
-          /* "pyprf/analysis/cython_prf_convolve.pyx":202
+          /* "pyprf/analysis/cython_prf_convolve.pyx":210
  *                     # Scale Gaussian:
  *                     aryGauss_view[idxX, idxY] = (
  *                         exp(-varTmp)             # <<<<<<<<<<<<<<
@@ -3638,7 +3758,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
  */
           __pyx_t_22 = exp((-__pyx_v_varTmp));
 
-          /* "pyprf/analysis/cython_prf_convolve.pyx":203
+          /* "pyprf/analysis/cython_prf_convolve.pyx":211
  *                     aryGauss_view[idxX, idxY] = (
  *                         exp(-varTmp)
  *                         / (2 * varPi * (varSd ** 2))             # <<<<<<<<<<<<<<
@@ -3648,10 +3768,10 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
           __pyx_t_21 = ((2.0 * __pyx_v_varPi) * powf(__pyx_v_varSd, 2.0));
           if (unlikely(__pyx_t_21 == 0)) {
             PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-            __PYX_ERR(0, 203, __pyx_L1_error)
+            __PYX_ERR(0, 211, __pyx_L1_error)
           }
 
-          /* "pyprf/analysis/cython_prf_convolve.pyx":201
+          /* "pyprf/analysis/cython_prf_convolve.pyx":209
  * 
  *                     # Scale Gaussian:
  *                     aryGauss_view[idxX, idxY] = (             # <<<<<<<<<<<<<<
@@ -3665,13 +3785,13 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
           if (unlikely(__pyx_t_24 >= (size_t)__pyx_v_aryGauss_view.shape[1])) __pyx_t_7 = 1;
           if (unlikely(__pyx_t_7 != -1)) {
             __Pyx_RaiseBufferIndexError(__pyx_t_7);
-            __PYX_ERR(0, 201, __pyx_L1_error)
+            __PYX_ERR(0, 209, __pyx_L1_error)
           }
           *((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryGauss_view.data + __pyx_t_23 * __pyx_v_aryGauss_view.strides[0]) ) + __pyx_t_24 * __pyx_v_aryGauss_view.strides[1]) )) = (__pyx_t_22 / __pyx_t_21);
         }
       }
 
-      /* "pyprf/analysis/cython_prf_convolve.pyx":207
+      /* "pyprf/analysis/cython_prf_convolve.pyx":215
  * 
  *             # Multiply pixel-time courses with Gaussian pRF models:
  *             for idxVol in range(varNumVol):             # <<<<<<<<<<<<<<
@@ -3682,7 +3802,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
       for (__pyx_t_26 = 0; __pyx_t_26 < __pyx_t_25; __pyx_t_26+=1) {
         __pyx_v_idxVol = __pyx_t_26;
 
-        /* "pyprf/analysis/cython_prf_convolve.pyx":208
+        /* "pyprf/analysis/cython_prf_convolve.pyx":216
  *             # Multiply pixel-time courses with Gaussian pRF models:
  *             for idxVol in range(varNumVol):
  *                 for idxX in range(varNumX):             # <<<<<<<<<<<<<<
@@ -3693,7 +3813,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
         for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
           __pyx_v_idxX = __pyx_t_13;
 
-          /* "pyprf/analysis/cython_prf_convolve.pyx":209
+          /* "pyprf/analysis/cython_prf_convolve.pyx":217
  *             for idxVol in range(varNumVol):
  *                 for idxX in range(varNumX):
  *                     for idxY in range(varNumY):             # <<<<<<<<<<<<<<
@@ -3704,7 +3824,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
           for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
             __pyx_v_idxY = __pyx_t_15;
 
-            /* "pyprf/analysis/cython_prf_convolve.pyx":211
+            /* "pyprf/analysis/cython_prf_convolve.pyx":219
  *                     for idxY in range(varNumY):
  *                         aryTmp_view[idxX, idxY, idxVol] = (
  *                             aryPixConv_view[idxX, idxY, idxCon, idxVol]             # <<<<<<<<<<<<<<
@@ -3722,10 +3842,10 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
             if (unlikely(__pyx_t_30 >= (size_t)__pyx_v_aryPixConv_view.shape[3])) __pyx_t_7 = 3;
             if (unlikely(__pyx_t_7 != -1)) {
               __Pyx_RaiseBufferIndexError(__pyx_t_7);
-              __PYX_ERR(0, 211, __pyx_L1_error)
+              __PYX_ERR(0, 219, __pyx_L1_error)
             }
 
-            /* "pyprf/analysis/cython_prf_convolve.pyx":212
+            /* "pyprf/analysis/cython_prf_convolve.pyx":220
  *                         aryTmp_view[idxX, idxY, idxVol] = (
  *                             aryPixConv_view[idxX, idxY, idxCon, idxVol]
  *                             * aryGauss_view[idxX, idxY]             # <<<<<<<<<<<<<<
@@ -3739,10 +3859,10 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
             if (unlikely(__pyx_t_32 >= (size_t)__pyx_v_aryGauss_view.shape[1])) __pyx_t_7 = 1;
             if (unlikely(__pyx_t_7 != -1)) {
               __Pyx_RaiseBufferIndexError(__pyx_t_7);
-              __PYX_ERR(0, 212, __pyx_L1_error)
+              __PYX_ERR(0, 220, __pyx_L1_error)
             }
 
-            /* "pyprf/analysis/cython_prf_convolve.pyx":210
+            /* "pyprf/analysis/cython_prf_convolve.pyx":218
  *                 for idxX in range(varNumX):
  *                     for idxY in range(varNumY):
  *                         aryTmp_view[idxX, idxY, idxVol] = (             # <<<<<<<<<<<<<<
@@ -3758,14 +3878,14 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
             if (unlikely(__pyx_t_35 >= (size_t)__pyx_v_aryTmp_view.shape[2])) __pyx_t_7 = 2;
             if (unlikely(__pyx_t_7 != -1)) {
               __Pyx_RaiseBufferIndexError(__pyx_t_7);
-              __PYX_ERR(0, 210, __pyx_L1_error)
+              __PYX_ERR(0, 218, __pyx_L1_error)
             }
             *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryTmp_view.data + __pyx_t_33 * __pyx_v_aryTmp_view.strides[0]) ) + __pyx_t_34 * __pyx_v_aryTmp_view.strides[1]) ) + __pyx_t_35 * __pyx_v_aryTmp_view.strides[2]) )) = ((*((float *) ( /* dim=3 */ (( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryPixConv_view.data + __pyx_t_27 * __pyx_v_aryPixConv_view.strides[0]) ) + __pyx_t_28 * __pyx_v_aryPixConv_view.strides[1]) ) + __pyx_t_29 * __pyx_v_aryPixConv_view.strides[2]) ) + __pyx_t_30 * __pyx_v_aryPixConv_view.strides[3]) ))) * (*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryGauss_view.data + __pyx_t_31 * __pyx_v_aryGauss_view.strides[0]) ) + __pyx_t_32 * __pyx_v_aryGauss_view.strides[1]) ))));
           }
         }
       }
 
-      /* "pyprf/analysis/cython_prf_convolve.pyx":221
+      /* "pyprf/analysis/cython_prf_convolve.pyx":229
  *             # takes at funcGauss(); pRF models are normalised to have an
  *             # area under the curve of one when they are created.
  *             for idxVol in range(varNumVol):             # <<<<<<<<<<<<<<
@@ -3776,7 +3896,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
       for (__pyx_t_26 = 0; __pyx_t_26 < __pyx_t_25; __pyx_t_26+=1) {
         __pyx_v_idxVol = __pyx_t_26;
 
-        /* "pyprf/analysis/cython_prf_convolve.pyx":225
+        /* "pyprf/analysis/cython_prf_convolve.pyx":233
  *                 # Variable for calculation of sum (area under the
  *                 # Gaussian):
  *                 varSum = 0             # <<<<<<<<<<<<<<
@@ -3785,7 +3905,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
  */
         __pyx_v_varSum = 0.0;
 
-        /* "pyprf/analysis/cython_prf_convolve.pyx":228
+        /* "pyprf/analysis/cython_prf_convolve.pyx":236
  * 
  *                 # Loop through pixel in current volume:
  *                 for idxX in range(varNumX):             # <<<<<<<<<<<<<<
@@ -3796,7 +3916,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
         for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
           __pyx_v_idxX = __pyx_t_13;
 
-          /* "pyprf/analysis/cython_prf_convolve.pyx":229
+          /* "pyprf/analysis/cython_prf_convolve.pyx":237
  *                 # Loop through pixel in current volume:
  *                 for idxX in range(varNumX):
  *                     for idxY in range(varNumY):             # <<<<<<<<<<<<<<
@@ -3807,7 +3927,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
           for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
             __pyx_v_idxY = __pyx_t_15;
 
-            /* "pyprf/analysis/cython_prf_convolve.pyx":230
+            /* "pyprf/analysis/cython_prf_convolve.pyx":238
  *                 for idxX in range(varNumX):
  *                     for idxY in range(varNumY):
  *                         varSum += aryTmp_view[idxX, idxY, idxVol]             # <<<<<<<<<<<<<<
@@ -3823,13 +3943,13 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
             if (unlikely(__pyx_t_38 >= (size_t)__pyx_v_aryTmp_view.shape[2])) __pyx_t_7 = 2;
             if (unlikely(__pyx_t_7 != -1)) {
               __Pyx_RaiseBufferIndexError(__pyx_t_7);
-              __PYX_ERR(0, 230, __pyx_L1_error)
+              __PYX_ERR(0, 238, __pyx_L1_error)
             }
             __pyx_v_varSum = (__pyx_v_varSum + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryTmp_view.data + __pyx_t_36 * __pyx_v_aryTmp_view.strides[0]) ) + __pyx_t_37 * __pyx_v_aryTmp_view.strides[1]) ) + __pyx_t_38 * __pyx_v_aryTmp_view.strides[2]) ))));
           }
         }
 
-        /* "pyprf/analysis/cython_prf_convolve.pyx":232
+        /* "pyprf/analysis/cython_prf_convolve.pyx":240
  *                         varSum += aryTmp_view[idxX, idxY, idxVol]
  * 
  *                 aryPrfTc_view[idxMdl, idxCon, idxVol] = varSum             # <<<<<<<<<<<<<<
@@ -3845,14 +3965,14 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
         if (unlikely(__pyx_t_41 >= (size_t)__pyx_v_aryPrfTc_view.shape[2])) __pyx_t_7 = 2;
         if (unlikely(__pyx_t_7 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_7);
-          __PYX_ERR(0, 232, __pyx_L1_error)
+          __PYX_ERR(0, 240, __pyx_L1_error)
         }
         *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_aryPrfTc_view.data + __pyx_t_39 * __pyx_v_aryPrfTc_view.strides[0]) ) + __pyx_t_40 * __pyx_v_aryPrfTc_view.strides[1]) ) + __pyx_t_41 * __pyx_v_aryPrfTc_view.strides[2]) )) = __pyx_v_varSum;
       }
     }
   }
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":235
+  /* "pyprf/analysis/cython_prf_convolve.pyx":243
  * 
  *     # Return memory views:
  *     return aryPrfTc_view             # <<<<<<<<<<<<<<
@@ -3862,7 +3982,7 @@ static __Pyx_memviewslice __pyx_f_5pyprf_8analysis_19cython_prf_convolve_cy_prf_
   __pyx_r = __pyx_v_aryPrfTc_view;
   goto __pyx_L0;
 
-  /* "pyprf/analysis/cython_prf_convolve.pyx":158
+  /* "pyprf/analysis/cython_prf_convolve.pyx":166
  * # aryPixConv[x-pixels, y-pixels, conditions, volumes]
  * 
  * cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,             # <<<<<<<<<<<<<<
@@ -20092,7 +20212,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 177, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 185, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 235, __pyx_L1_error)
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 823, __pyx_L1_error)
   __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(1, 1013, __pyx_L1_error)

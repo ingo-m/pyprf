@@ -1,1 +1,3 @@
 include pyprf/analysis/cython_leastsquares.c
+include pyprf/analysis/cython_leastsquares_two.c
+include pyprf/analysis/cython_prf_convolve.c
