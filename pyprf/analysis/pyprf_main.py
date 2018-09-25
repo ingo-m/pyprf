@@ -35,8 +35,6 @@ from pyprf.analysis.model_creation_main import model_creation
 from pyprf.analysis.preprocessing_main import pre_pro_models
 from pyprf.analysis.preprocessing_main import pre_pro_func
 
-from pyprf.analysis.model_creation_timecourses import crt_prf_tcmdl
-
 
 def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     """
