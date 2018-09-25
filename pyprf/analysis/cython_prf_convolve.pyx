@@ -26,6 +26,7 @@ cimport numpy as np
 cimport cython
 from libc.math cimport pow, sqrt, exp
 
+# @cython.profile(False)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -176,11 +177,12 @@ cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,
                                 unsigned int varNumX,
                                 unsigned int varNumY):
 
-    cdef float varPosX, varPosY, varSd, varPi, varSum, varTmp
+    cdef float varPosX, varPosY, varSd, varPi, varSum, varTmp, varTwo
     cdef unsigned int idxX, idxY, idxVol, idxCon
     cdef unsigned long idxMdl
 
     varPi = 3.14159265
+    varTwo = 2.0
 
     # Loop through conditions and volumes, and call cdef:
     for idxCon in range(varNumCon):
@@ -200,16 +202,16 @@ cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,
                     # Create Gaussian:
                     varTmp = (
                       (
-                       (aryX_view[idxX, idxY] - varPosX) ** 2
-                       + (aryY_view[idxX, idxY] - varPosY) ** 2
+                       (aryX_view[idxX, idxY] - varPosX) ** varTwo
+                       + (aryY_view[idxX, idxY] - varPosY) ** varTwo
                        )
-                      / (2 * (varSd ** 2))
+                      / (varTwo * (varSd ** varTwo))
                       )
 
                     # Scale Gaussian:
                     aryGauss_view[idxX, idxY] = (
                         exp(-varTmp)
-                        / (2 * varPi * (varSd ** 2))
+                        / (varTwo * varPi * (varSd ** varTwo))
                         )
 
             # Multiply pixel-time courses with Gaussian pRF models:
