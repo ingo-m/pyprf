@@ -25,6 +25,7 @@ def setup_cython_lstsq():
 
     sp.check_output(objCmd, shell=True)
 
+    return True
 
 # if __name__ == '__main__':
 #
