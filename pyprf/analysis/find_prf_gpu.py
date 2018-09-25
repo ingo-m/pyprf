@@ -531,11 +531,16 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
                                      vecSsTot)
                            )
 
+    # Dummy array for PEs - TODO: PE retrieval for GPU.
+    #: aryBstPe[varNumVoxChnk, varNumCon].
+    aryBstPe = np.zeros((varNumVox, 1), dtype=np.float32)
+
     # Output list:
     lstOut = [idxPrc,
               vecBstXpos,
               vecBstYpos,
               vecBstSd,
-              vecBstR2]
+              vecBstR2,
+              aryBstPe]
 
     queOut.put(lstOut)

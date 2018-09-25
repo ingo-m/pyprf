@@ -255,6 +255,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     lstResYpos = [None] * cfg.varPar
     lstResSd = [None] * cfg.varPar
     lstResR2 = [None] * cfg.varPar
+    lstResPe = [None] * cfg.varPar
 
     # Put output into correct order:
     for idxRes in range(0, cfg.varPar):
@@ -267,6 +268,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         lstResYpos[varTmpIdx] = lstPrfRes[idxRes][2]
         lstResSd[varTmpIdx] = lstPrfRes[idxRes][3]
         lstResR2[varTmpIdx] = lstPrfRes[idxRes][4]
+        lstResPe[varTmpIdx] = lstPrfRes[idxRes][5]
 
     # Concatenate output vectors (into the same order as the voxels that were
     # included in the fitting):
@@ -280,12 +282,17 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         aryBstSd = np.append(aryBstSd, lstResSd[idxRes])
         aryBstR2 = np.append(aryBstR2, lstResR2[idxRes])
 
+    # Concatenate PEs, shape: aryBstPe[varNumVox, varNumCon].
+    aryBstPe = np.concatenate(lstResPe, axis=0)
+    varNumCon = aryBstPe.shape[1]
+
     # Delete unneeded large objects:
     del(lstPrfRes)
     del(lstResXpos)
     del(lstResYpos)
     del(lstResSd)
     del(lstResR2)
+    del(lstResPe)
 
     # Put results form pRF finding into array (they originally needed to be
     # saved in a list due to parallelisation). Voxels were selected for pRF
@@ -329,6 +336,39 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     del(aryPrfRes01)
     del(aryPrfRes02)
 
+
+    # ***
+
+
+    # Bring PEs into original data shape. First, account for binary (brain)
+    # mask:
+    aryPrfRes01 = np.zeros((varNumVoxMsk, varNumCon), dtype=np.float32)
+
+    # Place voxels based on low-variance exlusion:
+    aryPrfRes01[aryLgcVar, :] = aryBstPe
+
+    # Place voxels based on mask-exclusion:
+    aryPrfRes02 = np.zeros((varNumVoxTlt, varNumCon), dtype=np.float32)
+    aryPrfRes02[aryLgcMsk, :] = aryPrfRes01
+
+    # Reshape pRF finding results into original image dimensions:
+    aryBstPe = np.reshape(aryPrfRes02,
+                          [tplNiiShp[0],
+                           tplNiiShp[1],
+                           tplNiiShp[2],
+                           varNumCon])
+
+    # New shape: aryBstPe[x, y, z, varNumCon]
+
+    del(aryPrfRes01)
+    del(aryPrfRes02)
+
+
+
+    # ***
+
+
+
     # Calculate polar angle map:
     aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
                                        aryPrfRes[:, :, :, 0])
@@ -349,8 +389,8 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     print('---------Exporting results')
 
-    # Save nii results:
-    for idxOut in range(0, 6):
+    # Save spatial pRF parameters to nii:
+    for idxOut in range(6):
         # Create nii object for results:
         niiOut = nb.Nifti1Image(aryPrfRes[:, :, :, idxOut],
                                 aryAff,
@@ -358,6 +398,20 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                                 )
         # Save nii:
         strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii.gz')
+        nb.save(niiOut, strTmp)
+
+    # Save PEs to nii:
+    for idxCon in range(varNumCon):
+        # Create nii object for results:
+        niiOut = nb.Nifti1Image(aryBstPe[:, :, :, idxCon],
+                                aryAff,
+                                header=hdrMsk
+                                )
+        # Save nii:
+        strTmp = (cfg.strPathOut
+                  + '_PE_'
+                  + str(idxCon + 1).zfill(2)
+                  + '.nii.gz')
         nb.save(niiOut, strTmp)
     # *************************************************************************
 

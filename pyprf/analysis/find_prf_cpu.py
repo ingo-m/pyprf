@@ -326,11 +326,15 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                            np.divide(vecBstRes,
                                      vecSsTot))
 
+    # Reshape PEs, new shape: aryBstPe[varNumVoxChnk, varNumCon].
+    aryBstPe = aryBstPe.T
+
     # Output list:
     lstOut = [idxPrc,
               vecBstXpos,
               vecBstYpos,
               vecBstSd,
-              vecBstR2]
+              vecBstR2,
+              aryBstPe]
 
     queOut.put(lstOut)
