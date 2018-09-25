@@ -9,8 +9,8 @@ from pyprf.analysis.cython_leastsquares_setup_call import setup_cython_lstsq
 from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
 
 # Compile cython code:
-#setup_cython_lstsq()
-#setup_cython_conv()
+setup_cython_lstsq()
+setup_cython_conv()
 
 # Get directory of this file:
 strDir = os.path.dirname(os.path.abspath(__file__))
