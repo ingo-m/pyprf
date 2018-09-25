@@ -3,7 +3,7 @@
 Compile cython function for pRF finding.
 
 Call this file with the following bash command:
-    python cython_leastsquares_setup.py build_ext --inplace
+    python cython_prf_convolve_setup.py build_ext --inplace
 """
 
 # Part of py_pRF_mapping library
@@ -28,10 +28,7 @@ from Cython.Build import cythonize
 
 # print('-Compiling cython function')
 
-# Compile the cython code for model fitting with one predictor:
-setup(ext_modules=cythonize('pyprf/analysis/cython_leastsquares.pyx'),
-      include_dirs=[np.get_include()])
-
-# Compile the cython code for model fitting with two predictors:
-setup(ext_modules=cythonize('pyprf/analysis/cython_leastsquares_two.pyx'),
+# Compile the cython code for 2D Gaussian convolution of pRF model time
+# courses:
+setup(ext_modules=cythonize('pyprf/analysis/cython_prf_convolve.pyx'),
       include_dirs=[np.get_include()])
