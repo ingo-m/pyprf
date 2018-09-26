@@ -18,6 +18,15 @@ with open('README.rst') as f:
 # and only are used when a user specifically installs them using pip install
 # -r. Therefore, we pin versions here.
 
+# From the cython documentation:
+# "Note also that if you use setuptools instead of distutils, the default
+# action when running python setup.py install is to create a zipped egg file
+# which will not work with cimport for pxd files when you try to use them from
+# a dependent package. To prevent this, include zip_safe=False in the arguments
+# to setup()."
+# Source:
+# http://docs.cython.org/en/latest/src/userguide/source_files_and_compilation.html
+
 setup(name='pyprf',
       version='1.3.13',
       description=('A free & open source python tool for population receptive \
