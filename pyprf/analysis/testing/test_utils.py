@@ -5,8 +5,8 @@ from os.path import isfile, join
 import numpy as np
 from pyprf.analysis import pyprf_main
 from pyprf.analysis import utilities as util
-from pyprf.analysis.cython_leastsquares_setup_call import setup_cython_lstsq
-from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
+# from pyprf.analysis.cython_leastsquares_setup_call import setup_cython_lstsq
+# from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
 
 # Compile cython code:
 # setup_cython_conv()
@@ -14,6 +14,13 @@ from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
 
 # Get directory of this file:
 strDir = os.path.dirname(os.path.abspath(__file__))
+
+
+import os
+import subprocess as sp
+strPthHme = str(os.environ['HOME'])
+strPthTst = (strPthHme + '/testing/result')
+os.mkdir(strPthTst)
 
 
 def test_main():
@@ -59,26 +66,31 @@ def test_main():
     for strVrsn in lstVrsn:
 
         # Call main pyprf function:
-        pyprf_main.pyprf(strCsvCnfg.format(strVrsn), lgcTest=True)
+        # pyprf_main.pyprf(strCsvCnfg.format(strVrsn), lgcTest=True)
+
+        sp.call([('pyprf -config ' + strCsvCnfg)],
+                # cwd=strDir,
+                shell=True)
+
 
         # Load result - R2:
         aryTestR2, _, _ = util.load_nii(
-            (strDir + '/result/'
+            (strPthTst #+ '/result/'
              + 'pRF_test_results_{}_R2.nii.gz'.format(strVrsn)))
 
         # Load result - eccentricity:
         aryTestEcc, _, _ = util.load_nii(
-            (strDir + '/result/'
+            (strPthTst #+ '/result/'
              + 'pRF_test_results_{}_eccentricity.nii.gz'.format(strVrsn)))
 
         # Load result - polar angle:
         aryTestPol, _, _ = util.load_nii(
-            (strDir + '/result/'
+            (strPthTst #+ '/result/'
              + 'pRF_test_results_{}_polar_angle.nii.gz'.format(strVrsn)))
 
         # Load result - SD:
         aryTestSd, _, _ = util.load_nii(
-            (strDir + '/result/'
+            (strPthTst #+ '/result/'
              + 'pRF_test_results_{}_SD.nii.gz'.format(strVrsn)))
 
         # Round test results:
@@ -103,7 +115,7 @@ def test_main():
     # *** Clean up
 
     # Path of directory with results:
-    strDirRes = strDir + '/result/'
+    strDirRes = strPthTst + '/' #strDir + '/result/'
 
     # Get list of files in results directory:
     lstFls = [f for f in os.listdir(strDirRes) if isfile(join(strDirRes, f))]
