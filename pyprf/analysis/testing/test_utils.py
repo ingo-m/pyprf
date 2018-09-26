@@ -22,6 +22,7 @@ strPthHme = str(os.environ['HOME'])
 strPthTst = (strPthHme + '/testing')
 os.mkdir(strPthTst)
 strPthTst = (strPthHme + '/testing/result')
+strPthTst = (strPthHme + '/testing/result/')
 os.mkdir(strPthTst)
 
 
@@ -117,7 +118,7 @@ def test_main():
     # *** Clean up
 
     # Path of directory with results:
-    strDirRes = strPthTst + '/' #strDir + '/result/'
+    strDirRes = strPthTst  #strDir + '/result/'
 
     # Get list of files in results directory:
     lstFls = [f for f in os.listdir(strDirRes) if isfile(join(strDirRes, f))]
