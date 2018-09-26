@@ -26,4 +26,4 @@ def cython_setup_call():
 
 # if __name__ == '__main__':
 #
-#     setup_cython()
+#     cython_setup_call()

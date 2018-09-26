@@ -1,14 +1,17 @@
 """Test utility functions."""
 
+
 import os
 from os.path import isfile, join
 import numpy as np
-from pyprf.analysis import pyprf_main
-from pyprf.analysis import utilities as util
-# from pyprf.analysis.cython_setup_call import cython_setup_call
 
+# from pyprf.analysis.cython_setup_call import cython_setup_call
 # Compile cython code:
 # cython_setup_call()
+
+from pyprf.analysis import pyprf_main
+from pyprf.analysis import utilities as util
+
 
 # Get directory of this file:
 strDir = os.path.dirname(os.path.abspath(__file__))

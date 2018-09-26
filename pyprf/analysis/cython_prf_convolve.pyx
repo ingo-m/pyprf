@@ -24,12 +24,13 @@
 import numpy as np
 cimport numpy as np
 cimport cython
-from libc.math cimport pow, sqrt, exp
+from libc.math cimport sqrt, exp, pow
 
-# @cython.profile(False)
+@cython.profile(False)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+@cython.nonecheck(False)
 # *****************************************************************************
 
 
@@ -65,7 +66,7 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
 
     Returns
     -------
-    aryPrfTcConv : np.array
+    aryPrfTc : np.array
         3D numpy array with convolved pRF model time courses, shape:
         aryPrfTc[varNumMdls, varNumCon, varNumVol].
 
@@ -73,8 +74,7 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
     -----
     Cythonised 2D convolution of model time courses with Gaussian pRF model.
     """
-    cdef unsigned int varNumX, varNumY
-    cdef unsigned long varNumMdls, varNumCon, varNumVol
+    cdef unsigned int varNumX, varNumY, varNumCon, varNumVol, varNumMdls
 
     # Memory view on pixel-wise, HRF-convolved design matrix (shape:
     # aryPixConv[x-pixels, y-pixels, conditions, volumes]).
@@ -98,63 +98,37 @@ cpdef np.ndarray[np.float32_t, ndim=3] prf_conv(
     # Number of volumes:
     varNumVol = int(aryPixConv.shape[3])
 
-    # Temporary array for result - 3D numpy array with pRF model time courses:
-    cdef np.ndarray[np.float32_t, ndim=3] aryPrfTc = np.zeros((varNumMdls,
-                                                               varNumCon,
-                                                               varNumVol),
-                                                              dtype=np.float32)
-
-    # Memory view on temporary array for results (will be passed into cdef):
-    cdef float[:, :, :] aryPrfTc_view = aryPrfTc
-
-    # Temporary array for convolution result - 3D numpy array with pRF model
-    # time courses:
-    cdef np.ndarray[np.float32_t, ndim=3] aryPrfTcConv = np.zeros(
-        (varNumMdls, varNumCon, varNumVol), dtype=np.float32)
-
-    # Memory view on temporary array for results (convolved pRF time courses):
-    cdef float[:, :, :] aryPrfTcConv_view = aryPrfTcConv
-
-    # Array for Gaussian models (will be updated on each iteration):
-    cdef np.ndarray[np.float32_t, ndim=2] aryGauss = np.zeros((varNumX,
-                                                               varNumY),
-                                                              dtype=np.float32)
-
-    # Memory view on array for Gaussian models:
-    cdef float[:, :] aryGauss_view = aryGauss
-
-    # Array for intermediate results (will be updated on each iteration):
-    cdef np.ndarray[np.float32_t, ndim=3] aryTmp = np.zeros((varNumX,
-                                                             varNumY,
-                                                             varNumVol),
-                                                            dtype=np.float32)
-
-    # Memory view on array for intermediate results:
-    cdef float[:, :, :] aryTmp_view = aryTmp
-
-
     # Memory view on array for pRF model parameters:
     cdef float[:, :] aryMdlParams_view = aryMdlParams
 
+    # Array for results (convolved pRF time courses):
+    cdef np.ndarray[np.float32_t, ndim=3] aryPrfTc = np.zeros(
+        (varNumMdls, varNumCon, varNumVol), dtype=np.float32)
+    # Memory view on array for results (convolved pRF time courses):
+    cdef float[:, :, :] aryPrfTc_view = aryPrfTc
+
+    # Array for Gaussian pRF models:
+    cdef np.ndarray[np.float32_t, ndim=2] aryGauss = np.zeros(
+        (varNumX, varNumY), dtype=np.float32)
+    # Memory view on array for Gaussian pRF models:
+    cdef float[:, :] aryGauss_view = aryGauss
+
     # Call optimised cdef function for 2D Gaussian convolution:
-    aryPrfTcConv_view = cy_prf_conv(aryX_view,
-                                    aryY_view,
-                                    aryMdlParams_view,
-                                    aryPixConv_view,
-                                    aryPrfTc_view,
-                                    aryGauss_view,
-                                    aryTmp_view,
-                                    varNumMdls,
-                                    varNumCon,
-                                    varNumVol,
-                                    varNumX,
-                                    varNumY)
+    aryPrfTcConv = cy_prf_conv(aryX_view,
+                               aryY_view,
+                               aryMdlParams_view,
+                               aryPixConv_view,
+                               aryPrfTc_view,
+                               aryGauss_view,
+                               varNumMdls,
+                               varNumCon,
+                               varNumVol,
+                               varNumX,
+                               varNumY)
 
     # Convert memory view to numpy array before returning it. Shape:
     # aryPrfTc[idxMdl, idxCon, idxVol].
-    aryPrfTcConv = np.asarray(aryPrfTcConv_view)
-
-    return aryPrfTcConv
+    return np.asarray(aryPrfTcConv)
 # *****************************************************************************
 
 
@@ -170,19 +144,18 @@ cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,
                                 float[:, :, :, :] aryPixConv_view,
                                 float[:, :, :] aryPrfTc_view,
                                 float[:, :] aryGauss_view,
-                                float[:, :, :] aryTmp_view,
-                                unsigned long varNumMdls,
-                                unsigned long varNumCon,
-                                unsigned long varNumVol,
+                                unsigned int varNumMdls,
+                                unsigned int varNumCon,
+                                unsigned int varNumVol,
                                 unsigned int varNumX,
                                 unsigned int varNumY):
 
     cdef float varPosX, varPosY, varSd, varPi, varSum, varTmp, varTwo
-    cdef unsigned int idxX, idxY, idxVol, idxCon
+    cdef unsigned int idxX, idxY, idxCon, idxVol
     cdef unsigned long idxMdl
 
     varPi = 3.14159265
-    varTwo = 2.0
+    varTwo = 2
 
     # Loop through conditions and volumes, and call cdef:
     for idxCon in range(varNumCon):
@@ -202,43 +175,39 @@ cdef float[:, :, :] cy_prf_conv(float[:, :] aryX_view,
                     # Create Gaussian:
                     varTmp = (
                       (
-                       (aryX_view[idxX, idxY] - varPosX) ** varTwo
-                       + (aryY_view[idxX, idxY] - varPosY) ** varTwo
+                       pow((aryX_view[idxX, idxY] - varPosX), varTwo)
+                       + pow((aryY_view[idxX, idxY] - varPosY), varTwo)
                        )
-                      / (varTwo * (varSd ** varTwo))
+                      / (varTwo * varSd * varSd)
                       )
 
                     # Scale Gaussian:
                     aryGauss_view[idxX, idxY] = (
                         exp(-varTmp)
-                        / (varTwo * varPi * (varSd ** varTwo))
+                        / (varTwo * varPi * varSd * varSd)
                         )
 
             # Multiply pixel-time courses with Gaussian pRF models:
-            for idxVol in range(varNumVol):
-                for idxX in range(varNumX):
-                    for idxY in range(varNumY):
-                        aryTmp_view[idxX, idxY, idxVol] = (
-                            aryPixConv_view[idxX, idxY, idxCon, idxVol]
-                            * aryGauss_view[idxX, idxY]
-                            )
-
-            # Calculate sum across x- and y-dimensions - the 'area under
-            # the Gaussian surface'. This gives us the ratio of
-            # 'activation' of the pRF at each time point, or, in other
-            # words, the pRF time course model. Note: Normalisation of pRFs
-            # takes at funcGauss(); pRF models are normalised to have an
-            # area under the curve of one when they are created.
             for idxVol in range(varNumVol):
 
                 # Variable for calculation of sum (area under the
                 # Gaussian):
                 varSum = 0
 
-                # Loop through pixel in current volume:
                 for idxX in range(varNumX):
                     for idxY in range(varNumY):
-                        varSum += aryTmp_view[idxX, idxY, idxVol]
+
+                        # Calculate sum across x- and y-dimensions - the 'area
+                        # under the Gaussian surface'. This gives us the ratio
+                        # of 'activation' of the pRF at each time point, or, in
+                        # other words, the pRF time course model. Note:
+                        # Normalisation of pRFs takes at funcGauss(); pRF
+                        # models are normalised to have an area under the curve
+                        # of one when they are created.
+                        varSum += (
+                            aryPixConv_view[idxX, idxY, idxCon, idxVol]
+                            * aryGauss_view[idxX, idxY]
+                            )
 
                 aryPrfTc_view[idxMdl, idxCon, idxVol] = varSum
 

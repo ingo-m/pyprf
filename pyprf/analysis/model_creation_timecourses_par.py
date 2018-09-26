@@ -19,6 +19,8 @@
 
 import numpy as np
 from pyprf.analysis.utilities import crt_gauss
+
+import scipy as sp
 from pyprf.analysis.cython_prf_convolve import prf_conv
 
 
@@ -91,7 +93,8 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
                              varTmpY,
                              varTmpSd)
 
-        # Multiply super-sampled pixel-time courses with Gaussian pRF models:
+        # Multiply super-sampled pixel-time courses with Gaussian pRF
+        # models:
         aryPrfTcTmp = np.multiply(aryPixConv, aryGauss[:, :, None, None])
         # Shape: aryPrfTcTmp[x-pixels, y-pixels, conditions, volumes]
 
@@ -107,17 +110,17 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
         # Put model time courses into the function's output array:
         aryPrfTc[idxMdl, :, :] = np.copy(aryPrfTcTmp)
 
-    # # Meshgrid for creation of Gaussian pRF models:
-    # aryX, aryY = sp.mgrid[0:tplVslSpcSze[0],
-    #                      0:tplVslSpcSze[1]]
-    # aryX = aryX.astype(np.float32)
-    # aryY = aryY.astype(np.float32)
+        # # Meshgrid for creation of Gaussian pRF models:
+        # aryX, aryY = sp.mgrid[0:tplVslSpcSze[0],
+        #                       0:tplVslSpcSze[1]]
+        # aryX = aryX.astype(np.float32)
+        # aryY = aryY.astype(np.float32)
 
-    # aryPrfTc = prf_conv(
-    #    aryX,
-    #    aryY,
-    #    aryMdlParamsChnk,
-    #    aryPixConv)
+        # aryPrfTc = prf_conv(
+        #    aryX,
+        #    aryY,
+        #    aryMdlParamsChnk,
+        #    aryPixConv)
 
     # Put column with the indicies of model-parameter-combinations into the
     # output list (in order to be able to put the pRF model time courses into
