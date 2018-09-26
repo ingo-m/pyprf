@@ -7,7 +7,6 @@ For development installation:
 
 import numpy as np
 from setuptools import setup, Extension
-# from setuptools.command.build_ext import build_ext
 from Cython.Build import cythonize
 
 with open('README.rst') as f:
@@ -26,6 +25,23 @@ with open('README.rst') as f:
 # to setup()."
 # Source:
 # http://docs.cython.org/en/latest/src/userguide/source_files_and_compilation.html
+
+# List of external modules (cython):
+lstExt = [Extension('pyprf.analysis.cython_leastsquares',
+                    sources=['pyprf/analysis/cython_leastsquares.pyx'],
+                    include_dirs=[np.get_include()],
+                    libraries=['m']
+                    ),
+          Extension('pyprf.analysis.cython_leastsquares_two',
+                    sources=['pyprf/analysis/cython_leastsquares_two.pyx'],
+                    include_dirs=[np.get_include()],
+                    libraries=['m']
+                    ),
+          Extension('pyprf.analysis.cython_prf_convolve',
+                    sources=['pyprf/analysis/cython_prf_convolve.pyx'],
+                    include_dirs=[np.get_include()],
+                    libraries=['m']
+                    )]
 
 setup(name='pyprf',
       version='1.3.13',
@@ -48,29 +64,5 @@ setup(name='pyprf',
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
               ]},
-      ext_modules=cythonize(
-          [Extension('pyprf.analysis.cython_leastsquares',  # ['pyprf/analysis/cython_leastsquares.c'],
-                     sources=['pyprf/analysis/cython_leastsquares.pyx'],
-                     include_dirs=[np.get_include()],
-                     libraries=['m']
-                     ),
-           Extension('pyprf.analysis.cython_leastsquares_two',  # ['pyprf/analysis/cython_leastsquares_two.c'],
-                     sources=['pyprf/analysis/cython_leastsquares_two.pyx'],
-                     include_dirs=[np.get_include()],
-                     libraries=['m']
-                     ),
-           Extension('pyprf.analysis.cython_prf_convolve',  # ['pyprf/analysis/cython_prf_convolve.c'],
-                     sources=['pyprf/analysis/cython_prf_convolve.pyx'],
-                     include_dirs=[np.get_include()],
-                     libraries=['m']
-                     )]
-          ),
+      ext_modules=cythonize(lstExt)
       )
-
-# Load module to setup python:
-# from pyprf.analysis.cython_leastsquares_setup_call import setup_cython_lstsq
-# from pyprf.analysis.cython_prf_convolve_setup_call import setup_cython_conv
-
-# Compile cython code:
-# setup_cython_lstsq()
-# setup_cython_conv()

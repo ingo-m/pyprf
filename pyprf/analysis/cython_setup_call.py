@@ -5,9 +5,9 @@ import os
 import subprocess as sp
 
 
-def setup_cython_conv():
+def cython_setup_call():
     """
-    Cython setup.
+    Call cython setup.
 
     Call script to build cython code, using call to bash subprocess.
     """
@@ -19,7 +19,7 @@ def setup_cython_conv():
     strDir = os.path.split(strDir)[0]
 
     # Call the script that compiles the cython code:
-    sp.call(['python cython_prf_convolve_setup.py build_ext --inplace'],
+    sp.call(['python cython_setup.py build_ext --inplace'],
             cwd=strDir,
             shell=True)
 
