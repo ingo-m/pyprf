@@ -16,16 +16,6 @@ from pyprf.analysis import utilities as util
 strDir = os.path.dirname(os.path.abspath(__file__))
 
 
-import os
-import subprocess as sp
-strPthHme = str(os.environ['HOME'])
-strPthTst = (strPthHme + '/testing')
-os.mkdir(strPthTst)
-strPthTst = (strPthHme + '/testing/result')
-strPthTst = (strPthHme + '/testing/result/')
-os.mkdir(strPthTst)
-
-
 def test_main():
     """Run main pyprf function and compare results with template."""
     # -------------------------------------------------------------------------
@@ -69,31 +59,26 @@ def test_main():
     for strVrsn in lstVrsn:
 
         # Call main pyprf function:
-        # pyprf_main.pyprf(strCsvCnfg.format(strVrsn), lgcTest=True)
-
-        sp.call([('pyprf -config ' + strCsvCnfg)],
-                # cwd=strDir,
-                shell=True)
-
+        pyprf_main.pyprf(strCsvCnfg.format(strVrsn), lgcTest=True)
 
         # Load result - R2:
         aryTestR2, _, _ = util.load_nii(
-            (strPthTst #+ '/result/'
+            (strDir + '/result/'
              + 'pRF_test_results_{}_R2.nii.gz'.format(strVrsn)))
 
         # Load result - eccentricity:
         aryTestEcc, _, _ = util.load_nii(
-            (strPthTst #+ '/result/'
+            (strDir + '/result/'
              + 'pRF_test_results_{}_eccentricity.nii.gz'.format(strVrsn)))
 
         # Load result - polar angle:
         aryTestPol, _, _ = util.load_nii(
-            (strPthTst #+ '/result/'
+            (strDir + '/result/'
              + 'pRF_test_results_{}_polar_angle.nii.gz'.format(strVrsn)))
 
         # Load result - SD:
         aryTestSd, _, _ = util.load_nii(
-            (strPthTst #+ '/result/'
+            (strDir + '/result/'
              + 'pRF_test_results_{}_SD.nii.gz'.format(strVrsn)))
 
         # Round test results:
@@ -118,7 +103,7 @@ def test_main():
     # *** Clean up
 
     # Path of directory with results:
-    strDirRes = strPthTst  #strDir + '/result/'
+    strDirRes = strDir + '/result/'
 
     # Get list of files in results directory:
     lstFls = [f for f in os.listdir(strDirRes) if isfile(join(strDirRes, f))]

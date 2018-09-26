@@ -248,15 +248,7 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
 
         # Preprend absolute parent path of testing folder to config file paths:
         dicCnfg['strPathNiiMask'] = (strDir + dicCnfg['strPathNiiMask'])
-
-
-        import os
-        strPthHme = str(os.environ['HOME'])
-        strPthTst = (strPthHme + '/testing/result')
-        #os.mkdir(strPthTst)
         dicCnfg['strPathOut'] = (strDir + dicCnfg['strPathOut'])
-
-
         dicCnfg['strPathMdl'] = (strDir + dicCnfg['strPathMdl'])
 
         # Loop through functional runs & prepend absolute path:
