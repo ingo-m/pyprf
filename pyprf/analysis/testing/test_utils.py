@@ -19,6 +19,8 @@ strDir = os.path.dirname(os.path.abspath(__file__))
 import os
 import subprocess as sp
 strPthHme = str(os.environ['HOME'])
+strPthTst = (strPthHme + '/testing')
+os.mkdir(strPthTst)
 strPthTst = (strPthHme + '/testing/result')
 os.mkdir(strPthTst)
 
