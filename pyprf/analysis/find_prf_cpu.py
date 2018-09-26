@@ -174,17 +174,21 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     # models that are not actually responsive to the stimuli). For
     # computational efficiency, and in order to avoid division by zero, we
     # ignore these model time courses.
-    aryPrfTcVar = np.var(aryPrfTc, axis=4)
+    aryPrfTcVar = np.var(aryPrfTc, axis=4).astype(np.float32)
 
     # Zero with float32 precision for comparison:
-    varZero32 = np.array(([0.0])).astype(np.float32)[0]
+    varZero32 = np.array(([0.0001])).astype(np.float32)[0]
+
+    # Only fit pRF model if variance greater than zero for all
+    # predictors:
+    aryLgcVar = np.greater(np.amin(aryPrfTcVar, axis=3), varZero32)
 
     # Loop through pRF models:
-    for idxX in range(0, varNumX):
+    for idxX in range(varNumX):
 
-        for idxY in range(0, varNumY):
+        for idxY in range(varNumY):
 
-            for idxSd in range(0, varNumPrfSizes):
+            for idxSd in range(varNumPrfSizes):
 
                 # Status indicator (only used in the first of the parallel
                 # processes):
@@ -210,8 +214,7 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
                 # Only fit pRF model if variance greater than zero for all
                 # predictors:
-                if np.greater(np.min(aryPrfTcVar[idxX, idxY, idxSd, :]),
-                              varZero32):
+                if aryLgcVar[idxX, idxY, idxSd]:
 
                     # Calculation of the ratio of the explained variance (R
                     # square) for the current model for all voxel time courses.
