@@ -18,12 +18,6 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-
-# from pyprf.analysis.cython_leastsquares import cy_lst_sq
-# from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
-# from pyprf.analysis.cython_prf_convolve import prf_conv
-# import scipy as sp
-
 from pyprf.analysis.utilities import crt_gauss
 
 
@@ -112,13 +106,13 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, aryPixConv, queOut):
         # Put model time courses into the function's output array:
         aryPrfTc[idxMdl, :, :] = np.copy(aryPrfTcTmp)
 
-    ## Meshgrid for creation of Gaussian pRF models:
-    #aryX, aryY = sp.mgrid[0:tplVslSpcSze[0],
+    # # Meshgrid for creation of Gaussian pRF models:
+    # aryX, aryY = sp.mgrid[0:tplVslSpcSze[0],
     #                      0:tplVslSpcSze[1]]
-    #aryX = aryX.astype(np.float32)
-    #aryY = aryY.astype(np.float32)
+    # aryX = aryX.astype(np.float32)
+    # aryY = aryY.astype(np.float32)
 
-    #aryPrfTc = prf_conv(
+    # aryPrfTc = prf_conv(
     #    aryX,
     #    aryY,
     #    aryMdlParamsChnk,
