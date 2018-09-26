@@ -40,19 +40,16 @@ setup(name='pyprf',
               'pyprf = pyprf.analysis.__main__:main',
               ]},
       ext_modules=cythonize(
-          [Extension('pyprf.analysis.cython_leastsquares',
-                     ['pyprf/analysis/cython_leastsquares.c'],
-                     include_dirs=[np.get_include()],
+          [Extension('pyprf.analysis.cython_leastsquares',  # ['pyprf/analysis/cython_leastsquares.c'],
+                     sources=['pyprf/analysis/cython_leastsquares.pyx'],  # include_dirs=[np.get_include()],
                      libraries=['m']
                      ),
-           Extension('pyprf.analysis.cython_leastsquares_two',
-                     ['pyprf/analysis/cython_leastsquares_two.c'],
-                     include_dirs=[np.get_include()],
+           Extension('pyprf.analysis.cython_leastsquares_two',  # ['pyprf/analysis/cython_leastsquares_two.c'],
+                     sources=['pyprf/analysis/cython_leastsquares_two.pyx'],  # include_dirs=[np.get_include()],
                      libraries=['m']
                      ),
-           Extension('pyprf.analysis.cython_prf_convolve',
-                     ['pyprf/analysis/cython_prf_convolve.c'],
-                     include_dirs=[np.get_include()],
+           Extension('pyprf.analysis.cython_prf_convolve',  # ['pyprf/analysis/cython_prf_convolve.c'],
+                     sources=['pyprf/analysis/cython_prf_convolve.pyx'],  # include_dirs=[np.get_include()],
                      libraries=['m']
                      )]
           ),
