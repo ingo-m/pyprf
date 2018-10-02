@@ -47,7 +47,7 @@ cpdef tuple cy_lst_sq_two(
         2D numpy array, at float32 precision, containing two pRF model time
         courses as two columns. E.g. model time courses for one pRF position &
         size, for two stimulus conditions (such as luminance contrast).
-        Dimensionality: aryPrfTc[time, 2].
+        Dimensionality: aryPrfTc[2, time].
     aryFuncChnk : np.array
         2D numpy array, at float32 precision, containing a chunk of functional
         data (i.e. voxel time courses). Dimensionality: aryFuncChnk[time,
@@ -106,13 +106,13 @@ cpdef tuple cy_lst_sq_two(
     cdef float[:, :] aryFuncChnk_view = aryFuncChnk
 
     # Calculate variance of pRF model time course (i.e. variance in the model):
-    varNumVols = int(aryPrfTc.shape[0])
+    varNumVols = int(aryPrfTc.shape[1])
 
     # Calculate variances and covariances of the two pRF model time courses:
     for idxVol in range(varNumVols):
-        varVarX1 += aryPrfTc_view[idxVol, 0] ** 2
-        varVarX2 += aryPrfTc_view[idxVol, 1] ** 2
-        varVarX1X2 += aryPrfTc_view[idxVol, 0] * aryPrfTc_view[idxVol, 1]
+        varVarX1 += aryPrfTc_view[0, idxVol] ** 2
+        varVarX2 += aryPrfTc_view[1, idxVol] ** 2
+        varVarX1X2 += aryPrfTc_view[0, idxVol] * aryPrfTc_view[1, idxVol]
 
     # Call optimised cdef function for calculation of residuals:
     vecRes_view, aryPe_view = func_cy_res_two(aryPrfTc_view,
@@ -151,6 +151,9 @@ cdef (float[:], float[:, :]) func_cy_res_two(float[:, :] aryPrfTc_view,
         unsigned int idxVol
         unsigned long idxVox
 
+    # Calculate denominator:
+    varDen = varVarX1 * varVarX2 - varVarX1X2 ** 2
+
     # Loop through voxels:
     for idxVox in range(varNumVoxChnk):
 
@@ -163,12 +166,9 @@ cdef (float[:], float[:, :]) func_cy_res_two(float[:, :] aryPrfTc_view,
         # the current voxel:
         for idxVol in range(varNumVols):
             varCovX1y += (aryFuncChnk_view[idxVol, idxVox]
-                          * aryPrfTc_view[idxVol, 0])
+                          * aryPrfTc_view[0, idxVol])
             varCovX2y += (aryFuncChnk_view[idxVol, idxVox]
-                          * aryPrfTc_view[idxVol, 1])
-
-        # Calculate denominator:
-        varDen = varVarX1 * varVarX2 - varVarX1X2 ** 2
+                          * aryPrfTc_view[1, idxVol])
 
         # Obtain the slope of the regression of the model on the data:
         varSlope1 = (varVarX2 * varCovX1y - varVarX1X2 * varCovX2y) / varDen
@@ -178,8 +178,8 @@ cdef (float[:], float[:, :]) func_cy_res_two(float[:, :] aryPrfTc_view,
         # prediction:
         for idxVol in range(varNumVols):
             # The predicted voxel time course value:
-            varXhat = (aryPrfTc_view[idxVol, 0] * varSlope1
-                       + aryPrfTc_view[idxVol, 1] * varSlope2)
+            varXhat = (aryPrfTc_view[0, idxVol] * varSlope1
+                       + aryPrfTc_view[1, idxVol] * varSlope2)
             # Mismatch between prediction and actual voxel value (variance):
             varRes += (aryFuncChnk_view[idxVol, idxVox] - varXhat) ** 2
 
