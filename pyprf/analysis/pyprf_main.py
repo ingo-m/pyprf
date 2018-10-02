@@ -372,6 +372,10 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *************************************************************************
     # *** Export results
 
+    # The nii header of the mask will be used for creation of result nii files.
+    # Set dtype to float32 to avoid precision loss (in case mask is int).
+    hdrMsk.set_data_dtype(np.float32)
+
     # Calculate polar angle map:
     aryPrfRes[:, :, :, 4] = np.arctan2(aryPrfRes[:, :, :, 1],
                                        aryPrfRes[:, :, :, 0])
