@@ -265,7 +265,7 @@ def crt_prf_tcmdl(aryPixConv, strPathMdl, tplVslSpcSze=(200, 200), varNumX=40,
 
     # In case of small parameter space, sort pRF time courses and return them
     # to partent function.
-    if not(strPathMdl is None):
+    if (strPathMdl is None):
 
         # List to array, concatenating along model-index-dimension:
         vecMdlIdx = np.concatenate(lstMdlIdx, axis=0)
