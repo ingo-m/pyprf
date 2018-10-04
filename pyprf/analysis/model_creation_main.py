@@ -86,18 +86,24 @@ def model_creation(dicCnfg):
 
         print('------Create pRF time course models')
 
+        # Number of conditions (stimulus levels):
+        varNumCon = aryPixConv.shape[2]
+
+        # Total number of volumes (sum of all runs).
+        varNumVol = aryPixConv.shape[3]
+
         # Size of model parameter space:
         varSzeMdlSpc = (cfg.varNumX
                         * cfg.varNumY
                         * cfg.varNumPrfSizes
-                        * cfg.varNumCon)
+                        * varNumCon)
 
         # If the number of volumes is large (multi-run experiment) or the
         # size of the model parameter space is large, the pRF time course
         # models will not fit into RAM. In this case, they are stored in an
         # hdf5 file (location specified by 'strPathMdl', as specified in the
         # config file).
-        lgcHdf5 = ((1000 < cfg.varNumVol) or (100000 < varSzeMdlSpc))
+        lgcHdf5 = ((1000 < varNumVol) or (100000 < varSzeMdlSpc))
         if lgcHdf5:
             # If model space is large, pass filepath to model creation
             # function.
