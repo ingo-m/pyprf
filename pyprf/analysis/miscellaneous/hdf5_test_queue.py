@@ -28,12 +28,12 @@ def funcPlcIn(varNumCon, varNumMdls, objQ):
 # -----------------------------------------------------------------
 # *** Prepare queue
 
-varNumMdls = 40 * 40 * 64
-varNumCon = 2
-varNumVol = 6356
+varNumMdls = 100  # 40 * 40 * 64
+varNumCon = 100  # 2
+varNumVol = 100  # 6356
 
 # Buffer size:
-varBuff = 10
+varBuff = 100
 
 # Create FIFO queue:
 objQ = queue.Queue(maxsize=varBuff)

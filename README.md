@@ -114,6 +114,7 @@ If you install `pyprf` using `pip` (as described above), all of the following de
 | [Cython](http://cython.org/)¹                         | 0.27.1         |
 | [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 5.0.0          |
 | [Tensorflow](https://www.tensorflow.org/)²            | 1.4.0          |
+| [h5py](http://www.h5py.org/)                          | 2.8.0          |
 
 ¹: For considerably faster performance
 

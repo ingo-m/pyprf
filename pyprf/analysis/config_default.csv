@@ -114,6 +114,6 @@ varStrtIdx = 1
 # `file_0007.png`.
 varZfill = 3
 
-# Path to npy file with pRF time course models (to save or laod). Without file
+# Path to npy file with pRF time course models (to save or load). Without file
 # extension.
 strPathMdl = '~/pRF_test_model_tc'
