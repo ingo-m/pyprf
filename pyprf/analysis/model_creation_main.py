@@ -26,7 +26,7 @@ from pyprf.analysis.model_creation_timecourses import crt_prf_tcmdl
 from pyprf.analysis.utilities import cls_set_config
 
 
-def model_creation(dicCnfg):
+def model_creation(dicCnfg, lgcHdf5=False):
     """
     Create or load pRF model time courses.
 
@@ -34,6 +34,12 @@ def model_creation(dicCnfg):
     ----------
     dicCnfg : dict
         Dictionary containing config parameters.
+    lgcHdf5 : bool
+        Flag for hdf5 mode. If the number of volumes is large (multi-run
+        experiment) or the size of the model parameter space is large, the pRF
+        time course models will not fit into RAM. In this case, they are stored
+        in an hdf5 file (location specified by 'strPathMdl', as specified in
+        the config file).
 
     Returns
     -------
@@ -89,21 +95,11 @@ def model_creation(dicCnfg):
         # Number of conditions (stimulus levels):
         varNumCon = aryPixConv.shape[2]
 
-        # Total number of volumes (sum of all runs).
-        varNumVol = aryPixConv.shape[3]
-
-        # Size of model parameter space:
-        varSzeMdlSpc = (cfg.varNumX
-                        * cfg.varNumY
-                        * cfg.varNumPrfSizes
-                        * varNumCon)
-
         # If the number of volumes is large (multi-run experiment) or the
         # size of the model parameter space is large, the pRF time course
         # models will not fit into RAM. In this case, they are stored in an
         # hdf5 file (location specified by 'strPathMdl', as specified in the
         # config file).
-        lgcHdf5 = ((1000 < varNumVol) or (100000 < varSzeMdlSpc))
         if lgcHdf5:
             # If model space is large, pass filepath to model creation
             # function.
