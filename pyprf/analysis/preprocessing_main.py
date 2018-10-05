@@ -18,6 +18,7 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+import h5py
 from pyprf.analysis.utilities import load_nii
 from pyprf.analysis.preprocessing_par import pre_pro_par
 
@@ -81,6 +82,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     time]. A mask is applied (externally supplied, e.g. a grey matter mask).
     Subsequently, the functional data is de-meaned, and intensities are
     converted into z-scores.
+
     """
     print('------Load & preprocess nii data')
 
@@ -188,21 +190,28 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     return aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp
 
 
-def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
+def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10, strPathMdl=None):
     """
     Preprocess pRF model time courses.
 
     Parameters
     ----------
-    aryPrfTc : np.array
+    aryPrfTc : np.array or None
         Array with pRF time course models, shape:
-        aryPrfTc[x-position, y-position, SD, condition, volume].
+        aryPrfTc[x-position, y-position, SD, condition, volume]. If `None`
+        (hdf5-mode, i.e. large parameter space), pRF model time courses are
+        loaded from & saved to hdf5 file.
     varSdSmthTmp : float
         Extent of temporal smoothing that is applied to functional data and
         pRF time course models, [SD of Gaussian kernel, in seconds]. If `zero`,
         no temporal smoothing is applied.
     varPar : int
         Number of processes to run in parallel (multiprocessing).
+    strPathMdl : str or None
+        Path of file with pRF time course models (without file extension). In
+        hdf5 mode, time courses are loaded to & saved to hdf5 file, so that
+        not all pRF model time courses do not have to be loaded into RAM at
+        once.
 
     Returns
     -------
@@ -213,12 +222,26 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
     Notes
     -----
     Only temporal smoothing is applied to the pRF model time courses.
+
     """
     print('------Preprocess pRF time course models')
-    # Loop through stimulus conditions, because the array needs to the 4D, with
-    # time as last dimension, for the preprocessing. Otherwise the same
-    # functions could not be used for the functional data and model time
-    # courses (which would increase redundancy).
+
+    # Hdf5 mode?
+    if aryPrfTc is None:
+
+        # Path of hdf5 file:
+        strPthHdf5 = (strPathMdl + '.hdf5')
+
+        # Read file:
+        fleHdf5 = h5py.File(strPthHdf5, 'r+')
+
+        # Access dataset in current hdf5 file:
+        aryPrfTc = fleHdf5['pRF_time_courses']
+
+    # Loop through stimulus conditions, because the array needs to the 4D,
+    # with time as last dimension, for the preprocessing. Otherwise the
+    # same functions could not be used for the functional data and model
+    # time courses (which would increase redundancy).
     varNumCon = aryPrfTc.shape[3]
     for idxCon in range(varNumCon):
 
@@ -227,5 +250,14 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
             aryPrfTc[:, :, :, idxCon, :], aryMask=np.array([]),
             lgcLinTrnd=False, varSdSmthTmp=varSdSmthTmp, varSdSmthSpt=0.0,
             varPar=varPar)
+
+    # Hdf5 mode?
+    if aryPrfTc is None:
+
+        # Dummy pRF time course array:
+        aryPrfTc = None
+
+        # Close hdf5 file:
+        fleHdf5.close()
 
     return aryPrfTc

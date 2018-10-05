@@ -68,6 +68,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         from pyprf.analysis.find_prf_gpu import find_prf_gpu
     if ((cfg.strVersion == 'cython') or (cfg.strVersion == 'numpy')):
         from pyprf.analysis.find_prf_cpu import find_prf_cpu
+        from pyprf.analysis.find_prf_cpu_hdf5 import find_prf_cpu_hdf5
 
     # Convert preprocessing parameters (for temporal and spatial smoothing)
     # from SI units (i.e. [s] and [mm]) into units of data array (volumes and
@@ -89,7 +90,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     # Preprocessing of pRF model time courses:
     aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
-                              varPar=cfg.varPar)
+                              varPar=cfg.varPar, strPathMdl=cfg.strPathMdl)
 
     # Preprocessing of functional data:
     aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp = pre_pro_func(
@@ -162,7 +163,11 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
     # Make sure type is float32:
     aryFunc = aryFunc.astype(np.float32)
-    aryPrfTc = aryPrfTc.astype(np.float32)
+
+    # In hdf5-mode, pRF time courses models are not loaded into RAM but
+    # accessed from hdf5 file.
+    if not(aryPrfTc is None):
+        aryPrfTc = aryPrfTc.astype(np.float32)
 
     # Put functional data into chunks:
     for idxChnk in range(cfg.varPar):
@@ -185,16 +190,37 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
         # Create processes:
         for idxPrc in range(cfg.varPar):
-            lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu,
-                                         args=(idxPrc,
-                                               vecMdlXpos,
-                                               vecMdlYpos,
-                                               vecMdlSd,
-                                               lstFunc[idxPrc],
-                                               aryPrfTc,
-                                               cfg.strVersion,
-                                               queOut)
-                                         )
+
+            # Hdf5-mode?
+            if aryPrfTc is None:
+
+                # Hdf5-mode (access pRF model time courses from disk in order
+                # to avoid out of memory).
+                lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu_hdf5,
+                                             args=(idxPrc,
+                                                   vecMdlXpos,
+                                                   vecMdlYpos,
+                                                   vecMdlSd,
+                                                   lstFunc[idxPrc],
+                                                   cfg.strPathMdl,
+                                                   cfg.strVersion,
+                                                   queOut)
+                                             )
+
+            else:
+
+                # Regualar CPU mode.
+                lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu,
+                                             args=(idxPrc,
+                                                   vecMdlXpos,
+                                                   vecMdlYpos,
+                                                   vecMdlSd,
+                                                   lstFunc[idxPrc],
+                                                   aryPrfTc,
+                                                   cfg.strVersion,
+                                                   queOut)
+                                             )
+
             # Daemon (kills processes when exiting):
             lstPrcs[idxPrc].Daemon = True
 

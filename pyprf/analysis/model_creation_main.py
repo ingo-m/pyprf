@@ -179,13 +179,39 @@ def model_creation(dicCnfg):
 
         print('------Load pRF time course models from disk')
 
-        # Load the file. Array with pRF time course models, shape:
-        # aryPrfTc[x-position, y-position, SD, condition, volume].
-        aryPrfTc = np.load((cfg.strPathMdl + '.npy'))
+        if lgcHdf5:
 
-        # Check whether pRF time course model array has the expected
-        # dimensions.
-        vecPrfTcShp = aryPrfTc.shape
+            # Hdf5 mode (large parameter space). Do not load pRF model time
+            # courses into RAM, but access from hdf5 file.
+
+            # Path of hdf5 file:
+            strPthHdf5 = (cfg.strPathMdl + '.hdf5')
+
+            # Read file:
+            fleHdf5 = h5py.File(strPthHdf5, 'r')
+
+            # Access dataset in current hdf5 file:
+            dtsPrfTc = fleHdf5['pRF_time_courses']
+
+            # Check whether pRF time course model array has the expected
+            # dimensions.
+            vecPrfTcShp = dtsPrfTc.shape
+
+            # Dummy pRF time course array:
+            aryPrfTc = None
+
+            # Close hdf5 file:
+            fleHdf5.close()
+
+        else:
+
+            # Load the file. Array with pRF time course models, shape:
+            # aryPrfTc[x-position, y-position, SD, condition, volume].
+            aryPrfTc = np.load((cfg.strPathMdl + '.npy'))
+
+            # Check whether pRF time course model array has the expected
+            # dimensions.
+            vecPrfTcShp = aryPrfTc.shape
 
         # Logical test for dimensions of parameter space:
         lgcDim = ((vecPrfTcShp[0] == cfg.varNumX)
