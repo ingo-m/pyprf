@@ -161,23 +161,43 @@ def crt_prf_tcmdl(aryPixConv, strPathMdl, tplVslSpcSze=(200, 200), varNumX=40,
     # Counter for parameter array:
     varCntMdlPrms = 0
 
+    # In hdf5-mode (i.e. parameter space too large for RAM), we need an array
+    # for sorting the hdf5 files.
+    if not(strPathMdl is None):
+
+        # Array for sorting pRF time courses into large hdf5 file, shape:
+        # arySort[models, 3], where the three columns correspond to indices of
+        # (1) x position, (2) y position, (3) pRF size (SD). This array can be
+        # used to look up model parameters based on model index (i.e. positions
+        # and size of n-th model). Whereas `aryMdlParams` contains the actual
+        # parameters (e.g. x-position in coordinates of visual space model),
+        # `arySort` contains the indices for the pRF time course array (e.g.
+        # model 1234 has index idxX in pRF model time course array).
+        arySort = np.zeros((varNumMdls, 3), dtype=np.uint32)
+
     # Put all combinations of x-position, y-position, and standard deviations
     # into the array:
 
     # Loop through x-positions:
-    for idxX in range(0, varNumX):
+    for idxX in range(varNumX):
 
         # Loop through y-positions:
-        for idxY in range(0, varNumY):
+        for idxY in range(varNumY):
 
             # Loop through standard deviations (of Gaussian pRF models):
-            for idxSd in range(0, varNumPrfSizes):
+            for idxSd in range(varNumPrfSizes):
 
                 # Place index and parameters in array:
                 aryMdlParams[varCntMdlPrms, 0] = float(varCntMdlPrms)
                 aryMdlParams[varCntMdlPrms, 1] = vecX[idxX]
                 aryMdlParams[varCntMdlPrms, 2] = vecY[idxY]
                 aryMdlParams[varCntMdlPrms, 3] = vecPrfSd[idxSd]
+
+                # Put position & size indices into array for hdf5 lookup.
+                if not(strPathMdl is None):
+                    arySort[varCntMdlPrms, 0] = idxX
+                    arySort[varCntMdlPrms, 1] = idxY
+                    arySort[varCntMdlPrms, 2] = idxSd
 
                 # Increment parameter index:
                 varCntMdlPrms = varCntMdlPrms + 1
@@ -358,16 +378,23 @@ def crt_prf_tcmdl(aryPixConv, strPathMdl, tplVslSpcSze=(200, 200), varNumX=40,
             vecMdlIdxPar = lstMdlIdx[idxPrc]
 
             # Number of models in the current chunk:
-            # varNumMdlPar = vecMdlIdxPar.shape[0]
+            varNumMdlPar = vecMdlIdxPar.shape[0]
+
+            # Indices need to be integer:
+            vecMdlIdxPar = np.around(vecMdlIdxPar).astype(np.int32)
 
             # Loop through models, and place the respective timecourse in the
             # final hdf5 file.
-            for idxMdl in vecMdlIdxPar:
+            for idxMdl in range(varNumMdlPar):
 
-                # Current models x position, y position, and size (SD).
-                idxX = int(aryMdlParams[idxMdl, 1])
-                idxY = int(aryMdlParams[idxMdl, 2])
-                idxSd = int(aryMdlParams[idxMdl, 3])
+                # Model index (in the range of all models, from all processes)
+                # of the current model:
+                varIdxMdlTmp = vecMdlIdxPar[idxMdl]
+
+                # Get model indices (wrt pRF model time course array).
+                idxX = arySort[varIdxMdlTmp, 0]
+                idxY = arySort[varIdxMdlTmp, 1]
+                idxSd = arySort[varIdxMdlTmp, 2]
 
                 # Get data from chunk hdf5 file (from parallel child process)
                 # and place them at the correct position in the final hdf5 file
