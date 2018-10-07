@@ -89,7 +89,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # the model parameter space is large, the pRF time course models will not
     # fit into memory. In this case, they are stored in an hdf5 file (location
     # specified by 'strPathMdl', as specified in the config file).
-    lgcHdf5 = ((1000 < cfg.varNumVol) or (100000 < varSzeMdlSpc))
+    lgcHdf5 = ((1000 < cfg.varNumVol) or (120000 < varSzeMdlSpc))
 
     # Array with pRF time course models, shape:
     # aryPrfTc[x-position, y-position, SD, condition, volume].

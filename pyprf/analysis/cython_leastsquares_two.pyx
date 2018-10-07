@@ -55,13 +55,12 @@ cpdef tuple cy_lst_sq_two(
 
     Returns
     -------
-    aryPe : np.array
-        2D numpy array with parameter estimates for all voxels in the chunk of
-        functional data. Dimensionality: aryPe[2, voxel]
     vecRes : np.array
         1D numpy array with model residuals for all voxels in the chunk of
         functional data. Dimensionality: vecRes[voxel]
-
+    aryPe : np.array
+        2D numpy array with parameter estimates for all voxels in the chunk of
+        functional data. Dimensionality: aryPe[2, voxel]
 
     Notes
     -----
@@ -129,7 +128,7 @@ cpdef tuple cy_lst_sq_two(
     vecRes = np.asarray(vecRes_view)
     aryPe = np.asarray(aryPe_view).T
 
-    return aryPe, vecRes
+    return vecRes, aryPe
 # *****************************************************************************
 
 # *****************************************************************************
