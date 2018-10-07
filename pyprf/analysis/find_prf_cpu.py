@@ -120,7 +120,8 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     # vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
 
     # We reshape the voxel time courses, so that time goes down the column,
-    # i.e. from top to bottom.
+    # i.e. from top to bottom. TODO: Do not manipulate large object in
+    # subprocess.
     aryFuncChnk = aryFuncChnk.T
 
     # Prepare data for cython (i.e. accelerated) least squares finding:
@@ -129,7 +130,7 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
         # data and from the model ("FSL style"). First, we subtract the mean
         # over time from the data:
         aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
-        aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[0, None])
+        aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[None, 0])
         # Secondly, we subtract the mean over time form the pRF model time
         # courses.
         aryPrfTcTmean = np.mean(aryPrfTc, axis=4)
