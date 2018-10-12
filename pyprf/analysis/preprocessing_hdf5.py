@@ -366,49 +366,77 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Close thread:
             objThrd.join()
 
+        # ---------------------------------------------------------------------
+        # Z-scoring
 
+        print('---------Z-score functional data')
 
+        # Looping voxel by voxel is too slow. Instead, read & write a chunks of
+        # voxels at a time. Indices of chunks:
+        varStpSze = 100
+        vecSplt = np.arange(0, (varNumVox + 1), varStpSze)
+        vecSplt = np.concatenate((vecSplt, np.array([varNumVox])))
 
+        # Number of chunks:
+        varNumCnk = vecSplt.shape[0]
 
+        # Buffer size:
+        varBuff = 100
 
+        # Create FIFO queue:
+        objQ = queue.Queue(maxsize=varBuff)
 
+        # Define & run extra thread with graph that places data on queue:
+        objThrd = threading.Thread(target=feed_hdf5_spt,
+                                   args=(dtsFunc, objQ, vecSplt))
+        objThrd.setDaemon(True)
+        objThrd.start()
 
+        # Loop through chunks of volumes:
+        for idxChnk in range((varNumCnk - 1)):
 
+            # Start index of current chunk:
+            varIdx01 = vecSplt[idxChnk]
 
-        # De-mean functional data:
-        aryTmpFunc = np.subtract(aryTmpFunc,
-                                 np.mean(aryTmpFunc,
-                                         axis=1,
-                                         dtype=np.float32)[:, None])
+            # Stop index of current chunk:
+            varIdx02 = vecSplt[idxChnk + 1]
 
-        # Convert intensities into z-scores. If there are several pRF runs,
-        # these are concatenated. Z-scoring ensures that differences in mean
-        # image intensity and/or variance between runs do not confound the
-        # analysis. Possible enhancement: Explicitly model across-runs variance
-        # with a nuisance regressor in the GLM.
-        aryTmpStd = np.std(aryTmpFunc, axis=1)
+            # Get chunk of functional data from hdf5 file:
+            aryFunc = dtsFunc[:, varIdx01:varIdx02]
 
-        # In order to avoid devision by zero, only divide those voxels with a
-        # standard deviation greater than zero:
-        aryTmpLgc = np.greater(aryTmpStd.astype(np.float32),
-                               np.array([0.0], dtype=np.float32)[0])
-        # Z-scoring:
-        aryTmpFunc[aryTmpLgc, :] = np.divide(aryTmpFunc[aryTmpLgc, :],
-                                             aryTmpStd[aryTmpLgc, None])
-        # Set voxels with a variance of zero to intensity zero:
-        aryTmpLgc = np.not_equal(aryTmpLgc, True)
-        aryTmpFunc[aryTmpLgc, :] = np.array([0.0], dtype=np.float32)[0]
+            # De-mean functional data:
+            aryFunc = np.subtract(aryFunc,
+                                  np.mean(aryFunc,
+                                          axis=0,
+                                          dtype=np.float32)[None, :])
 
-        # Put preprocessed functional data of current run into list:
-        lstFunc.append(aryTmpFunc)
-        del(aryTmpFunc)
+            # Convert intensities into z-scores. If there are several pRF runs,
+            # these are concatenated. Z-scoring ensures that differences in
+            # mean image intensity and/or variance between runs do not confound
+            # the analysis. Possible enhancement: Explicitly model across-runs
+            # variance with a nuisance regressor in the GLM.
+            aryTmpStd = np.std(aryFunc, axis=0)
 
-+++
+            # In order to avoid devision by zero, only divide those voxels with
+            # a standard deviation greater than zero:
+            aryTmpLgc = np.greater(aryTmpStd.astype(np.float32),
+                                   np.array([0.0], dtype=np.float32)[0])
+            # Z-scoring:
+            aryFunc[:, aryTmpLgc] = np.divide(aryFunc[:, aryTmpLgc],
+                                              aryTmpStd[None, aryTmpLgc])
+            # Set voxels with a variance of zero to intensity zero:
+            aryTmpLgc = np.not_equal(aryTmpLgc, True)
+            aryFunc[:, aryTmpLgc] = np.array([0.0], dtype=np.float32)[0]
+
+            # Put result on queue (from where it will be saved to disk in a
+            # separate thread).
+            objQ.put(aryFunc)
+
         # Close thread:
         objThrd.join()
 
         # Close hdf5 file:
-        fleHdf5.close()
+        fleHdf5Msk.close()
 +++
 
     # Put functional data from separate runs into one array. 2D array of the
