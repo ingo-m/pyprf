@@ -58,7 +58,7 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
     # varNumVoxChnk = aryFuncChnk.shape[0]
 
     # Number of time points in this chunk:
-    varNumVol = aryFuncChnk.shape[0]
+    varNumVol = aryFuncChnk.shape[1]
 
     # We reshape the voxel time courses, so that time goes down the column,
     # i.e. from top to bottom.
@@ -357,7 +357,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Array for output, same size as input (i.e. accounting for those
         # elements that were masked out):
-        aryOut = np.zeros((varNumVol,
+        aryOut = np.zeros((vecInShp[3],
                            varNumEleTlt),
                           dtype=np.float32)
 
@@ -412,7 +412,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         varNumVol = aryFunc.shape[3]
 
         # Loop through volumes:
-        for idxVol in range(varNumVol):
+        for idxVol in range(0, varNumVol):
 
             # print('------------Volume: ' + str(idxVol))
 
