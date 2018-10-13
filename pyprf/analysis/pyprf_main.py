@@ -31,6 +31,7 @@ import multiprocessing as mp
 from pyprf.analysis.load_config import load_config
 from pyprf.analysis.utilities import cls_set_config
 
+from pyprf.analysis.nii_to_hdf5 import nii_to_hdf5
 from pyprf.analysis.model_creation_main import model_creation
 from pyprf.analysis.preprocessing_main import pre_pro_models
 from pyprf.analysis.preprocessing_main import pre_pro_func
@@ -99,15 +100,31 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *************************************************************************
     # *** Preprocessing
 
+    #if lgcHdf5:
+
+    print('---Hdf5 mode.')
+
+    print('------Copy fMRI data from nii file to hdf5 file.')
+
+    # Hdf5 mode. First, copy data from nii to hdf5 files.
+    varNumRun = len(cfg.lstPathNiiFunc)
+    for idxRun in range(varNumRun):
+        nii_to_hdf5(cfg.lstPathNiiFunc[idxRun])
+
+
+
+    #else:
+
     # Preprocessing of pRF model time courses:
     aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
                               varPar=cfg.varPar)
 
     # Preprocessing of functional data:
-    aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp = pre_pro_func(
-        cfg.strPathNiiMask, cfg.lstPathNiiFunc, lgcLinTrnd=cfg.lgcLinTrnd,
-        varSdSmthTmp=cfg.varSdSmthTmp, varSdSmthSpt=cfg.varSdSmthSpt,
-        varPar=cfg.varPar)
+    aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp = \
+        pre_pro_func(cfg.strPathNiiMask, cfg.lstPathNiiFunc,
+                     lgcLinTrnd=cfg.lgcLinTrnd,
+                     varSdSmthTmp=cfg.varSdSmthTmp,
+                     varSdSmthSpt=cfg.varSdSmthSpt, varPar=cfg.varPar)
     # *************************************************************************
 
     # *************************************************************************

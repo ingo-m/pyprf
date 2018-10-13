@@ -22,11 +22,14 @@ import numpy as np
 import h5py
 import threading
 import queue
+from scipy.ndimage.filters import gaussian_filter
 from pyprf.analysis.utilities import load_nii
 from pyprf.analysis.preprocessing_par import funcLnTrRm
+from pyprf.analysis.preprocessing_par import funcSmthTmp
 from nii_to_hdf5 import feed_hdf5
 from nii_to_hdf5 import feed_hdf5_spt
 from nii_to_hdf5 import feed_hdf5_tme
+from pyprf.analysis.preprocessing_par import pre_pro_par
 
 
 def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
@@ -72,9 +75,6 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         This is to avoid problems in the subsequent model fitting. This array
         is necessary to put results into original dimensions after model
         fitting.
-    aryFunc : np.array
-        2D numpy array containing preprocessed functional data, of the form
-        aryFunc[voxelCount, time].
     tplHdf5Shp : tuple
         Spatial dimensions of input nii data (number of voxels in x, y, z
         direction). The data are reshaped during preprocessing, this
@@ -83,14 +83,14 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     Notes
     -----
-    Functional data is loaded from disk. Temporal and spatial smoothing can be
-    applied. The functional data is reshaped, into the form aryFunc[voxel,
-    time]. A mask is applied (externally supplied, e.g. a grey matter mask).
-    Subsequently, the functional data is de-meaned, and intensities are
-    converted into z-scores.
+    Functional data is manipulated on disk (hdf5 mode). Temporal and spatial
+    smoothing can be applied. The functional data is reshaped, into the form
+    aryFunc[time, voxel]. A mask is applied (externally supplied, e.g. a grey
+    matter mask). Subsequently, the functional data is de-meaned, and
+    intensities are converted into z-scores.
 
     """
-    print('------Load & preprocess nii data (hdf5 mode)')
+    print('------Load & preprocess nii data (hdf5 mode).')
 
     # Load mask (to restrict model fitting):
     aryMask, hdrMsk, aryAff = load_nii(strPathNiiMask)
@@ -109,6 +109,13 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     # Number of runs:
     varNumRun = len(lstPathNiiFunc)
+
+    # Counter for total number of volumes (in case number of volumes differs
+    # between runs).
+    varNumVolTtl = 0
+
+    # Remember file names of masked hdf5 files.
+    lstFleMsk = [None] * varNumRun
 
     # Loop through runs and load data:
     for idxRun in range(varNumRun):
@@ -142,10 +149,14 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Number of time points in hdf5 file:
         varNumVol = tplHdf5Shp[0]
 
+        # Increment total-volume counter:
+        varNumVolTtl += varNumVol
+
         # Preprocessing of nii data.
 
         # ---------------------------------------------------------------------
-        # Linear trend removal.
+        # Linear trend removal
+
         if lgcLinTrnd:
 
             print('---------Linear trend removal')
@@ -160,7 +171,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             varNumCnk = vecSplt.shape[0]
 
             # Buffer size:
-            varBuff = 100
+            varBuff = 10
 
             # Create FIFO queue:
             objQ = queue.Queue(maxsize=varBuff)
@@ -194,7 +205,8 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             objThrd.join()
 
         # ---------------------------------------------------------------------
-        # Perform spatial smoothing on fMRI data:
+        # Spatial smoothing
+
         if 0.0 < varSdSmthSpt:
 
             print('---------Spatial smoothing')
@@ -209,7 +221,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             varNumCnk = vecSplt.shape[0]
 
             # Buffer size:
-            varBuff = 100
+            varBuff = 10
 
             # Create FIFO queue:
             objQ = queue.Queue(maxsize=varBuff)
@@ -223,8 +235,6 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Loop through chunks of volumes:
             for idxChnk in range((varNumCnk - 1)):
 
-                print(idxChnk)
-
                 # Start index of current chunk:
                 varIdx01 = vecSplt[idxChnk]
 
@@ -232,7 +242,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
                 varIdx02 = vecSplt[idxChnk + 1]
 
                 # Number of volumes in current chunk:
-                varNumVolTmp = varIdx02 - varIdx01
+                # varNumVolTmp = varIdx02 - varIdx01
 
                 # Get chunk of functional data from hdf5 file:
                 aryFunc = dtsFunc[varIdx01:varIdx02, :]
@@ -267,6 +277,9 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Path of hdf5 file for masked functional data:
         strPthHdf5Msk = os.path.join(strFlePth, (strFleNme + '_masked.hdf5'))
 
+        # Remember file names of masked hdf5 files:
+        lstFleMsk[idxRun] = strPthHdf5Msk
+
         # Reshape mask:
         aryMask = aryMask.reshape(varNumVox)
 
@@ -281,12 +294,12 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         fleHdf5Msk = h5py.File(strPthHdf5Msk, 'w')
 
         # Create dataset within hdf5 file:
-        dtsFuncMsk = fleHdf5.create_dataset('func',
-                                            (varNumVol, varNumVoxMsk),
-                                            dtype=np.float32)
+        dtsFuncMsk = fleHdf5Msk.create_dataset('func',
+                                               (varNumVol, varNumVoxMsk),
+                                               dtype=np.float32)
 
         # Buffer size:
-        varBuff = 100
+        varBuff = 10
 
         # Create FIFO queue:
         objQ = queue.Queue(maxsize=varBuff)
@@ -310,8 +323,11 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         fleHdf5.close()
         fleHdf5Msk.close()
 
+        # Remove un-maksed (i.e. large) hdf5 file.
+        os.remove(strPthHdf5)
+
         # ---------------------------------------------------------------------
-        # Perform temporal smoothing:
+        # Temporal smoothing
 
         # Read & write file (after masking):
         fleHdf5Msk = h5py.File(strPthHdf5Msk, 'r+')
@@ -333,7 +349,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             varNumCnk = vecSplt.shape[0]
 
             # Buffer size:
-            varBuff = 100
+            varBuff = 10
 
             # Create FIFO queue:
             objQ = queue.Queue(maxsize=varBuff)
@@ -374,14 +390,14 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Looping voxel by voxel is too slow. Instead, read & write a chunks of
         # voxels at a time. Indices of chunks:
         varStpSze = 100
-        vecSplt = np.arange(0, (varNumVox + 1), varStpSze)
-        vecSplt = np.concatenate((vecSplt, np.array([varNumVox])))
+        vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
+        vecSplt = np.concatenate((vecSplt, np.array([varNumVoxMsk])))
 
         # Number of chunks:
         varNumCnk = vecSplt.shape[0]
 
         # Buffer size:
-        varBuff = 100
+        varBuff = 10
 
         # Create FIFO queue:
         objQ = queue.Queue(maxsize=varBuff)
@@ -437,29 +453,200 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Close hdf5 file:
         fleHdf5Msk.close()
-+++
 
-    # Put functional data from separate runs into one array. 2D array of the
-    # form aryFunc[voxelCount, time]
-    aryFunc = np.concatenate(lstFunc, axis=1).astype(np.float32, copy=False)
-    del(lstFunc)
+    # -------------------------------------------------------------------------
+    # Combine runs
+
+    # Path for hdf5 file with combined functional data from all runs (after
+    # application of anatomical mask).
+    strPthHdf5Conc = os.path.join(strFlePth, (strFleNme + '_concat.hdf5'))
+
+    # Create hdf5 file:
+    fleHdf5Conc = h5py.File(strPthHdf5Conc, 'w')
+
+    # Create dataset within hdf5 file:
+    dtsFuncConc = fleHdf5Conc.create_dataset('func',
+                                             (varNumVolTtl, varNumVoxMsk),
+                                             dtype=np.float32)
+
+    # Count volumes:
+    varCntVol = 0
+
+    # Loop through runs and load data:
+    for idxRun in range(varNumRun):
+
+        # Read hdf5 file (masked timecourses of current run):
+        fleHdf5Msk = h5py.File(lstFleMsk[idxRun], 'r')
+
+        # Access dataset in current hdf5 file:
+        dtsFuncMsk = fleHdf5Msk['func']
+
+        # Volumes in current run:
+        varNumVolTmp = dtsFuncMsk.shape[0]
+
+        # Looping volume by volume is too slow. Instead, read & write a chunk
+        # of volumes at a time. Indices of chunks:
+        varStpSze = 50
+        vecSplt = np.arange(0, (varNumVolTmp + 1), varStpSze)
+        vecSplt = np.concatenate((vecSplt, np.array([varNumVolTmp])))
+
+        # Number of chunks:
+        varNumCnk = vecSplt.shape[0]
+
+        # Buffer size:
+        varBuff = 10
+
+        # Create FIFO queue:
+        objQ = queue.Queue(maxsize=varBuff)
+
+        # Account for previous runs:
+        vecSpltPlus = np.add(vecSplt, varCntVol)
+
+        # Define & run extra thread with graph that places data on queue:
+        objThrd = threading.Thread(target=feed_hdf5_tme,
+                                   args=(dtsFuncConc, objQ, vecSpltPlus))
+        objThrd.setDaemon(True)
+        objThrd.start()
+
+        # Loop through chunks of volumes:
+        for idxChnk in range((varNumCnk - 1)):
+
+            # Start index of current chunk:
+            varIdx01 = vecSplt[idxChnk]
+
+            # Stop index of current chunk:
+            varIdx02 = vecSplt[idxChnk + 1]
+
+            # Number of volumes in current chunk:
+            # varNumVolTmp = varIdx02 - varIdx01
+
+            # Put current volumes on queue.
+            objQ.put(dtsFuncMsk[varIdx01:varIdx02, :])
+
+        # Close thread:
+        objThrd.join()
+
+        # Close hdf5 file (masked single run):
+        fleHdf5Msk.close()
+
+        # Remove maksed hdf5 file.
+        os.remove(lstFleMsk[idxRun])
+
+    # Close hdf5 file (combined multi run):
+    fleHdf5Conc.close()
+
+    # -------------------------------------------------------------------------
+    # Variance mask
 
     # Voxels that are outside the brain and have no, or very little, signal
     # should not be included in the pRF model finding. We take the variance
-    # over time and exclude voxels with a suspiciously low variance. Because
-    # the data given into the cython or GPU function has float32 precision, we
-    # calculate the variance on data with float32 precision.
-    aryFuncVar = np.var(aryFunc, axis=1, dtype=np.float32)
+    # over time and exclude voxels with a suspiciously low variance.
 
-    # Is the variance greater than zero?
-    aryLgcVar = np.greater(aryFuncVar,
-                           np.array([0.0001]).astype(np.float32)[0])
+    # Read concatenated hdf5 file:
+    fleHdf5Conc = h5py.File(strPthHdf5Conc, 'r')
 
-    # Array with functional data for which conditions (mask inclusion and
-    # cutoff value) are fullfilled:
-    aryFunc = aryFunc[aryLgcVar, :]
+    # Access dataset in concatenated hdf5 file:
+    dtsFuncConc = fleHdf5Conc['func']
 
-    return aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplHdf5Shp
+    # Total number of volumes:
+    varNumVolTtl = dtsFuncConc.shape[0]
+
+    # Number of voxels:
+    varNumVoxMsk = dtsFuncConc.shape[1]
+
+    # Counter for voxels with variance greater than zero:
+    varCntVoxInc = 0
+
+    # Looping voxel by voxel is too slow. Instead, read & write a chunks of
+    # voxels at a time. Indices of chunks:
+    varStpSze = 100
+    vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
+    vecSplt = np.concatenate((vecSplt, np.array([varNumVoxMsk])))
+
+    # Number of chunks:
+    varNumCnk = vecSplt.shape[0]
+
+    # List for variance mask:
+    lstLgcVar = [None] * (varNumCnk - 1)
+
+    # Loop through chunks of voxels:
+    for idxChnk in range((varNumCnk - 1)):
+
+        # Start index of current chunk:
+        varIdx01 = vecSplt[idxChnk]
+
+        # Stop index of current chunk:
+        varIdx02 = vecSplt[idxChnk + 1]
+
+        # Get chunk of functional data from hdf5 file:
+        aryFunc = dtsFuncConc[:, varIdx01:varIdx02]
+
+        # Variance over time:
+        vecVar = np.var(aryFunc, axis=0, dtype=np.float32)
+
+        # Is the variance greater than zero?
+        vecLgcVar = np.greater(vecVar,
+                               np.array([0.0001]).astype(np.float32)[0])
+
+        # Count voxels with variance greater than zero:
+        varCntVoxInc += np.sum(vecLgcVar)
+
+        # Remember variance mask:
+        lstLgcVar[idxChnk] = np.copy(vecLgcVar)
+
+    # Close hdf5 file (combined multi run):
+    fleHdf5Conc.close()
+
+    # Path for hdf5 file with combined functional data from all runs (after
+    # application of variance mask).
+    strPthHdf5Var = os.path.join(strFlePth, (strFleNme + '_complete.hdf5'))
+
+    # Create hdf5 file:
+    fleHdf5Var = h5py.File(strPthHdf5Var, 'w')
+
+    # Create dataset within hdf5 file:
+    dtsFuncVar = fleHdf5Var.create_dataset('func',
+                                           (varNumVolTtl, varCntVoxInc),
+                                           dtype=np.float32)
+
+    # Index for placement of selected voxels (i.e. after application of
+    # variance mask).
+    varIdx03 = 0
+
+    # Loop through chunks of voxels:
+    for idxChnk in range((varNumCnk - 1)):
+
+        # Start index of current chunk:
+        varIdx01 = vecSplt[idxChnk]
+
+        # Stop index of current chunk:
+        varIdx02 = vecSplt[idxChnk + 1]
+
+        # Get chunk of functional data from hdf5 file:
+        aryFunc = dtsFuncConc[:, varIdx01:varIdx02]
+
+        # Apply variance mask:
+        aryFunc = aryFunc[:, lstLgcVar[idxChnk]]
+
+        # Number of voxels in variance mask:
+        varNumTmp = np.sum(lstLgcVar[idxChnk])
+
+        # Place variance-masked data in hdf5 file:
+        dtsFuncVar[:, varIdx03:(varIdx03 + varNumTmp)] = aryFunc
+
+        # Increment counter:
+        varIdx03 += varNumTmp
+
+    # Close hdf5 files:
+    fleHdf5Conc.close()
+    fleHdf5Var.close()
+
+    # Concatenate variance masks over all voxels, new shape:
+    # `aryLgcVar[voxels]`.
+    aryLgcVar = np.concatenate(lstLgcVar, axis=0)
+    del(lstLgcVar)
+
+    return aryLgcMsk, hdrMsk, aryAff, aryLgcVar, tplHdf5Shp
 
 
 def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10, strPathMdl=None):
@@ -479,7 +666,7 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10, strPathMdl=None):
         no temporal smoothing is applied.
     varPar : int
         Number of processes to run in parallel (multiprocessing).
-    strPathMdl : str or None
+    strPathMdl : str
         Path of file with pRF time course models (without file extension). In
         hdf5 mode, time courses are loaded to & saved to hdf5 file, so that
         not all pRF model time courses do not have to be loaded into RAM at
@@ -487,28 +674,25 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10, strPathMdl=None):
 
     Returns
     -------
-    aryPrfTc : np.array
-        Array with preprocessed pRF time course models, same shape as input
-        (aryPrfTc[x-position, y-position, SD, condition, volume]).
+    This function has no return value. pRF model time courses are processed on
+    disk (hdf5 mode).
 
     Notes
     -----
-    Only temporal smoothing is applied to the pRF model time courses.
+    Only temporal (but no spatial) smoothing is applied to the pRF model time
+    courses.
 
     """
-    print('------Preprocess pRF time course models')
+    print('------Preprocess pRF time course models (hdf5 mode).')
 
-    # Hdf5 mode?
-    if aryPrfTc is None:
+    # Path of hdf5 file:
+    strPthHdf5 = (strPathMdl + '.hdf5')
 
-        # Path of hdf5 file:
-        strPthHdf5 = (strPathMdl + '.hdf5')
+    # Read file:
+    fleHdf5 = h5py.File(strPthHdf5, 'r+')
 
-        # Read file:
-        fleHdf5 = h5py.File(strPthHdf5, 'r+')
-
-        # Access dataset in current hdf5 file:
-        aryPrfTc = fleHdf5['pRF_time_courses']
+    # Access dataset in current hdf5 file:
+    aryPrfTc = fleHdf5['pRF_time_courses']
 
     # Loop through stimulus conditions, because the array needs to the 4D,
     # with time as last dimension, for the preprocessing. Otherwise the
@@ -523,13 +707,5 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10, strPathMdl=None):
             lgcLinTrnd=False, varSdSmthTmp=varSdSmthTmp, varSdSmthSpt=0.0,
             varPar=varPar)
 
-    # Hdf5 mode?
-    if aryPrfTc is None:
-
-        # Dummy pRF time course array:
-        aryPrfTc = None
-
-        # Close hdf5 file:
-        fleHdf5.close()
-
-    return aryPrfTc
+    # Close hdf5 file:
+    fleHdf5.close()
