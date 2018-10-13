@@ -26,14 +26,14 @@ from scipy.ndimage.filters import gaussian_filter
 from pyprf.analysis.utilities import load_nii
 from pyprf.analysis.preprocessing_par import funcLnTrRm
 from pyprf.analysis.preprocessing_par import funcSmthTmp
-from nii_to_hdf5 import feed_hdf5
-from nii_to_hdf5 import feed_hdf5_spt
-from nii_to_hdf5 import feed_hdf5_tme
+from pyprf.analysis.nii_to_hdf5 import feed_hdf5
+from pyprf.analysis.nii_to_hdf5 import feed_hdf5_spt
+from pyprf.analysis.nii_to_hdf5 import feed_hdf5_tme
 from pyprf.analysis.preprocessing_par import pre_pro_par
 
 
-def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
-                 varSdSmthTmp=2.0, varSdSmthSpt=0.0):
+def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
+                      varSdSmthTmp=2.0, varSdSmthSpt=0.0):
     """
     Load & preprocess functional data - hdf5 mode.
 
@@ -306,15 +306,19 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Define & run extra thread with graph that places data on queue:
         objThrd = threading.Thread(target=feed_hdf5,
-                                   args=(dtsFuncMsk, objQ, varNumVox))
+                                   args=(dtsFuncMsk, objQ, varNumVoxMsk))
         objThrd.setDaemon(True)
         objThrd.start()
+
+        # Counter for placement of voxels in masked hdf5 file:
+        varCntVoxMsk = 0
 
         # Loop through voxel and place voxel time courses that are within the
         # mask in new hdf5 file:
         for idxVox in range(varNumVox):
             if aryLgcMsk[idxVox]:
-                objQ.put(dtsFunc[:, idxVox])
+                objQ.put(dtsFuncMsk[:, varCntVoxMsk])
+                varCntVoxMsk += 1
 
         # Close thread:
         objThrd.join()
@@ -459,7 +463,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     # Path for hdf5 file with combined functional data from all runs (after
     # application of anatomical mask).
-    strPthHdf5Conc = os.path.join(strFlePth, (strFleNme + '_concat.hdf5'))
+    strPthHdf5Conc = os.path.join(strFlePth, ('concat.hdf5'))
 
     # Create hdf5 file:
     fleHdf5Conc = h5py.File(strPthHdf5Conc, 'w')
@@ -594,12 +598,9 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Remember variance mask:
         lstLgcVar[idxChnk] = np.copy(vecLgcVar)
 
-    # Close hdf5 file (combined multi run):
-    fleHdf5Conc.close()
-
     # Path for hdf5 file with combined functional data from all runs (after
     # application of variance mask).
-    strPthHdf5Var = os.path.join(strFlePth, (strFleNme + '_complete.hdf5'))
+    strPthHdf5Var = os.path.join(strFlePth, ('complete.hdf5'))
 
     # Create hdf5 file:
     fleHdf5Var = h5py.File(strPthHdf5Var, 'w')
@@ -649,28 +650,24 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     return aryLgcMsk, hdrMsk, aryAff, aryLgcVar, tplHdf5Shp
 
 
-def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10, strPathMdl=None):
+def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, varPar=10):
     """
     Preprocess pRF model time courses - hdf5 mode.
 
     Parameters
     ----------
-    aryPrfTc : np.array or None
-        Array with pRF time course models, shape:
-        aryPrfTc[x-position, y-position, SD, condition, volume]. If `None`
-        (hdf5-mode, i.e. large parameter space), pRF model time courses are
-        loaded from & saved to hdf5 file.
+    strPathMdl : str
+        Path of file with pRF time course models (without file extension). In
+        hdf5 mode, time courses are loaded to & saved to hdf5 file, so that
+        not all pRF model time courses do not have to be loaded into RAM at
+        once.
     varSdSmthTmp : float
         Extent of temporal smoothing that is applied to functional data and
         pRF time course models, [SD of Gaussian kernel, in seconds]. If `zero`,
         no temporal smoothing is applied.
     varPar : int
         Number of processes to run in parallel (multiprocessing).
-    strPathMdl : str
-        Path of file with pRF time course models (without file extension). In
-        hdf5 mode, time courses are loaded to & saved to hdf5 file, so that
-        not all pRF model time courses do not have to be loaded into RAM at
-        once.
+
 
     Returns
     -------
@@ -679,8 +676,8 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10, strPathMdl=None):
 
     Notes
     -----
-    Only temporal (but no spatial) smoothing is applied to the pRF model time
-    courses.
+    pRF model time courses (in hdf5 file) have same shape as in 'regular' mode:
+    aryPrfTc[x-position, y-position, SD, condition, volume].
 
     """
     print('------Preprocess pRF time course models (hdf5 mode).')

@@ -30,11 +30,13 @@ import multiprocessing as mp
 
 from pyprf.analysis.load_config import load_config
 from pyprf.analysis.utilities import cls_set_config
-
 from pyprf.analysis.nii_to_hdf5 import nii_to_hdf5
 from pyprf.analysis.model_creation_main import model_creation
 from pyprf.analysis.preprocessing_main import pre_pro_models
 from pyprf.analysis.preprocessing_main import pre_pro_func
+
+from pyprf.analysis.preprocessing_hdf5 import pre_pro_models_hdf5
+from pyprf.analysis.preprocessing_hdf5 import pre_pro_func_hdf5
 
 
 def pyprf(strCsvCnfg, lgcTest=False):  #noqa
@@ -111,7 +113,15 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     for idxRun in range(varNumRun):
         nii_to_hdf5(cfg.lstPathNiiFunc[idxRun])
 
+    pre_pro_func_hdf5(cfg.strPathNiiMask,
+                      cfg.lstPathNiiFunc,
+                      lgcLinTrnd=cfg.lgcLinTrnd,
+                      varSdSmthTmp=cfg.varSdSmthTmp,
+                      varSdSmthSpt=cfg.varSdSmthSpt)
 
+    # pre_pro_models_hdf5(cfg.strPathMdl,
+    #                     varSdSmthTmp=cfg.varSdSmthTmp,
+    #                     varPar=cfg.varPar)
 
     #else:
 
