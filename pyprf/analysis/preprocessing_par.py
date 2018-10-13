@@ -35,14 +35,10 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
     with other functions using the same parallelisation.
     """
     # Number of voxels in this chunk:
-    # varNumVoxChnk = aryFuncChnk.shape[0]
+    # varNumVoxChnk = aryFuncChnk.shape[1]
 
     # Number of time points in this chunk:
-    varNumVol = aryFuncChnk.shape[1]
-
-    # We reshape the voxel time courses, so that time goes down the column,
-    # i.e. from top to bottom.
-    aryFuncChnk = aryFuncChnk.T
+    varNumVol = aryFuncChnk.shape[0]
 
     # Linear mode to fit to the voxel time courses:
     vecMdlTc = np.linspace(0,
@@ -77,9 +73,6 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
     # aryFuncChnk = np.subtract(aryFuncChnk,
     #                           aryLstSqFt[1, :])
 
-    # Bring array into original order (time from left to right):
-    aryFuncChnk = aryFuncChnk.T
-
     # Output list:
     lstOut = [idxPrc,
               aryFuncChnk.astype(np.float32, copy=False)]
@@ -101,25 +94,25 @@ def funcSmthTmp(idxPrc, aryFuncChnk, varSdSmthTmp, queOut):
     # set the method to 'nearest' and place a volume with mean intensity
     # (over time) at the beginning and at the end.
     aryFuncChnkMean = np.mean(aryFuncChnk,
-                              axis=1,
+                              axis=0,
                               keepdims=True,
                               dtype=np.float32)
 
     aryFuncChnk = np.concatenate((aryFuncChnkMean,
                                   aryFuncChnk,
-                                  aryFuncChnkMean), axis=1)
+                                  aryFuncChnkMean), axis=0)
 
     # In the input data, time goes from left to right. Therefore, we apply
     # the filter along axis=1.
     aryFuncChnk = gaussian_filter1d(aryFuncChnk,
                                     varSdSmthTmp,
-                                    axis=1,
+                                    axis=0,
                                     order=0,
                                     mode='nearest',
                                     truncate=4.0)
 
     # Remove mean-intensity volumes at the beginning and at the end:
-    aryFuncChnk = aryFuncChnk[:, 1:-1]
+    aryFuncChnk = aryFuncChnk[1:-1, :]
 
     # Output list:
     lstOut = [idxPrc,
@@ -202,7 +195,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         varNumEleTlt = (vecInShp[0] * vecInShp[1] * vecInShp[2])
 
         # Reshape data:
-        aryData = np.reshape(aryData, [varNumEleTlt, varNumVol])
+        aryData = np.reshape(aryData, [varNumVol, varNumEleTlt])
 
         # The exclusion of voxels based on the mask is only used for the fMRI
         # data, not for the pRF time course models. For the pRF time course
@@ -223,10 +216,10 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
             # Array with functional data for which conditions (mask inclusion
             # and cutoff value) are fullfilled:
-            aryData = aryData[aryLgc, :]
+            aryData = aryData[:, aryLgc]
 
         # Number of elements on which function will be applied:
-        varNumEleInc = aryData.shape[0]
+        varNumEleInc = aryData.shape[1]
 
         print('------------Number of voxels/pRF time courses on which ' +
               'function will be applied: ' + str(varNumEleInc))
@@ -244,13 +237,13 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         vecIdxChnks = np.hstack((vecIdxChnks, varNumEleInc))
 
         # Put data into chunks:
-        for idxChnk in range(0, varPar):
+        for idxChnk in range(varPar):
             # Index of first element to be included in current chunk:
             varTmpChnkSrt = int(vecIdxChnks[idxChnk])
             # Index of last element to be included in current chunk:
             varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
             # Put array chunk into list:
-            lstFunc[idxChnk] = aryData[varTmpChnkSrt:varTmpChnkEnd, :]
+            lstFunc[idxChnk] = aryData[:, varTmpChnkSrt:varTmpChnkEnd]
 
         # We don't need the original array with the functional data anymore:
         del(aryData)
@@ -258,7 +251,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         print('------------Creating parallel processes')
 
         # Create processes:
-        for idxPrc in range(0, varPar):
+        for idxPrc in range(varPar):
             lstPrcs[idxPrc] = mp.Process(target=funcIn,
                                          args=(idxPrc,
                                                lstFunc[idxPrc],
@@ -268,15 +261,15 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             lstPrcs[idxPrc].Daemon = True
 
         # Start processes:
-        for idxPrc in range(0, varPar):
+        for idxPrc in range(varPar):
             lstPrcs[idxPrc].start()
 
         # Collect results from queue:
-        for idxPrc in range(0, varPar):
+        for idxPrc in range(varPar):
             lstResPar[idxPrc] = queOut.get(True)
 
         # Join processes:
-        for idxPrc in range(0, varPar):
+        for idxPrc in range(varPar):
             lstPrcs[idxPrc].join()
 
         print('------------Post-process data from parallel function')
@@ -286,7 +279,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         lstRes = [None] * varPar
 
         # Put output into correct order:
-        for idxRes in range(0, varPar):
+        for idxRes in range(varPar):
 
             # Index of results (first item in output list):
             varTmpIdx = lstResPar[idxRes][0]
@@ -296,9 +289,9 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
-        aryRes = np.array([], dtype=np.float32).reshape(0, varNumVol)
+        aryRes = np.array([], dtype=np.float32).reshape(varNumVol, 0)
         for idxRes in range(0, varPar):
-            aryRes = np.append(aryRes, lstRes[idxRes], axis=0)
+            aryRes = np.append(aryRes, lstRes[idxRes], axis=1)
 
         # Delete unneeded large objects:
         del(lstRes)
@@ -306,8 +299,8 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Array for output, same size as input (i.e. accounting for those
         # elements that were masked out):
-        aryOut = np.zeros((varNumEleTlt,
-                           vecInShp[3]),
+        aryOut = np.zeros((varNumVol,
+                           varNumEleTlt),
                           dtype=np.float32)
 
         if 0 < aryMask.size:
@@ -315,7 +308,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             # Put results form pRF finding into array (they originally needed
             # to be saved in a list due to parallelisation). If mask was used,
             # we have to account for leaving out some voxels earlier.
-            aryOut[aryLgc, :] = aryRes
+            aryOut[:, aryLgc] = aryRes
 
         else:
 
@@ -332,110 +325,6 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # And... done.
         return aryOut
-    # *************************************************************************
-
-    # *************************************************************************
-    # *** Generic function for parallelisation over volumes
-
-    # def funcParVol(funcIn, aryData, varSdSmthSpt, varPar):
-    #     """
-    #     Parallelize over another function.
-
-    #     Data is chunked into separate volumes.
-    #     """
-    #     # Shape of input data:
-    #     vecInShp = aryData.shape
-
-    #     # Number of volumes:
-    #     varNumVol = vecInShp[3]
-
-    #     # Empty list for results:
-    #     lstResPar = [None] * varPar
-
-    #     # Empty list for processes:
-    #     lstPrcs = [None] * varPar
-
-    #     # Create a queue to put the results in:
-    #     queOut = mp.Queue()
-
-    #     # List into which the chunks of data for the parallel processes will
-    #     # be put:
-    #     lstFunc = [None] * varPar
-
-    #     # Vector with the indicies at which the data will be separated in
-    #     # order to be chunked up for the parallel processes:
-    #     vecIdxChnks = np.linspace(0,
-    #                               varNumVol,
-    #                               num=varPar,
-    #                               endpoint=False)
-    #     vecIdxChnks = np.hstack((vecIdxChnks, varNumVol))
-
-    #     # Put data into chunks:
-    #     for idxChnk in range(0, varPar):
-    #         # Index of first element to be included in current chunk:
-    #         varTmpChnkSrt = int(vecIdxChnks[idxChnk])
-    #         # Index of last element to be included in current chunk:
-    #         varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-    #         # Put array chunk into list:
-    #         lstFunc[idxChnk] = aryData[:, :, :, varTmpChnkSrt:varTmpChnkEnd]
-
-    #     # We don't need the original array with the functional data anymore:
-    #     del(aryData)
-
-    #     print('------------Creating parallel processes')
-
-    #     # Create processes:
-    #     for idxPrc in range(0, varPar):
-    #         lstPrcs[idxPrc] = mp.Process(target=funcIn,
-    #                                      args=(idxPrc,
-    #                                            lstFunc[idxPrc],
-    #                                            varSdSmthSpt,
-    #                                            queOut))
-    #         # Daemon (kills processes when exiting):
-    #         lstPrcs[idxPrc].Daemon = True
-
-    #     # Start processes:
-    #     for idxPrc in range(0, varPar):
-    #         lstPrcs[idxPrc].start()
-
-    #     # Collect results from queue:
-    #     for idxPrc in range(0, varPar):
-    #         lstResPar[idxPrc] = queOut.get(True)
-
-    #     # Join processes:
-    #     for idxPrc in range(0, varPar):
-    #         lstPrcs[idxPrc].join()
-
-    #     print('------------Post-process data from parallel function')
-
-    #     # Create list for vectors with results, in order to put the results
-    #     # into the correct order:
-    #     lstRes = [None] * varPar
-
-    #     # Put output into correct order:
-    #     for idxRes in range(0, varPar):
-
-    #         # Index of results (first item in output list):
-    #         varTmpIdx = lstResPar[idxRes][0]
-
-    #         # Put results into list, in correct order:
-    #         lstRes[varTmpIdx] = lstResPar[idxRes][1]
-
-    #     # Merge output vectors (into the same order with which they were put
-    #     # into this function):
-    #     aryRes = np.array([], dtype=np.float32).reshape(vecInShp[0],
-    #                                                     vecInShp[1],
-    #                                                     vecInShp[2],
-    #                                                     0)
-    #     for idxRes in range(0, varPar):
-    #         aryRes = np.append(aryRes, lstRes[idxRes], axis=3)
-
-    #     # Delete unneeded large objects:
-    #     del(lstRes)
-    #     del(lstResPar)
-
-    #     # And... done.
-    #     return aryRes
     # *************************************************************************
 
     # *************************************************************************
