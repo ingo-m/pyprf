@@ -18,7 +18,6 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import h5py
 from pyprf.analysis.utilities import load_nii
 from pyprf.analysis.preprocessing_par import pre_pro_par
 
@@ -101,8 +100,12 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     # Total number of voxels:
     varNumVoxTlt = (tplNiiShp[0] * tplNiiShp[1] * tplNiiShp[2])
 
-    # Reshape mask:
-    aryMask = np.reshape(aryMask, varNumVoxTlt)
+    # Reshape mask (flatten):
+    aryMaskFlt = np.reshape(aryMask, varNumVoxTlt)
+
+    # Boolean mask:
+    aryLgcMsk = np.greater(aryMaskFlt.astype(np.int16),
+                           np.array([0], dtype=np.int16)[0])
 
     # List for arrays with functional data (possibly several runs):
     lstFunc = []
@@ -135,8 +138,6 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         aryTmpFunc = np.reshape(aryTmpFunc, [varNumVoxTlt, tplNiiShp[3]])
 
         # Apply mask:
-        aryLgcMsk = np.greater(aryMask.astype(np.int16),
-                               np.array([0], dtype=np.int16)[0])
         aryTmpFunc = aryTmpFunc[aryLgcMsk, :]
 
         # De-mean functional data:
