@@ -296,9 +296,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
-        aryRes = np.array([], dtype=np.float32).reshape(0, varNumVol)
-        for idxRes in range(0, varPar):
-            aryRes = np.append(aryRes, lstRes[idxRes], axis=0)
+        aryRes = np.concatenate(lstRes, axis=0).astype(np.float32)
 
         # Delete unneeded large objects:
         del(lstRes)
