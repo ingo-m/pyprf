@@ -105,7 +105,7 @@ def model_creation(dicCnfg, lgcHdf5=False):
             # function.
             strPathMdlTmp = cfg.strPathMdl
         else:
-            # If the file
+            # Switch off hdf5 mode for child modules.
             strPathMdlTmp = None
 
         aryPrfTc = crt_prf_tcmdl(aryPixConv,
