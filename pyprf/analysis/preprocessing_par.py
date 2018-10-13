@@ -253,7 +253,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         varNumEleTlt = (vecInShp[0] * vecInShp[1] * vecInShp[2])
 
         # Reshape data:
-        aryData = np.reshape(aryData, [varNumEleTlt, varNumVol])
+        aryData = np.reshape(aryData, [varNumVol, varNumEleTlt])
 
         # The exclusion of voxels based on the mask is only used for the fMRI
         # data, not for the pRF time course models. For the pRF time course
@@ -274,10 +274,10 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
             # Array with functional data for which conditions (mask inclusion
             # and cutoff value) are fullfilled:
-            aryData = aryData[aryLgc, :]
+            aryData = aryData[:, aryLgc]
 
         # Number of elements on which function will be applied:
-        varNumEleInc = aryData.shape[0]
+        varNumEleInc = aryData.shape[1]
 
         print('------------Number of voxels/pRF time courses on which ' +
               'function will be applied: ' + str(varNumEleInc))
@@ -295,13 +295,13 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         vecIdxChnks = np.hstack((vecIdxChnks, varNumEleInc))
 
         # Put data into chunks:
-        for idxChnk in range(0, varPar):
+        for idxChnk in range(varPar):
             # Index of first element to be included in current chunk:
             varTmpChnkSrt = int(vecIdxChnks[idxChnk])
             # Index of last element to be included in current chunk:
             varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
             # Put array chunk into list:
-            lstFunc[idxChnk] = aryData[varTmpChnkSrt:varTmpChnkEnd, :]
+            lstFunc[idxChnk] = aryData[:, varTmpChnkSrt:varTmpChnkEnd]
 
         # We don't need the original array with the functional data anymore:
         del(aryData)
@@ -319,15 +319,15 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             lstPrcs[idxPrc].Daemon = True
 
         # Start processes:
-        for idxPrc in range(0, varPar):
+        for idxPrc in range(varPar):
             lstPrcs[idxPrc].start()
 
         # Collect results from queue:
-        for idxPrc in range(0, varPar):
+        for idxPrc in range(varPar):
             lstResPar[idxPrc] = queOut.get(True)
 
         # Join processes:
-        for idxPrc in range(0, varPar):
+        for idxPrc in range(varPar):
             lstPrcs[idxPrc].join()
 
         print('------------Post-process data from parallel function')
@@ -337,7 +337,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         lstRes = [None] * varPar
 
         # Put output into correct order:
-        for idxRes in range(0, varPar):
+        for idxRes in range(varPar):
 
             # Index of results (first item in output list):
             varTmpIdx = lstResPar[idxRes][0]
@@ -347,9 +347,9 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
-        aryRes = np.array([], dtype=np.float32).reshape(0, varNumVol)
-        for idxRes in range(0, varPar):
-            aryRes = np.append(aryRes, lstRes[idxRes], axis=0)
+        aryRes = np.array([], dtype=np.float32).reshape(varNumVol, 0)
+        for idxRes in range(varPar):
+            aryRes = np.append(aryRes, lstRes[idxRes], axis=1)
 
         # Delete unneeded large objects:
         del(lstRes)
@@ -357,16 +357,15 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Array for output, same size as input (i.e. accounting for those
         # elements that were masked out):
-        aryOut = np.zeros((varNumEleTlt,
-                           vecInShp[3]),
+        aryOut = np.zeros((vecInShp[3],
+                           varNumEleTlt),
                           dtype=np.float32)
 
         if 0 < aryMask.size:
 
-            # Put results form pRF finding into array (they originally needed
-            # to be saved in a list due to parallelisation). If mask was used,
-            # we have to account for leaving out some voxels earlier.
-            aryOut[aryLgc, :] = aryRes
+            # Put results form parallel processes finding into array,
+            # accounting for mask.
+            aryOut[:, aryLgc] = aryRes
 
         else:
 
@@ -374,7 +373,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             # to account for leaft out values.
             aryOut = aryRes
 
-        # Reshape pRF finding results:
+        # Reshape results (to match input shape):
         aryOut = np.reshape(aryOut,
                             [vecInShp[0],
                              vecInShp[1],
@@ -391,14 +390,18 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     # Data type for all computations should be float32 to avoid memory issues.
     aryFunc = aryFunc.astype(np.float32, copy=False)
 
+    # At this point, `aryFunc` is 4D ([x, y, z, time]). This is so because
+    # spatial smoothing will have to be carried out in original spatial
+    # dimensions.
+
     if lgcLinTrnd:
         # Perform linear trend removal (parallelised over voxels):
         print('---------Linear trend removal')
         aryFunc = funcParVox(funcLnTrRm,
-                             aryFunc.T,
+                             aryFunc,
                              aryMask,
                              0,
-                             varPar).T
+                             varPar)
 
     # Perform spatial smoothing on fMRI data (reduced parallelisation over
     # volumes because this function is very memory intense):
@@ -424,10 +427,10 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     if 0.0 < varSdSmthTmp:
         print('---------Temporal smoothing')
         aryFunc = funcParVox(funcSmthTmp,
-                             aryFunc.T,
+                             aryFunc,
                              aryMask,
                              varSdSmthTmp,
-                             varPar).T
+                             varPar)
     # *************************************************************************
 
     # *************************************************************************
