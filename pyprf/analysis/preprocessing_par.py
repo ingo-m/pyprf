@@ -423,8 +423,8 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     # Perform temporal smoothing:
     if 0.0 < varSdSmthTmp:
         print('---------Temporal smoothing')
-        aryFunc = funcParVox(funcSmthTmp,
-                             aryFunc.T,
+        aryFunc = funcParVox(funcSmthTmp.T,
+                             aryFunc,
                              aryMask,
                              varSdSmthTmp,
                              varPar).T
