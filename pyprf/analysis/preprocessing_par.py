@@ -31,18 +31,36 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
     """
     Perform linear trend removal on the input fMRI data.
 
+    Parameters
+    ----------
+    idxPrc : int
+        Process ID for parallel processes (for sorting results from multiple
+        parallel processes).
+    aryFuncChnk : np.array
+        Array with data (fMRI data or pRF model time courses). Shape:
+        `aryFuncChnk[time, voxels/models]`.
+    varSdSmthSpt : float
+        Dummy variable (has no effect). Needed for modularity wrt
+        parallelisation function.
+    queOut : multiprocessing.queue or None
+        Queue on which to put results. Results are a list containing the
+        process ID (`idxPrc`) and the filtered data (same shape as input
+        `aryFuncChnk`). If `None`, only `aryFuncChnk` is returned directly.
+
+    Returns
+    -------
+    lstOut or aryFuncChnk
+        If `queOut` is a multiprocessing.queue, a list containing the process
+        ID (`idxPrc`) and the filtered data (same shape as input `aryFuncChnk`)
+        are put on this queue. Otherwise, `aryFuncChnk` is returned directly.
+
+    Notes
+    -----
     The variable varSdSmthSpt is not needed, only included for consistency
     with other functions using the same parallelisation.
     """
-    # Number of voxels in this chunk:
-    # varNumVoxChnk = aryFuncChnk.shape[0]
-
     # Number of time points in this chunk:
     varNumVol = aryFuncChnk.shape[0]
-
-    # We reshape the voxel time courses, so that time goes down the column,
-    # i.e. from top to bottom.
-    # aryFuncChnk = aryFuncChnk.T
 
     # Linear mode to fit to the voxel time courses:
     vecMdlTc = np.linspace(0,
@@ -50,7 +68,6 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
                            num=varNumVol,
                            endpoint=True,
                            dtype=np.float32)
-    # vecMdlTc = vecMdlTc.flatten()
 
     # We create a design matrix including the linear trend and a
     # constant term:
@@ -77,14 +94,17 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
     # aryFuncChnk = np.subtract(aryFuncChnk,
     #                           aryLstSqFt[1, :])
 
-    # Bring array into original order (time from left to right):
-    # aryFuncChnk = aryFuncChnk.T
+    if queOut is None:
 
-    # Output list:
-    lstOut = [idxPrc,
-              aryFuncChnk.astype(np.float32, copy=False)]
+        return aryFuncChnk.astype(np.float32)
 
-    queOut.put(lstOut)
+    else:
+
+        # Output list:
+        lstOut = [idxPrc,
+                  aryFuncChnk.astype(np.float32, copy=False)]
+
+        queOut.put(lstOut)
 # *************************************************************************
 
 
