@@ -118,7 +118,11 @@ def nii_to_hdf5(strPathIn):
             # Load from nii file, and reshape (new shape: func[time, voxel]).
             aryTmp = np.asarray(objNii.dataobj[..., varIdx01:varIdx02]
                                 ).astype(np.float32)
-            aryTmp = aryTmp.reshape(varNumVolTmp, varNumVox)
+
+            # The reshape mechanism need to be the same as in the 'regular'
+            # (i.e. not hdf5 mode) pipeline (`pre_pro_func`).
+            aryTmp = np.reshape(aryTmp, [varNumVox, varNumVolTmp]).T
+            # aryTmp = np.reshape(aryTmp, [varNumVolTmp, varNumVox])
 
             # Put current volume on queue.
             objQ.put(aryTmp)

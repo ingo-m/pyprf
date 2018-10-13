@@ -80,6 +80,8 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         direction). The data are reshaped during preprocessing, this
         information is needed to fit final output into original spatial
         dimensions.
+    strPthHdf5Func : str
+        Path of hdf5 files with preprocessed functional data.
 
     Notes
     -----
@@ -95,17 +97,24 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     # Load mask (to restrict model fitting):
     aryMask, hdrMsk, aryAff = load_nii(strPathNiiMask)
 
-    # Mask is loaded as float32, but is better represented as integer:
-    aryMask = np.array(aryMask).astype(np.int16)
-
-    # Number of non-zero voxels in mask:
-    # varNumVoxMsk = int(np.count_nonzero(aryMask))
-
     # Dimensions of nii data:
     tplNiiShp = aryMask.shape
 
     # Total number of voxels:
     varNumVox = (tplNiiShp[0] * tplNiiShp[1] * tplNiiShp[2])
+
+    # Mask is loaded as float32, but is better represented as integer:
+    aryMask = np.array(aryMask).astype(np.int16)
+
+    # Reshape mask:
+    aryMask = np.reshape(aryMask, varNumVox)
+
+    # Make mask boolean:
+    vecLgcMsk = np.greater(aryMask.astype(np.int16),
+                           np.array([0], dtype=np.int16)[0])
+
+    # Number of voxels after masking:
+    varNumVoxMsk = np.sum(vecLgcMsk)
 
     # Number of runs:
     varNumRun = len(lstPathNiiFunc)
@@ -252,18 +261,23 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
                 for idxVol in range(varChnkNumVol):
 
                     # Reshape into original shape (for spatial smoothing):
-                    aryTmp = aryFunc[idxVol, :].reshape(tplNiiShp)
+                    # aryTmp = np.reshape(aryFunc[idxVol, :], [tplNiiShp[0], tplNiiShp[1], tplNiiShp[2]])
+                    # aryTmp = np.reshape(aryFunc[idxVol, :], [58, 33, 25], order='C') # : {‘C’, ‘F’, ‘A’}, optional)
+                    aryTmp = np.reshape(
+                                        np.reshape(aryFunc[idxVol, :], (varNumVox, 1)).T,
+                                        [tplNiiShp[0], tplNiiShp[1], tplNiiShp[2]])
 
                     # Perform smoothing:
                     aryTmp = gaussian_filter(
-                        aryTmp,
+                        aryTmp.astype(np.float32),
                         varSdSmthSpt,
                         order=0,
                         mode='nearest',
-                        truncate=4.0)
+                        truncate=4.0).astype(np.float32)
 
                     # Back to shape: func[time, voxel].
-                    aryFunc[idxVol, :] = aryTmp.reshape(1, varNumVox)
+                    #aryFunc[idxVol, :] = aryTmp.reshape(varNumVox)
+                    aryFunc[idxVol, :] = np.reshape(aryTmp, [varNumVox])
 
                 # Put current volume on queue.
                 objQ.put(aryFunc)
@@ -279,16 +293,6 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Remember file names of masked hdf5 files:
         lstFleMsk[idxRun] = strPthHdf5Msk
-
-        # Reshape mask:
-        aryMask = aryMask.reshape(varNumVox)
-
-        # Make mask boolean:
-        vecLgcMsk = np.greater(aryMask.astype(np.int16),
-                               np.array([0], dtype=np.int16)[0])
-
-        # Number of voxels after masking:
-        varNumVoxMsk = np.sum(vecLgcMsk)
 
         # Create hdf5 file:
         fleHdf5Msk = h5py.File(strPthHdf5Msk, 'w')
@@ -310,15 +314,11 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         objThrd.setDaemon(True)
         objThrd.start()
 
-        # Counter for placement of voxels in masked hdf5 file:
-        varCntVoxMsk = 0
-
         # Loop through voxel and place voxel time courses that are within the
         # mask in new hdf5 file:
         for idxVox in range(varNumVox):
             if vecLgcMsk[idxVox]:
-                objQ.put(dtsFuncMsk[:, varCntVoxMsk])
-                varCntVoxMsk += 1
+                objQ.put(dtsFunc[:, idxVox])
 
         # Close thread:
         objThrd.join()
@@ -536,6 +536,9 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Remove maksed hdf5 file.
         os.remove(lstFleMsk[idxRun])
 
+        # Increment volume counter:
+        varCntVol += varNumVolTmp
+
     # Close hdf5 file (combined multi run):
     fleHdf5Conc.close()
 
@@ -602,6 +605,8 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     # application of variance mask).
     strPthHdf5Var = os.path.join(strFlePth, ('complete.hdf5'))
 
+    strPthHdf5Func = strPthHdf5Var
+
     # Create hdf5 file:
     fleHdf5Var = h5py.File(strPthHdf5Var, 'w')
 
@@ -647,7 +652,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     vecLgcVar = np.concatenate(lstLgcVar, axis=0)
     del(lstLgcVar)
 
-    return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplHdf5Shp
+    return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplHdf5Shp, strPthHdf5Func
 
 
 def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, varPar=10):

@@ -27,6 +27,7 @@ import time
 import numpy as np
 import nibabel as nb
 import multiprocessing as mp
+import h5py
 
 from pyprf.analysis.load_config import load_config
 from pyprf.analysis.utilities import cls_set_config
@@ -91,7 +92,8 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # The hdf5 file with fMRI data are stored at the same location as the input
     # nii files. Switch to hdf5 mode in case of more than three functional
     # runs:
-    lgcHdf5 = 3 < len(cfg.lstPathNiiFunc)
+    #lgcHdf5 = 3 < len(cfg.lstPathNiiFunc)
+    lgcHdf5 = False
 
     # Array with pRF time course models, shape:
     # aryPrfTc[x-position, y-position, SD, condition, volume].
@@ -102,7 +104,8 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *************************************************************************
     # *** Preprocessing
 
-    if lgcHdf5:
+    # if lgcHdf5:
+    if True:
 
         print('---Hdf5 mode.')
 
@@ -113,29 +116,78 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         for idxRun in range(varNumRun):
             nii_to_hdf5(cfg.lstPathNiiFunc[idxRun])
 
-        pre_pro_func_hdf5(cfg.strPathNiiMask,
-                          cfg.lstPathNiiFunc,
-                          lgcLinTrnd=cfg.lgcLinTrnd,
-                          varSdSmthTmp=cfg.varSdSmthTmp,
-                          varSdSmthSpt=cfg.varSdSmthSpt)
+        vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplHdf5Shp, strPthHdf5Func = \
+            pre_pro_func_hdf5(cfg.strPathNiiMask,
+                              cfg.lstPathNiiFunc,
+                              lgcLinTrnd=cfg.lgcLinTrnd,
+                              varSdSmthTmp=cfg.varSdSmthTmp,
+                              varSdSmthSpt=cfg.varSdSmthSpt)
+
+        # Makeshift solution for small data after masking:
+
+        # Read hdf5 file (masked timecourses of current run):
+        fleHdfFunc = h5py.File(strPthHdf5Func, 'r')
+
+        # Access dataset in current hdf5 file:
+        dtsFunc = fleHdfFunc['func']
+
+        aryFunc2 = dtsFunc[:, :]
+
+        aryFunc2 = np.copy(aryFunc2)
+
+        aryFunc2 = aryFunc2.T
+
+        fleHdfFunc.close()
+
+
+
+    if False:
 
         vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplHdf5Shp = \
             pre_pro_models_hdf5(cfg.strPathMdl,
                                 varSdSmthTmp=cfg.varSdSmthTmp,
                                 varPar=cfg.varPar)
 
-    else:
+
+
+    # else:
+    if True:
 
         # Preprocessing of pRF model time courses:
         aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
                                   varPar=cfg.varPar)
+
+    if True:
 
         # Preprocessing of functional data:
         vecLgcMsk, hdrMsk, aryAff, vecLgcVar, aryFunc, tplNiiShp = \
             pre_pro_func(cfg.strPathNiiMask, cfg.lstPathNiiFunc,
                          lgcLinTrnd=cfg.lgcLinTrnd,
                          varSdSmthTmp=cfg.varSdSmthTmp,
-                         varSdSmthSpt=cfg.varSdSmthSpt, varPar=cfg.varPar)
+                         varSdSmthSpt=cfg.varSdSmthSpt, varPar=cfg.varPar) #
+
+    print('aryFunc.shape')
+    print(aryFunc.shape)
+    print('aryFunc2.shape')
+    print(aryFunc2.shape)
+
+    print('aryFunc[55, 10:20]')
+    print(aryFunc[55, 10:20])
+    print('aryFunc2[55, 10:20]')
+    print(aryFunc2[55, 10:20])
+
+    print('np.max(np.abs(np.subtract(aryFunc.astype(np.float32), aryFunc2.astype(np.float32))))')
+    print(np.max(np.abs(np.subtract(aryFunc.astype(np.float32), aryFunc2.astype(np.float32)))))
+
+    print('np.max(aryFunc2)')
+    print(np.max(aryFunc2))
+
+    print('np.max(aryFunc)')
+    print(np.max(aryFunc))
+
+    del(aryFunc)
+    aryFunc = aryFunc2
+
     # *************************************************************************
 
     # *************************************************************************

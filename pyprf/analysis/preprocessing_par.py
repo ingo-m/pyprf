@@ -529,11 +529,11 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             # print('------------Volume: ' + str(idxVol))
 
             aryFunc[:, :, :, idxVol] = gaussian_filter(
-                aryFunc[:, :, :, idxVol],
+                aryFunc[:, :, :, idxVol].astype(np.float32),
                 varSdSmthSpt,
                 order=0,
                 mode='nearest',
-                truncate=4.0)
+                truncate=4.0).astype(np.float32)
 
     # Perform temporal smoothing:
     if 0.0 < varSdSmthTmp:
