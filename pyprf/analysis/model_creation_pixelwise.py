@@ -55,7 +55,6 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
     The number of GLM predictors is inferred from the number of unique values
     in the image (e.g. greyscale values of 25 and 255 if the stimulus was
     presented at two contrast level).
-
     """
     # Error message if image is not of expected type:
     strErr = 'Image is not of expected type (not uint8).'

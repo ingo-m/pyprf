@@ -75,45 +75,39 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # voxels):
     cfg.varSdSmthTmp = np.divide(cfg.varSdSmthTmp, cfg.varTr)
     cfg.varSdSmthSpt = np.divide(cfg.varSdSmthSpt, cfg.varVoxRes)
-
-    # In case of a multi-run experiment, the data may not fit into memory.
-    # (Both pRF model time courses and the fMRI data may be large in this
-    # case.) Therefore, we switch to hdf5 mode, where model time courses and
-    # fMRI data are hold in hdf5 files (on disk). The location of the hdf5 file
-    # for model time courses is specified by 'strPathMdl' (in the config file).
-    # The hdf5 file with fMRI data are stored at the same location as the
-    # input nii files. Switch to hdf5 mode in case of more than three
-    # functional runs:
-    lgcHdf5 = 3 < len(cfg.lstPathNiiFunc)
     # *************************************************************************
 
     # *************************************************************************
     # *** Create or load pRF time course models
 
+    # Size of model parameter space:
+    varSzeMdlSpc = (cfg.varNumX
+                    * cfg.varNumY
+                    * cfg.varNumPrfSizes)
+
+    # If the number of volumes is large (multi-run experiment) or the size of
+    # the model parameter space is large, the pRF time course models will not
+    # fit into memory. In this case, they are stored in an hdf5 file (location
+    # specified by 'strPathMdl', as specified in the config file).
+    lgcHdf5 = ((1000 < cfg.varNumVol) or (120000 < varSzeMdlSpc))
+
     # Array with pRF time course models, shape:
     # aryPrfTc[x-position, y-position, SD, condition, volume].
-    # If in hdf5 mode, `aryPrfTc` is `None`.
     aryPrfTc = model_creation(dicCnfg, lgcHdf5=lgcHdf5)
     # *************************************************************************
 
     # *************************************************************************
     # *** Preprocessing
 
-
-
     # Preprocessing of pRF model time courses:
     aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
                               varPar=cfg.varPar, strPathMdl=cfg.strPathMdl)
-
-
-
-
 
     # Preprocessing of functional data:
     aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp = pre_pro_func(
         cfg.strPathNiiMask, cfg.lstPathNiiFunc, lgcLinTrnd=cfg.lgcLinTrnd,
         varSdSmthTmp=cfg.varSdSmthTmp, varSdSmthSpt=cfg.varSdSmthSpt,
-        varPar=cfg.varPar, lgcHdf5=lgcHdf5)
+        varPar=cfg.varPar)
     # *************************************************************************
 
     # *************************************************************************

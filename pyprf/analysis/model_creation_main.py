@@ -108,7 +108,6 @@ def model_creation(dicCnfg, lgcHdf5=False):
             # If the file
             strPathMdlTmp = None
 
-        # If in hdf5 mode, `aryPrfTc` is `None`.
         aryPrfTc = crt_prf_tcmdl(aryPixConv,
                                  strPathMdl=strPathMdlTmp,
                                  tplVslSpcSze=cfg.tplVslSpcSze,
