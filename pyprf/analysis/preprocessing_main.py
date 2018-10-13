@@ -48,15 +48,15 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     Returns
     -------
-    aryLgcMsk : np.array
-        3D numpy array with logial values. Externally supplied mask (e.g grey
+    vecLgcMsk : np.array
+        1D numpy array with logial values. Externally supplied mask (e.g grey
         matter mask). Voxels that are `False` in the mask are excluded.
     hdrMsk : nibabel-header-object
         Nii header of mask.
     aryAff : np.array
         Array containing 'affine', i.e. information about spatial positioning
         of mask nii data.
-    aryLgcVar : np.array
+    vecLgcVar : np.array
         1D numpy array containing logical values. One value per voxel after
         mask has been applied. If `True`, the variance of the voxel's time
         course is larger than zero, and the voxel is included in the output
@@ -101,10 +101,10 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     varNumVoxTlt = (tplNiiShp[0] * tplNiiShp[1] * tplNiiShp[2])
 
     # Reshape mask (flatten):
-    aryMaskFlt = np.reshape(aryMask, varNumVoxTlt)
+    vecMaskFlt = np.reshape(aryMask, varNumVoxTlt)
 
     # Boolean mask:
-    aryLgcMsk = np.greater(aryMaskFlt.astype(np.int16),
+    vecLgcMsk = np.greater(vecMaskFlt.astype(np.int16),
                            np.array([0], dtype=np.int16)[0])
 
     # List for arrays with functional data (possibly several runs):
@@ -138,7 +138,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         aryTmpFunc = np.reshape(aryTmpFunc, [varNumVoxTlt, tplNiiShp[3]])
 
         # Apply mask:
-        aryTmpFunc = aryTmpFunc[aryLgcMsk, :]
+        aryTmpFunc = aryTmpFunc[vecLgcMsk, :]
 
         # De-mean functional data:
         aryTmpFunc = np.subtract(aryTmpFunc,
@@ -181,14 +181,14 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     aryFuncVar = np.var(aryFunc, axis=1, dtype=np.float32)
 
     # Is the variance greater than zero?
-    aryLgcVar = np.greater(aryFuncVar,
+    vecLgcVar = np.greater(aryFuncVar,
                            np.array([0.0001]).astype(np.float32)[0])
 
     # Array with functional data for which conditions (mask inclusion and
     # cutoff value) are fullfilled:
-    aryFunc = aryFunc[aryLgcVar, :]
+    aryFunc = aryFunc[vecLgcVar, :]
 
-    return aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp
+    return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, aryFunc, tplNiiShp
 
 
 def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):

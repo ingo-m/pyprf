@@ -102,39 +102,40 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *************************************************************************
     # *** Preprocessing
 
-    #if lgcHdf5:
+    if lgcHdf5:
 
-    print('---Hdf5 mode.')
+        print('---Hdf5 mode.')
 
-    print('------Copy fMRI data from nii file to hdf5 file.')
+        print('------Copy fMRI data from nii file to hdf5 file.')
 
-    # Hdf5 mode. First, copy data from nii to hdf5 files.
-    varNumRun = len(cfg.lstPathNiiFunc)
-    for idxRun in range(varNumRun):
-        nii_to_hdf5(cfg.lstPathNiiFunc[idxRun])
+        # Hdf5 mode. First, copy data from nii to hdf5 files.
+        varNumRun = len(cfg.lstPathNiiFunc)
+        for idxRun in range(varNumRun):
+            nii_to_hdf5(cfg.lstPathNiiFunc[idxRun])
 
-    pre_pro_func_hdf5(cfg.strPathNiiMask,
-                      cfg.lstPathNiiFunc,
-                      lgcLinTrnd=cfg.lgcLinTrnd,
-                      varSdSmthTmp=cfg.varSdSmthTmp,
-                      varSdSmthSpt=cfg.varSdSmthSpt)
+        pre_pro_func_hdf5(cfg.strPathNiiMask,
+                          cfg.lstPathNiiFunc,
+                          lgcLinTrnd=cfg.lgcLinTrnd,
+                          varSdSmthTmp=cfg.varSdSmthTmp,
+                          varSdSmthSpt=cfg.varSdSmthSpt)
 
-    # pre_pro_models_hdf5(cfg.strPathMdl,
-    #                     varSdSmthTmp=cfg.varSdSmthTmp,
-    #                     varPar=cfg.varPar)
+        vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplHdf5Shp = \
+            pre_pro_models_hdf5(cfg.strPathMdl,
+                                varSdSmthTmp=cfg.varSdSmthTmp,
+                                varPar=cfg.varPar)
 
-    #else:
+    else:
 
-    # Preprocessing of pRF model time courses:
-    aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
-                              varPar=cfg.varPar)
+        # Preprocessing of pRF model time courses:
+        aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
+                                  varPar=cfg.varPar)
 
-    # Preprocessing of functional data:
-    aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp = \
-        pre_pro_func(cfg.strPathNiiMask, cfg.lstPathNiiFunc,
-                     lgcLinTrnd=cfg.lgcLinTrnd,
-                     varSdSmthTmp=cfg.varSdSmthTmp,
-                     varSdSmthSpt=cfg.varSdSmthSpt, varPar=cfg.varPar)
+        # Preprocessing of functional data:
+        vecLgcMsk, hdrMsk, aryAff, vecLgcVar, aryFunc, tplNiiShp = \
+            pre_pro_func(cfg.strPathNiiMask, cfg.lstPathNiiFunc,
+                         lgcLinTrnd=cfg.lgcLinTrnd,
+                         varSdSmthTmp=cfg.varSdSmthTmp,
+                         varSdSmthSpt=cfg.varSdSmthSpt, varPar=cfg.varPar)
     # *************************************************************************
 
     # *************************************************************************
@@ -370,7 +371,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # format accordingly.
 
     # Number of voxels that were included in the mask:
-    varNumVoxMsk = np.sum(aryLgcMsk)
+    varNumVoxMsk = np.sum(vecLgcMsk)
 
     # Array for pRF finding results, of the form aryPrfRes[voxel-count, 0:3],
     # where the 2nd dimension contains the parameters of the best-fitting pRF
@@ -380,20 +381,20 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     aryPrfRes01 = np.zeros((varNumVoxMsk, 6), dtype=np.float32)
 
     # Place voxels based on low-variance exlusion:
-    aryPrfRes01[aryLgcVar, 0] = aryBstXpos
-    aryPrfRes01[aryLgcVar, 1] = aryBstYpos
-    aryPrfRes01[aryLgcVar, 2] = aryBstSd
-    aryPrfRes01[aryLgcVar, 3] = aryBstR2
+    aryPrfRes01[vecLgcVar, 0] = aryBstXpos
+    aryPrfRes01[vecLgcVar, 1] = aryBstYpos
+    aryPrfRes01[vecLgcVar, 2] = aryBstSd
+    aryPrfRes01[vecLgcVar, 3] = aryBstR2
 
     # Total number of voxels:
     varNumVoxTlt = (tplNiiShp[0] * tplNiiShp[1] * tplNiiShp[2])
 
     # Place voxels based on mask-exclusion:
     aryPrfRes02 = np.zeros((varNumVoxTlt, 6), dtype=np.float32)
-    aryPrfRes02[aryLgcMsk, 0] = aryPrfRes01[:, 0]
-    aryPrfRes02[aryLgcMsk, 1] = aryPrfRes01[:, 1]
-    aryPrfRes02[aryLgcMsk, 2] = aryPrfRes01[:, 2]
-    aryPrfRes02[aryLgcMsk, 3] = aryPrfRes01[:, 3]
+    aryPrfRes02[vecLgcMsk, 0] = aryPrfRes01[:, 0]
+    aryPrfRes02[vecLgcMsk, 1] = aryPrfRes01[:, 1]
+    aryPrfRes02[vecLgcMsk, 2] = aryPrfRes01[:, 2]
+    aryPrfRes02[vecLgcMsk, 3] = aryPrfRes01[:, 3]
 
     # Reshape pRF finding results into original image dimensions:
     aryPrfRes = np.reshape(aryPrfRes02,
@@ -414,11 +415,11 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     aryPrfRes01 = np.zeros((varNumVoxMsk, varNumCon), dtype=np.float32)
 
     # Place voxels based on low-variance exlusion:
-    aryPrfRes01[aryLgcVar, :] = aryBstPe
+    aryPrfRes01[vecLgcVar, :] = aryBstPe
 
     # Place voxels based on mask-exclusion:
     aryPrfRes02 = np.zeros((varNumVoxTlt, varNumCon), dtype=np.float32)
-    aryPrfRes02[aryLgcMsk, :] = aryPrfRes01
+    aryPrfRes02[vecLgcMsk, :] = aryPrfRes01
 
     # Reshape pRF finding results into original image dimensions:
     aryBstPe = np.reshape(aryPrfRes02,

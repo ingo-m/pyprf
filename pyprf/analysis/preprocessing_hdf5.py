@@ -58,15 +58,15 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     Returns
     -------
-    aryLgcMsk : np.array
-        3D numpy array with logial values. Externally supplied mask (e.g grey
+    vecLgcMsk : np.array
+        1D numpy array with logial values. Externally supplied mask (e.g grey
         matter mask). Voxels that are `False` in the mask are excluded.
     hdrMsk : nibabel-header-object
         Nii header of mask.
     aryAff : np.array
         Array containing 'affine', i.e. information about spatial positioning
         of mask nii data.
-    aryLgcVar : np.array
+    vecLgcVar : np.array
         1D numpy array containing logical values. One value per voxel after
         mask has been applied. If `True`, the variance of the voxel's time
         course is larger than zero, and the voxel is included in the output
@@ -284,11 +284,11 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         aryMask = aryMask.reshape(varNumVox)
 
         # Make mask boolean:
-        aryLgcMsk = np.greater(aryMask.astype(np.int16),
+        vecLgcMsk = np.greater(aryMask.astype(np.int16),
                                np.array([0], dtype=np.int16)[0])
 
         # Number of voxels after masking:
-        varNumVoxMsk = np.sum(aryLgcMsk)
+        varNumVoxMsk = np.sum(vecLgcMsk)
 
         # Create hdf5 file:
         fleHdf5Msk = h5py.File(strPthHdf5Msk, 'w')
@@ -316,7 +316,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Loop through voxel and place voxel time courses that are within the
         # mask in new hdf5 file:
         for idxVox in range(varNumVox):
-            if aryLgcMsk[idxVox]:
+            if vecLgcMsk[idxVox]:
                 objQ.put(dtsFuncMsk[:, varCntVoxMsk])
                 varCntVoxMsk += 1
 
@@ -643,11 +643,11 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     fleHdf5Var.close()
 
     # Concatenate variance masks over all voxels, new shape:
-    # `aryLgcVar[voxels]`.
-    aryLgcVar = np.concatenate(lstLgcVar, axis=0)
+    # `vecLgcVar[voxels]`.
+    vecLgcVar = np.concatenate(lstLgcVar, axis=0)
     del(lstLgcVar)
 
-    return aryLgcMsk, hdrMsk, aryAff, aryLgcVar, tplHdf5Shp
+    return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplHdf5Shp
 
 
 def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, varPar=10):
