@@ -201,7 +201,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         # Total number of elements to loop over (voxels):
         varNumEleTlt = (vecInShp[0] * vecInShp[1] * vecInShp[2])
 
-        # Reshape data:
+        # Reshape data (new shape: `aryData[time, voxels]`).
         aryData = np.reshape(aryData, [varNumEleTlt, varNumVol]).T
 
         # The exclusion of voxels based on the mask is only used for the fMRI
@@ -292,11 +292,11 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             varTmpIdx = lstResPar[idxRes][0]
 
             # Put results into list, in correct order:
-            lstRes[varTmpIdx] = lstResPar[idxRes][1].T
+            lstRes[varTmpIdx] = lstResPar[idxRes][1]
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
-        aryRes = np.concatenate(lstRes, axis=0).astype(np.float32)
+        aryRes = np.concatenate(lstRes, axis=1).astype(np.float32).T
 
         # Delete unneeded large objects:
         del(lstRes)
@@ -305,7 +305,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         # Array for output, same size as input (i.e. accounting for those
         # elements that were masked out):
         aryOut = np.zeros((varNumEleTlt,
-                           vecInShp[3]),
+                           varNumVol),
                           dtype=np.float32)
 
         if 0 < aryMask.size:
