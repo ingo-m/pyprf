@@ -55,7 +55,7 @@ def nii_to_hdf5(strPathIn):
     # Prepare placement of pRF model time courses in hdf5 file.
 
     # Buffer size:
-    varBuff = 100
+    varBuff = 10
 
     # Create FIFO queue:
     objQ = queue.Queue(maxsize=varBuff)
@@ -105,8 +105,6 @@ def nii_to_hdf5(strPathIn):
 
         # Loop through chunks of volumes:
         for idxChnk in range((varNumCnk - 1)):
-
-            print(idxChnk)
 
             # Start index of current chunk:
             varIdx01 = vecSplt[idxChnk]
