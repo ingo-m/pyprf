@@ -24,7 +24,7 @@ from pyprf.analysis.preprocessing_par import pre_pro_par
 
 
 def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
-                 varSdSmthTmp=2.0, varSdSmthSpt=0.0, varPar=10.0):
+                 varSdSmthTmp=2.0, varSdSmthSpt=0.0, varPar=10):
     """
     Load & preprocess functional data.
 
