@@ -308,7 +308,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             # Put results form pRF finding into array (they originally needed
             # to be saved in a list due to parallelisation). If mask was used,
             # we have to account for leaving out some voxels earlier.
-            aryOut[:, aryLgc] = aryRes
+            aryOut[aryLgc, :] = aryRes
 
         else:
 
