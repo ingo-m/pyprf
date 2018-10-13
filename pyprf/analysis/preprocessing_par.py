@@ -38,11 +38,11 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
     # varNumVoxChnk = aryFuncChnk.shape[0]
 
     # Number of time points in this chunk:
-    varNumVol = aryFuncChnk.shape[1]
+    varNumVol = aryFuncChnk.shape[0]
 
     # We reshape the voxel time courses, so that time goes down the column,
     # i.e. from top to bottom.
-    aryFuncChnk = aryFuncChnk.T
+    # aryFuncChnk = aryFuncChnk.T
 
     # Linear mode to fit to the voxel time courses:
     vecMdlTc = np.linspace(0,
@@ -78,7 +78,7 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
     #                           aryLstSqFt[1, :])
 
     # Bring array into original order (time from left to right):
-    aryFuncChnk = aryFuncChnk.T
+    # aryFuncChnk = aryFuncChnk.T
 
     # Output list:
     lstOut = [idxPrc,
@@ -101,25 +101,25 @@ def funcSmthTmp(idxPrc, aryFuncChnk, varSdSmthTmp, queOut):
     # set the method to 'nearest' and place a volume with mean intensity
     # (over time) at the beginning and at the end.
     aryFuncChnkMean = np.mean(aryFuncChnk,
-                              axis=1,
+                              axis=0,
                               keepdims=True,
                               dtype=np.float32)
 
     aryFuncChnk = np.concatenate((aryFuncChnkMean,
                                   aryFuncChnk,
-                                  aryFuncChnkMean), axis=1)
+                                  aryFuncChnkMean), axis=0)
 
     # In the input data, time goes from left to right. Therefore, we apply
     # the filter along axis=1.
     aryFuncChnk = gaussian_filter1d(aryFuncChnk,
                                     varSdSmthTmp,
-                                    axis=1,
+                                    axis=0,
                                     order=0,
                                     mode='nearest',
                                     truncate=4.0)
 
     # Remove mean-intensity volumes at the beginning and at the end:
-    aryFuncChnk = aryFuncChnk[:, 1:-1]
+    aryFuncChnk = aryFuncChnk[1:-1, :]
 
     # Output list:
     lstOut = [idxPrc,
@@ -261,7 +261,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         for idxPrc in range(0, varPar):
             lstPrcs[idxPrc] = mp.Process(target=funcIn,
                                          args=(idxPrc,
-                                               lstFunc[idxPrc],
+                                               lstFunc[idxPrc].T,
                                                varSdSmthTmp,
                                                queOut))
             # Daemon (kills processes when exiting):
@@ -292,7 +292,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             varTmpIdx = lstResPar[idxRes][0]
 
             # Put results into list, in correct order:
-            lstRes[varTmpIdx] = lstResPar[idxRes][1]
+            lstRes[varTmpIdx] = lstResPar[idxRes][1].T
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
