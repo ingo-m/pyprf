@@ -289,9 +289,9 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
-        aryRes = np.array([], dtype=np.float32).reshape(varNumVol, 0)
+        aryRes = np.array([], dtype=np.float32).reshape(0, varNumVol)
         for idxRes in range(0, varPar):
-            aryRes = np.append(aryRes, lstRes[idxRes], axis=1)
+            aryRes = np.append(aryRes, lstRes[idxRes].T, axis=0)
 
         # Delete unneeded large objects:
         del(lstRes)
@@ -299,8 +299,8 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Array for output, same size as input (i.e. accounting for those
         # elements that were masked out):
-        aryOut = np.zeros((varNumVol,
-                           varNumEleTlt),
+        aryOut = np.zeros((varNumEleTlt,
+                           varNumVol),
                           dtype=np.float32)
 
         if 0 < aryMask.size:
