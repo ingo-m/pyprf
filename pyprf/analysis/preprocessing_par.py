@@ -202,7 +202,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         varNumEleTlt = (vecInShp[0] * vecInShp[1] * vecInShp[2])
 
         # Reshape data:
-        aryData = np.reshape(aryData, [varNumEleTlt, varNumVol])
+        aryData = np.reshape(aryData, [varNumEleTlt, varNumVol]).T
 
         # The exclusion of voxels based on the mask is only used for the fMRI
         # data, not for the pRF time course models. For the pRF time course
@@ -214,7 +214,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             aryMask = np.reshape(aryMask, varNumEleTlt)
 
             # Take mean over time:
-            # aryDataMean = np.mean(aryData, axis=1)
+            # aryDataMean = np.mean(aryData, axis=0)
 
             # Logical test for voxel inclusion: is the voxel value greater than
             # zero in the mask, and is the mean of the functional time series
@@ -223,10 +223,10 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
             # Array with functional data for which conditions (mask inclusion
             # and cutoff value) are fullfilled:
-            aryData = aryData[aryLgc, :]
+            aryData = aryData[:, aryLgc]
 
         # Number of elements on which function will be applied:
-        varNumEleInc = aryData.shape[0]
+        varNumEleInc = aryData.shape[1]
 
         print('------------Number of voxels/pRF time courses on which ' +
               'function will be applied: ' + str(varNumEleInc))
@@ -250,7 +250,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             # Index of last element to be included in current chunk:
             varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
             # Put array chunk into list:
-            lstFunc[idxChnk] = aryData[varTmpChnkSrt:varTmpChnkEnd, :]
+            lstFunc[idxChnk] = aryData[:, varTmpChnkSrt:varTmpChnkEnd]
 
         # We don't need the original array with the functional data anymore:
         del(aryData)
@@ -261,7 +261,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         for idxPrc in range(0, varPar):
             lstPrcs[idxPrc] = mp.Process(target=funcIn,
                                          args=(idxPrc,
-                                               lstFunc[idxPrc].T,
+                                               lstFunc[idxPrc],
                                                varSdSmthTmp,
                                                queOut))
             # Daemon (kills processes when exiting):
