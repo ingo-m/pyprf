@@ -105,11 +105,15 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
                               varPar=cfg.varPar, strPathMdl=cfg.strPathMdl)
 
+
+
+
+
     # Preprocessing of functional data:
     aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp = pre_pro_func(
         cfg.strPathNiiMask, cfg.lstPathNiiFunc, lgcLinTrnd=cfg.lgcLinTrnd,
         varSdSmthTmp=cfg.varSdSmthTmp, varSdSmthSpt=cfg.varSdSmthSpt,
-        varPar=cfg.varPar)
+        varPar=cfg.varPar, lgcHdf5=lgcHdf5)
     # *************************************************************************
 
     # *************************************************************************
