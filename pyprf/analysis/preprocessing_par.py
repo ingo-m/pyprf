@@ -58,6 +58,7 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
     -----
     The variable varSdSmthSpt is not needed, only included for consistency
     with other functions using the same parallelisation.
+
     """
     # Number of time points in this chunk:
     varNumVol = aryFuncChnk.shape[0]
@@ -113,9 +114,30 @@ def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
 
 def funcSmthTmp(idxPrc, aryFuncChnk, varSdSmthTmp, queOut):
     """
-    Apply temporal smoothing to the input data.
+    Apply temporal smoothing.
 
-    The extend of smoothing needs to be specified as an input parameter.
+    Parameters
+    ----------
+    idxPrc : int
+        Process ID for parallel processes (for sorting results from multiple
+        parallel processes).
+    aryFuncChnk : np.array
+        Array with data (fMRI data or pRF model time courses). Shape:
+        `aryFuncChnk[time, voxels/models]`.
+    varSdSmthTmp : float
+        Extent of temporal smoothing (SD) in units of array indices.
+    queOut : multiprocessing.queue or None
+        Queue on which to put results. Results are a list containing the
+        process ID (`idxPrc`) and the filtered data (same shape as input
+        `aryFuncChnk`). If `None`, only `aryFuncChnk` is returned directly.
+
+    Returns
+    -------
+    lstOut or aryFuncChnk
+        If `queOut` is a multiprocessing.queue, a list containing the process
+        ID (`idxPrc`) and the filtered data (same shape as input `aryFuncChnk`)
+        are put on this queue. Otherwise, `aryFuncChnk` is returned directly.
+
     """
     # For the filtering to perform well at the ends of the time series, we
     # set the method to 'nearest' and place a volume with mean intensity
@@ -141,11 +163,17 @@ def funcSmthTmp(idxPrc, aryFuncChnk, varSdSmthTmp, queOut):
     # Remove mean-intensity volumes at the beginning and at the end:
     aryFuncChnk = aryFuncChnk[1:-1, :]
 
-    # Output list:
-    lstOut = [idxPrc,
-              aryFuncChnk.astype(np.float32, copy=False)]
+    if queOut is None:
 
-    queOut.put(lstOut)
+        return aryFuncChnk.astype(np.float32)
+
+    else:
+
+        # Output list:
+        lstOut = [idxPrc,
+                  aryFuncChnk.astype(np.float32, copy=False)]
+
+        queOut.put(lstOut)
 # *****************************************************************************
 
 
