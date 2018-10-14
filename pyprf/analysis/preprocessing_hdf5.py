@@ -704,7 +704,8 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplNiiShp, strPthHdf5Func
 
 
-def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, varPar=10):
+def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
+                        varPar=10):
     """
     Preprocess pRF model time courses - hdf5 mode.
 
@@ -725,8 +726,13 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, varPar=10):
 
     Returns
     -------
-    This function has no return value. pRF model time courses are processed on
-    disk (hdf5 mode).
+    strPthOut : str
+        Path of hdf5 file with preprocessed model time courses.
+    aryLgcVar : np.array
+        Mask for pRF time courses with temporal variance greater than zero
+        (i.e. models that are responsive to the stimulus). Can be used to
+        restricted to models with a variance greater than zero. Shape:
+        `aryLgcVar[model-x-pos, model-y-pos, pRF-size]`.
 
     Notes
     -----
@@ -736,27 +742,75 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, varPar=10):
     """
     print('------Preprocess pRF time course models (hdf5 mode).')
 
-    # Path of hdf5 file:
-    strPthHdf5 = (strPathMdl + '.hdf5')
+    # Path of input hdf5 file:
+    strPthIn = (strPathMdl + '.hdf5')
 
     # Read file:
-    fleHdf5 = h5py.File(strPthHdf5, 'r+')
+    fleHdf5In = h5py.File(strPthIn, 'r')
 
     # Access dataset in current hdf5 file:
-    aryPrfTc = fleHdf5['pRF_time_courses']
+    aryPrfTcIn = fleHdf5In['pRF_time_courses']
+
+    # Path of output hdf5 file (after preprocessing):
+    strPthOut = (strPathMdl + '_prepro.hdf5')
+
+    # New hdf5 file for preprocessed pRF time courses:
+    fleHdf5Out = h5py.File(strPthOut, 'w')
+
+    # Create dataset within hdf5 file:
+    aryPrfTcOut = fleHdf5Out.create_dataset('pRF_time_courses',
+                                            aryPrfTcIn.shape,
+                                            dtype=np.float32)
 
     # Loop through stimulus conditions, because the array needs to the 4D,
     # with time as last dimension, for the preprocessing. Otherwise the
     # same functions could not be used for the functional data and model
     # time courses (which would increase redundancy).
-    varNumCon = aryPrfTc.shape[3]
+    varNumCon = aryPrfTcIn.shape[3]
     for idxCon in range(varNumCon):
 
         # Preprocessing of pRF time course models:
-        aryPrfTc[:, :, :, idxCon, :] = pre_pro_par(
-            aryPrfTc[:, :, :, idxCon, :], aryMask=np.array([]),
+        aryPrfTcOut[:, :, :, idxCon, :] = pre_pro_par(
+            aryPrfTcIn[:, :, :, idxCon, :], aryMask=np.array([]),
             lgcLinTrnd=False, varSdSmthTmp=varSdSmthTmp, varSdSmthSpt=0.0,
             varPar=varPar)
 
     # Close hdf5 file:
-    fleHdf5.close()
+    fleHdf5In.close()
+
+
+
+    # Prepare data for cython (i.e. accelerated) least squares finding:
+    if strVersion == 'cython':
+
+        for idxCon in range(varNumCon):
+
+            # Subtract the mean over time form the pRF model time courses.
+            aryPrfTcTmean = np.mean(aryPrfTc[:, :, :, idxCon, :], axis=3)
+            aryPrfTc[:, :, :, idxCon, :] = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, None])
+
+    aryPrfTcVar = np.zeros(aryPrfTcIn.shape[0],
+                           aryPrfTcIn.shape[1],
+                           aryPrfTcIn.shape[2],
+                           aryPrfTcIn.shape[3],
+                           dtype=np.float32)
+
+    for idxCon in range(varNumCon):
+
+        # There can be pRF model time courses with a variance of zero (i.e. pRF
+        # models that are not actually responsive to the stimuli). For
+        # computational efficiency, and in order to avoid division by zero, we
+        # ignore these model time courses.
+        aryPrfTcVar[:, :, :, idxCon] = np.var(aryPrfTc[:, :, :, idxCon, :], axis=3).astype(np.float32)
+
+    # Zero with float32 precision for comparison:
+    varZero32 = np.array(([0.0001])).astype(np.float32)[0]
+
+    # Only fit pRF model if variance greater than zero for all
+    # predictors:
+    aryLgcVar = np.greater(np.amin(aryPrfTcVar, axis=3), varZero32)
+
+    # Close hdf5 file:
+    fleHdf5Out.close()
+
+    return strPthOut, aryLgcVar

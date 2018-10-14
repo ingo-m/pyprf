@@ -24,7 +24,7 @@ from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
 
 
 def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
-                      strPathMdl, strVersion, queOut):
+                      strPrfTc, aryLgcVar, strVersion, queOut):
     """
     Find best fitting pRF model for voxel time course, hdf5 mode.
 
@@ -44,12 +44,17 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
         1D array with pRF model sizes (SD of Gaussian).
     aryFunc : np.array
         2D array with functional MRI data, with shape aryFunc[voxel, time].
-    strPathMdl : str
-        Path of file with pRF time course models (without file extension). In
-        hdf5 mode, time courses are loaded to & saved to hdf5 file, so that
-        not all pRF model time courses do not have to be loaded into RAM at
-        once. Hdf5 file contains array with pRF time course models, with shape
+    strPrfTc : str
+        Path of file with pRF time course models (including file extension). In
+        hdf5 mode, time courses are loaded from hdf5 file, so that not all pRF
+        model time courses do not have to be loaded into RAM at once. Hdf5 file
+        contains array with pRF time course models, with shape
         aryPrfTc[x-position, y-position, SD, condition, volume].
+    aryLgcVar : np.array
+        Mask for pRF time courses with temporal variance greater than zero
+        (i.e. models that are responsive to the stimulus). Can be used to
+        restricted to models with a variance greater than zero. Shape:
+        `aryLgcVar[model-x-pos, model-y-pos, pRF-size]`.
     strVersion : str
         Which version to use for pRF finding; 'numpy' or 'cython'.
     queOut : multiprocessing.queues.Queue
@@ -86,11 +91,8 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     using numpy or cython (depending on the value of `strVersion`).
 
     """
-    # Path of hdf5 file:
-    strPthHdf5 = (strPathMdl + '.hdf5')
-
     # Read file:
-    fleHdf5 = h5py.File(strPthHdf5, 'r+')
+    fleHdf5 = h5py.File(strPrfTc, 'r+')
 
     # Access dataset in current hdf5 file:
     aryPrfTc = fleHdf5['pRF_time_courses']
@@ -148,10 +150,6 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
         # over time from the data:
         aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
         aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[0, None])
-        # Secondly, we subtract the mean over time form the pRF model time
-        # courses.
-        aryPrfTcTmean = np.mean(aryPrfTc, axis=4)
-        aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, :, None])
     # Otherwise, create constant term for numpy least squares finding:
     elif strVersion == 'numpy':
         # Constant term for the model:
@@ -187,19 +185,6 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
         # Counter for status indicator:
         varCntSts01 = 0
         varCntSts02 = 0
-
-    # There can be pRF model time courses with a variance of zero (i.e. pRF
-    # models that are not actually responsive to the stimuli). For
-    # computational efficiency, and in order to avoid division by zero, we
-    # ignore these model time courses.
-    aryPrfTcVar = np.var(aryPrfTc, axis=4).astype(np.float32)
-
-    # Zero with float32 precision for comparison:
-    varZero32 = np.array(([0.0001])).astype(np.float32)[0]
-
-    # Only fit pRF model if variance greater than zero for all
-    # predictors:
-    aryLgcVar = np.greater(np.amin(aryPrfTcVar, axis=3), varZero32)
 
     # Loop through pRF models:
     for idxX in range(varNumX):

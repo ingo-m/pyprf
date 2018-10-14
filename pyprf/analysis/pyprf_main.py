@@ -104,8 +104,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *************************************************************************
     # *** Preprocessing
 
-    # if lgcHdf5:
-    if True:
+    if lgcHdf5:
 
         print('---Hdf5 mode.')
 
@@ -116,12 +115,24 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         for idxRun in range(varNumRun):
             nii_to_hdf5(cfg.lstPathNiiFunc[idxRun])
 
+        # Preprocessing of functional data:
         vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplNiiShp, strPthHdf5Func = \
             pre_pro_func_hdf5(cfg.strPathNiiMask,
                               cfg.lstPathNiiFunc,
                               lgcLinTrnd=cfg.lgcLinTrnd,
                               varSdSmthTmp=cfg.varSdSmthTmp,
                               varSdSmthSpt=cfg.varSdSmthSpt)
+
+        # Preprocessing of pRF model time courses:
+        strPrfTc, aryLgcVar = \
+            pre_pro_models_hdf5(cfg.strPathMdl,
+                                varSdSmthTmp=cfg.varSdSmthTmp,
+                                strVersion=cfg.strVersion,
+                                varPar=cfg.varPar)
+
+
+        aryPrfTc = None
+
 
         # Makeshift solution for small data after masking:
 
@@ -139,26 +150,23 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
         fleHdfFunc.close()
 
-    if False:
-        vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplHdf5Shp = \
-            pre_pro_models_hdf5(cfg.strPathMdl,
-                                varSdSmthTmp=cfg.varSdSmthTmp,
-                                varPar=cfg.varPar)
 
-    if True:
+
+    else:
 
         # Preprocessing of pRF model time courses:
-        aryPrfTc = pre_pro_models(aryPrfTc, varSdSmthTmp=cfg.varSdSmthTmp,
+        aryPrfTc = pre_pro_models(aryPrfTc,
+                                  varSdSmthTmp=cfg.varSdSmthTmp,
                                   varPar=cfg.varPar)
-
-    if False:
 
         # Preprocessing of functional data:
         vecLgcMsk, hdrMsk, aryAff, vecLgcVar, aryFunc, tplNiiShp = \
-            pre_pro_func(cfg.strPathNiiMask, cfg.lstPathNiiFunc,
+            pre_pro_func(cfg.strPathNiiMask,
+                         cfg.lstPathNiiFunc,
                          lgcLinTrnd=cfg.lgcLinTrnd,
                          varSdSmthTmp=cfg.varSdSmthTmp,
-                         varSdSmthSpt=cfg.varSdSmthSpt, varPar=cfg.varPar)
+                         varSdSmthSpt=cfg.varSdSmthSpt,
+                         varPar=cfg.varPar)
     # *************************************************************************
 
     # *************************************************************************
@@ -264,7 +272,8 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                                                    vecMdlYpos,
                                                    vecMdlSd,
                                                    lstFunc[idxPrc],
-                                                   cfg.strPathMdl,
+                                                   strPrfTc,
+                                                   aryLgcVar,
                                                    cfg.strVersion,
                                                    queOut)
                                              )
