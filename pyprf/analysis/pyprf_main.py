@@ -105,7 +105,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *** Preprocessing
 
     # if lgcHdf5:
-    if True:
+    if False:
 
         print('---Hdf5 mode.')
 
@@ -166,96 +166,12 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                          varSdSmthTmp=cfg.varSdSmthTmp,
                          varSdSmthSpt=cfg.varSdSmthSpt, varPar=cfg.varPar)
 
-    print('aryFunc.shape')
-    print(aryFunc.shape)
-    print('aryFunc2.shape')
-    print(aryFunc2.shape)
-
-    print('aryFunc[100:102, 10:15]')
-    print(aryFunc[100:102, 10:15])
-    print('aryFunc2[100:102, 10:15]')
-    print(aryFunc2[100:102, 10:15])
-
-    print('np.max(np.abs(np.subtract(aryFunc.astype(np.float32), aryFunc2.astype(np.float32))))')
-    print(np.max(np.abs(np.subtract(aryFunc.astype(np.float32), aryFunc2.astype(np.float32)))))
-
-    print('np.max(aryFunc2)')
-    print(np.max(aryFunc2))
-
-    print('np.max(aryFunc)')
-    print(np.max(aryFunc))
-
-
-    # vecLgcMsk
-    # vecLgcVar
-    # vecLgcMskB
-    # vecLgcVarB
-
-
-    np.save('/home/john/Desktop/tmp/aryFunc2.npy', aryFunc2)
-    np.save('/home/john/Desktop/tmp/aryFunc.npy', aryFunc)
-
-    aryMneA = np.mean(aryFunc, axis=1)
-    aryMneB = np.mean(aryFunc2, axis=1)
-
-    aryMneA = aryFunc[:, 33]
-    aryMneB = aryFunc2[:, 33]
-
-    # aryMneA = np.multiply(aryMneA, 10000.0, dtype=np.float32)
-    # aryMneB = np.multiply(aryMneB, 10000.0, dtype=np.float32)
-
-    # Number of voxels that were included in the mask:
-    varNumVoxMskA = np.sum(vecLgcMsk)
-    varNumVoxMskB = np.sum(vecLgcMskB)
-    aryRes01a = np.zeros((varNumVoxMskA), dtype=np.float32)
-    aryRes01b = np.zeros((varNumVoxMskB), dtype=np.float32)
-
-    # Place voxels based on low-variance exlusion:
-    aryRes01a[vecLgcVar] = aryMneA
-    aryRes01b[vecLgcVarB] = aryMneB
-
-    # Total number of voxels:
-    varNumVoxTltA = (tplNiiShp[0] * tplNiiShp[1] * tplNiiShp[2])
-    varNumVoxTltB = (tplNiiShp[0] * tplNiiShp[1] * tplNiiShp[2])
-
-    # Place voxels based on mask-exclusion:
-    aryRes02a = np.zeros((varNumVoxTltA), dtype=np.float32)
-    aryRes02b = np.zeros((varNumVoxTltB), dtype=np.float32)
-
-    aryRes02a[vecLgcMsk] = aryRes01a
-    aryRes02b[vecLgcMskB] = aryRes01b
-
-    aryMne2 = np.reshape(aryRes02b,
-                         [tplNiiShp[0],
-                          tplNiiShp[1],
-                          tplNiiShp[2]])
-    aryMne = np.reshape(aryRes02a,
-                        [tplNiiShp[0],
-                         tplNiiShp[1],
-                         tplNiiShp[2]])
-
-
-    hdrMsk.set_data_dtype(np.float32)
-    niiOut = nb.Nifti1Image(aryMne2,
-                            aryAff,
-                            header=hdrMsk
-                            )
-    # Save nii:
-    strTmp = ('/home/john/Desktop/tmp/aryMne2.nii.gz')
-    nb.save(niiOut, strTmp)
-
-    niiOut = nb.Nifti1Image(aryMne,
-                            aryAff,
-                            header=hdrMsk
-                            )
-    # Save nii:
-    strTmp = ('/home/john/Desktop/tmp/aryMne.nii.gz')
-    nb.save(niiOut, strTmp)
 
 
 
-    del(aryFunc)
-    aryFunc = aryFunc2
+
+    #del(aryFunc)
+    #aryFunc = aryFunc2
 
     # *************************************************************************
 
