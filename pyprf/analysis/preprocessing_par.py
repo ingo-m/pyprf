@@ -490,15 +490,6 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     # Data type for all computations should be float32 to avoid memory issues.
     aryFunc = aryFunc.astype(np.float32, copy=False)
 
-    if lgcLinTrnd:
-        # Perform linear trend removal (parallelised over voxels):
-        print('---------Linear trend removal')
-        aryFunc = funcParVox(funcLnTrRm,
-                             aryFunc,
-                             aryMask,
-                             0,
-                             varPar)
-
     # Perform spatial smoothing on fMRI data (reduced parallelisation over
     # volumes because this function is very memory intense):
     if 0.0 < varSdSmthSpt:
@@ -534,6 +525,15 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
                 order=0,
                 mode='nearest',
                 truncate=4.0).astype(np.float32)
+
+    if lgcLinTrnd:
+        # Perform linear trend removal (parallelised over voxels):
+        print('---------Linear trend removal')
+        aryFunc = funcParVox(funcLnTrRm,
+                             aryFunc,
+                             aryMask,
+                             0,
+                             varPar)
 
     # Perform temporal smoothing:
     if 0.0 < varSdSmthTmp:
