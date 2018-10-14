@@ -110,11 +110,8 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     aryMask = np.reshape(aryMask, varNumVox)
 
     # Make mask boolean:
-    #vecLgcMsk = np.greater(aryMask.astype(np.int16),
-    #                       np.array([0], dtype=np.int16)[0])
-
-    #aryMask = np.reshape(aryMask, varNumEleTlt)
-    vecLgcMsk = np.greater(aryMask, 0)
+    vecLgcMsk = np.greater(aryMask.astype(np.int16),
+                           np.array([0], dtype=np.int16)[0])
 
     # Number of voxels after masking:
     varNumVoxMsk = np.sum(vecLgcMsk)
@@ -167,60 +164,6 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Preprocessing of nii data.
 
         # ---------------------------------------------------------------------
-        # Linear trend removal
-
-        if lgcLinTrnd:
-
-            print('---------Linear trend removal')
-
-            # Looping voxel by voxel is too slow. Instead, read & write a
-            # chunks of voxels at a time. Indices of chunks:
-            varStpSze = 100
-            vecSplt = np.arange(0, (varNumVox + 1), varStpSze)
-            vecSplt = np.concatenate((vecSplt, np.array([varNumVox])))
-
-            # Number of chunks:
-            varNumCnk = vecSplt.shape[0]
-
-            # Buffer size:
-            varBuff = 10
-
-            # Create FIFO queue:
-            objQ = queue.Queue(maxsize=varBuff)
-
-            # Define & run extra thread with graph that places data on queue:
-            objThrd = threading.Thread(target=feed_hdf5_spt,
-                                       args=(dtsFunc, objQ, vecSplt))
-            objThrd.setDaemon(True)
-            objThrd.start()
-
-            # Loop through chunks of voxels:
-            for idxChnk in range((varNumCnk - 1)):
-
-                # Start index of current chunk:
-                varIdx01 = vecSplt[idxChnk]
-
-                # Stop index of current chunk:
-                varIdx02 = vecSplt[idxChnk + 1]
-
-                # Get chunk of functional data from hdf5 file:
-                aryFunc = dtsFunc[:, varIdx01:varIdx02]
-
-                # vecLgcMskChnk = vecLgcMsk[varIdx01:varIdx02]
-
-                if True:  # 0 < np.sum(vecLgcMskChnk):
-                    # Perform linear trend removal:
-                    # aryFunc[:, vecLgcMskChnk] = funcLnTrRm(0, aryFunc[:, vecLgcMskChnk], 0.0, None)
-                    aryFunc = funcLnTrRm(0, aryFunc, 0.0, None)
-
-                # Put result on queue (from where it will be saved to disk in a
-                # separate thread).
-                objQ.put(aryFunc)
-
-            # Close thread:
-            objThrd.join()
-
-        # ---------------------------------------------------------------------
         # Spatial smoothing
 
         if 0.0 < varSdSmthSpt:
@@ -231,7 +174,11 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # chunk of volumes at a time. Indices of chunks:
             varStpSze = 10
             vecSplt = np.arange(0, (varNumVol + 1), varStpSze)
-            vecSplt = np.concatenate((vecSplt, np.array([varNumVol])))
+
+            # Concatenate stop index of last chunk (only if there are remaining
+            # voxels after the last chunk).
+            if not(vecSplt[-1] == varNumVox):
+                vecSplt = np.concatenate((vecSplt, np.array([varNumVol])))
 
             # Number of chunks:
             varNumCnk = vecSplt.shape[0]
@@ -290,8 +237,17 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Close thread:
             objThrd.join()
 
+        # Close hdf5 files:
+        fleHdf5.close()
+
         # ---------------------------------------------------------------------
         # Apply mask
+
+        # Read hdf5 file:
+        fleHdf5 = h5py.File(strPthHdf5, 'r')
+
+        # Access dataset in current hdf5 file:
+        dtsFunc = fleHdf5['func']
 
         # Path of hdf5 file for masked functional data:
         strPthHdf5Msk = os.path.join(strFlePth, (strFleNme + '_masked.hdf5'))
@@ -336,23 +292,90 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         os.remove(strPthHdf5)
 
         # ---------------------------------------------------------------------
+        # Linear trend removal
+
+        if lgcLinTrnd:
+
+            print('---------Linear trend removal')
+
+            # Read & write file (after masking):
+            fleHdf5Msk = h5py.File(strPthHdf5Msk, 'r+')
+
+            # Access dataset in current hdf5 file:
+            dtsFunc = fleHdf5Msk['func']
+
+            # Looping voxel by voxel is too slow. Instead, read & write a
+            # chunks of voxels at a time. Indices of chunks:
+            varStpSze = 10
+            vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
+
+            # Concatenate stop index of last chunk (only if there are remaining
+            # voxels after the last chunk).
+            if not(vecSplt[-1] == varNumVoxMsk):
+                vecSplt = np.concatenate((vecSplt, np.array([varNumVoxMsk])))
+
+            # Number of chunks:
+            varNumCnk = vecSplt.shape[0]
+
+            # Buffer size:
+            varBuff = 10
+
+            # Create FIFO queue:
+            objQ = queue.Queue(maxsize=varBuff)
+
+            # Define & run extra thread with graph that places data on queue:
+            objThrd = threading.Thread(target=feed_hdf5_spt,
+                                       args=(dtsFunc, objQ, vecSplt))
+            objThrd.setDaemon(True)
+            objThrd.start()
+
+            # Loop through chunks of voxels:
+            for idxChnk in range((varNumCnk - 1)):
+
+                # Start index of current chunk:
+                varIdx01 = vecSplt[idxChnk]
+
+                # Stop index of current chunk:
+                varIdx02 = vecSplt[idxChnk + 1]
+
+                # Get chunk of functional data from hdf5 file:
+                aryFunc = dtsFunc[:, varIdx01:varIdx02]
+
+                # Perform linear trend removal:
+                aryFunc = funcLnTrRm(0, aryFunc, 0.0, None)
+
+                # Put result on queue (from where it will be saved to disk in a
+                # separate thread).
+                objQ.put(aryFunc)
+
+            # Close thread:
+            objThrd.join()
+
+            # Close hdf5 files:
+            fleHdf5Msk.close()
+
+        # ---------------------------------------------------------------------
         # Temporal smoothing
-
-        # Read & write file (after masking):
-        fleHdf5Msk = h5py.File(strPthHdf5Msk, 'r+')
-
-        # Access dataset in current hdf5 file:
-        dtsFunc = fleHdf5Msk['func']
 
         if 0.0 < varSdSmthTmp:
 
             print('---------Temporal smoothing')
 
+            # Read & write file (after masking):
+            fleHdf5Msk = h5py.File(strPthHdf5Msk, 'r+')
+
+            # Access dataset in current hdf5 file:
+            dtsFunc = fleHdf5Msk['func']
+
             # Looping voxel by voxel is too slow. Instead, read & write a
             # chunks of voxels at a time. Indices of chunks:
             varStpSze = 100
-            vecSplt = np.arange(0, (varNumVox + 1), varStpSze)
-            vecSplt = np.concatenate((vecSplt, np.array([varNumVox])))
+            vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
+
+            # Concatenate stop index of last chunk (only if there are remaining
+            # voxels after the last chunk).
+            if not(vecSplt[-1] == varNumVoxMsk):
+                vecSplt = np.concatenate((vecSplt, np.array([varNumVoxMsk])))
 
             # Number of chunks:
             varNumCnk = vecSplt.shape[0]
@@ -391,16 +414,29 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Close thread:
             objThrd.join()
 
+            # Close hdf5 files:
+            fleHdf5Msk.close()
+
         # ---------------------------------------------------------------------
         # Z-scoring
 
         print('---------Z-score functional data')
 
+        # Read & write file (after masking):
+        fleHdf5Msk = h5py.File(strPthHdf5Msk, 'r+')
+
+        # Access dataset in current hdf5 file:
+        dtsFunc = fleHdf5Msk['func']
+
         # Looping voxel by voxel is too slow. Instead, read & write a chunks of
         # voxels at a time. Indices of chunks:
         varStpSze = 100
         vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
-        vecSplt = np.concatenate((vecSplt, np.array([varNumVoxMsk])))
+
+        # Concatenate stop index of last chunk (only if there are remaining
+        # voxels after the last chunk).
+        if not(vecSplt[-1] == varNumVoxMsk):
+            vecSplt = np.concatenate((vecSplt, np.array([varNumVoxMsk])))
 
         # Number of chunks:
         varNumCnk = vecSplt.shape[0]
@@ -497,7 +533,11 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # of volumes at a time. Indices of chunks:
         varStpSze = 50
         vecSplt = np.arange(0, (varNumVolTmp + 1), varStpSze)
-        vecSplt = np.concatenate((vecSplt, np.array([varNumVolTmp])))
+
+        # Concatenate stop index of last chunk (only if there are remaining
+        # voxels after the last chunk).
+        if not(vecSplt[-1] == varNumVoxMsk):
+            vecSplt = np.concatenate((vecSplt, np.array([varNumVolTmp])))
 
         # Number of chunks:
         varNumCnk = vecSplt.shape[0]
@@ -573,7 +613,11 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     # voxels at a time. Indices of chunks:
     varStpSze = 100
     vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
-    vecSplt = np.concatenate((vecSplt, np.array([varNumVoxMsk])))
+
+    # Concatenate stop index of last chunk (only if there are remaining
+    # voxels after the last chunk).
+    if not(vecSplt[-1] == varNumVoxMsk):
+        vecSplt = np.concatenate((vecSplt, np.array([varNumVoxMsk])))
 
     # Number of chunks:
     varNumCnk = vecSplt.shape[0]
