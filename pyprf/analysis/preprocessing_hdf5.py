@@ -75,7 +75,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         This is to avoid problems in the subsequent model fitting. This array
         is necessary to put results into original dimensions after model
         fitting.
-    tplHdf5Shp : tuple
+    tplNiiShp : tuple
         Spatial dimensions of input nii data (number of voxels in x, y, z
         direction). The data are reshaped during preprocessing, this
         information is needed to fit final output into original spatial
@@ -701,7 +701,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     vecLgcVar = np.concatenate(lstLgcVar, axis=0)
     del(lstLgcVar)
 
-    return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplHdf5Shp, strPthHdf5Func
+    return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplNiiShp, strPthHdf5Func
 
 
 def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, varPar=10):
