@@ -172,7 +172,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Looping volume by volume is too slow. Instead, read & write a
             # chunk of volumes at a time. Indices of chunks:
-            varStpSze = 10
+            varStpSze = 25
             vecSplt = np.arange(0, (varNumVol + 1), varStpSze)
 
             # Concatenate stop index of last chunk (only if there are remaining
@@ -289,7 +289,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         fleHdf5Msk.close()
 
         # Remove un-maksed (i.e. large) hdf5 file.
-        os.remove(strPthHdf5)
+        # os.remove(strPthHdf5)
 
         # ---------------------------------------------------------------------
         # Linear trend removal
@@ -306,7 +306,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Looping voxel by voxel is too slow. Instead, read & write a
             # chunks of voxels at a time. Indices of chunks:
-            varStpSze = 10
+            varStpSze = 1000
             vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
             # Concatenate stop index of last chunk (only if there are remaining
@@ -369,7 +369,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Looping voxel by voxel is too slow. Instead, read & write a
             # chunks of voxels at a time. Indices of chunks:
-            varStpSze = 100
+            varStpSze = 1000
             vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
             # Concatenate stop index of last chunk (only if there are remaining
@@ -430,7 +430,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Looping voxel by voxel is too slow. Instead, read & write a chunks of
         # voxels at a time. Indices of chunks:
-        varStpSze = 100
+        varStpSze = 1000
         vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
         # Concatenate stop index of last chunk (only if there are remaining
@@ -579,7 +579,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         fleHdf5Msk.close()
 
         # Remove maksed hdf5 file.
-        os.remove(lstFleMsk[idxRun])
+        # os.remove(lstFleMsk[idxRun])
 
         # Increment volume counter:
         varCntVol += varNumVolTmp
@@ -611,7 +611,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     # Looping voxel by voxel is too slow. Instead, read & write a chunks of
     # voxels at a time. Indices of chunks:
-    varStpSze = 100
+    varStpSze = 1000
     vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
     # Concatenate stop index of last chunk (only if there are remaining
@@ -751,6 +751,9 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
     # Access dataset in current hdf5 file:
     aryPrfTcIn = fleHdf5In['pRF_time_courses']
 
+    # Dimensions of pRF model space:
+    tplPrfDim = aryPrfTcIn.shape
+
     # Path of output hdf5 file (after preprocessing):
     strPthOut = (strPathMdl + '_prepro.hdf5')
 
@@ -759,7 +762,7 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
 
     # Create dataset within hdf5 file:
     aryPrfTcOut = fleHdf5Out.create_dataset('pRF_time_courses',
-                                            aryPrfTcIn.shape,
+                                            tplPrfDim,
                                             dtype=np.float32)
 
     # Loop through stimulus conditions, because the array needs to the 4D,
@@ -786,13 +789,13 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
         for idxCon in range(varNumCon):
 
             # Subtract the mean over time form the pRF model time courses.
-            aryPrfTcTmean = np.mean(aryPrfTc[:, :, :, idxCon, :], axis=3)
-            aryPrfTc[:, :, :, idxCon, :] = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, None])
+            aryPrfTcTmean = np.mean(aryPrfTcOut[:, :, :, idxCon, :], axis=3)
+            aryPrfTcOut[:, :, :, idxCon, :] = np.subtract(aryPrfTcOut, aryPrfTcTmean[:, :, :, None])
 
-    aryPrfTcVar = np.zeros(aryPrfTcIn.shape[0],
-                           aryPrfTcIn.shape[1],
-                           aryPrfTcIn.shape[2],
-                           aryPrfTcIn.shape[3],
+    aryPrfTcVar = np.zeros((tplPrfDim[0],
+                            tplPrfDim[1],
+                            tplPrfDim[2],
+                            tplPrfDim[3]),
                            dtype=np.float32)
 
     for idxCon in range(varNumCon):
@@ -801,7 +804,7 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
         # models that are not actually responsive to the stimuli). For
         # computational efficiency, and in order to avoid division by zero, we
         # ignore these model time courses.
-        aryPrfTcVar[:, :, :, idxCon] = np.var(aryPrfTc[:, :, :, idxCon, :], axis=3).astype(np.float32)
+        aryPrfTcVar[:, :, :, idxCon] = np.var(aryPrfTcOut[:, :, :, idxCon, :], axis=3).astype(np.float32)
 
     # Zero with float32 precision for comparison:
     varZero32 = np.array(([0.0001])).astype(np.float32)[0]

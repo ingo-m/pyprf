@@ -92,7 +92,7 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
     """
     # Read file:
-    fleHdf5 = h5py.File(strPrfTc, 'r+')
+    fleHdf5 = h5py.File(strPrfTc, 'r')
 
     # Access dataset in current hdf5 file:
     aryPrfTc = fleHdf5['pRF_time_courses']
@@ -231,9 +231,11 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
                         if varNumCon == 1:
 
+                            vecMdlTc = aryPrfTc[idxX, idxY, idxSd, 0, :].flatten()
+
                             # Cythonised model fitting with one predictor:
                             vecTmpRes, vecTmpPe = cy_lst_sq(
-                                aryPrfTc[idxX, idxY, idxSd, 0, :].flatten(),
+                                vecMdlTc,
                                 aryFuncChnk)
                             # Output shape:
                             # Parameter estimates: vecTmpPe[varNumVox]
@@ -241,9 +243,11 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
                         elif varNumCon == 2:
 
+                            vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :, :]
+
                             # Cythonised model fitting with two predictors:
                             vecTmpRes, aryTmpPe = cy_lst_sq_two(
-                                aryPrfTc[idxX, idxY, idxSd, :, :],
+                                vecMdlTc,
                                 aryFuncChnk)
                             # Output shape:
                             # Parameter estimates: aryTmpPe[2, varNumVox]
@@ -315,6 +319,9 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
                     # Increment status indicator counter:
                     varCntSts02 = varCntSts02 + 1
+
+    # Close hdf5 file:
+    fleHdf5.close()
 
     # After finding the best fitting model for each voxel, we still have to
     # calculate the coefficient of determination (R-squared) for each voxel. We
