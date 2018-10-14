@@ -104,7 +104,8 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *************************************************************************
     # *** Preprocessing
 
-    if lgcHdf5:
+    # if lgcHdf5:
+    if True:
 
         print('---Hdf5 mode.')
 
@@ -122,7 +123,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                               lgcLinTrnd=cfg.lgcLinTrnd,
                               varSdSmthTmp=cfg.varSdSmthTmp,
                               varSdSmthSpt=cfg.varSdSmthSpt)
-
+    if False:
         # Preprocessing of pRF model time courses:
         strPrfTc, aryLgcVar = \
             pre_pro_models_hdf5(cfg.strPathMdl,
@@ -133,7 +134,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
         aryPrfTc = None
 
-
+    if True:
         # Makeshift solution for small data after masking:
 
         # Read hdf5 file (masked timecourses of current run):
@@ -152,13 +153,13 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
 
 
-    else:
+    if True: #else:
 
         # Preprocessing of pRF model time courses:
         aryPrfTc = pre_pro_models(aryPrfTc,
                                   varSdSmthTmp=cfg.varSdSmthTmp,
                                   varPar=cfg.varPar)
-
+    if False:
         # Preprocessing of functional data:
         vecLgcMsk, hdrMsk, aryAff, vecLgcVar, aryFunc, tplNiiShp = \
             pre_pro_func(cfg.strPathNiiMask,
@@ -167,6 +168,9 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                          varSdSmthTmp=cfg.varSdSmthTmp,
                          varSdSmthSpt=cfg.varSdSmthSpt,
                          varPar=cfg.varPar)
+
+
+
     # *************************************************************************
 
     # *************************************************************************

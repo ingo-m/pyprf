@@ -142,18 +142,18 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Path of hdf5 file with functional data (corresponding to 4D nii file
         # for current run).
-        strPthHdf5 = os.path.join(strFlePth, (strFleNme + '.hdf5'))
+        strPthHdf5In = os.path.join(strFlePth, (strFleNme + '.hdf5'))
 
-        assert os.path.isfile(strPthHdf5), 'HDF5 file not found.'
+        assert os.path.isfile(strPthHdf5In), 'HDF5 file not found.'
 
-        # Read & write file:
-        fleHdf5 = h5py.File(strPthHdf5, 'r+')
+        # Read file:
+        fleHdf5In = h5py.File(strPthHdf5In, 'r')
 
         # Access dataset in current hdf5 file:
-        dtsFunc = fleHdf5['func']
+        dtsFuncIn = fleHdf5In['func']
 
         # Dimensions of hdf5 data (should be of shape func[time, voxel]):
-        tplHdf5Shp = dtsFunc.shape
+        tplHdf5Shp = dtsFuncIn.shape
 
         # Number of time points in hdf5 file:
         varNumVol = tplHdf5Shp[0]
@@ -170,6 +170,18 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             print('---------Spatial smoothing')
 
+            # Path of output hdf5 file:
+            strPthHdf5Out = os.path.join(strFlePth,
+                                         (strFleNme + '_sptlsmth.hdf5'))
+
+            # Create hdf5 file:
+            fleHdf5Out = h5py.File(strPthHdf5Out, 'w')
+
+            # Create dataset within hdf5 file:
+            dtsFuncOut = fleHdf5Out.create_dataset('func',
+                                                   tplHdf5Shp,
+                                                   dtype=np.float32)
+
             # Looping volume by volume is too slow. Instead, read & write a
             # chunk of volumes at a time. Indices of chunks:
             varStpSze = 25
@@ -177,7 +189,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Concatenate stop index of last chunk (only if there are remaining
             # voxels after the last chunk).
-            if not(vecSplt[-1] == varNumVox):
+            if not(vecSplt[-1] == varNumVol):
                 vecSplt = np.concatenate((vecSplt, np.array([varNumVol])))
 
             # Number of chunks:
@@ -191,7 +203,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Define & run extra thread with graph that places data on queue:
             objThrd = threading.Thread(target=feed_hdf5_tme,
-                                       args=(dtsFunc, objQ, vecSplt))
+                                       args=(dtsFuncOut, objQ, vecSplt))
             objThrd.setDaemon(True)
             objThrd.start()
 
@@ -208,7 +220,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
                 # varNumVolTmp = varIdx02 - varIdx01
 
                 # Get chunk of functional data from hdf5 file:
-                aryFunc = np.copy(dtsFunc[varIdx01:varIdx02, :])
+                aryFunc = np.copy(dtsFuncIn[varIdx01:varIdx02, :])
 
                 # Loop through volumes (within current chunk):
                 varChnkNumVol = aryFunc.shape[0]
@@ -237,17 +249,35 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Close thread:
             objThrd.join()
 
-        # Close hdf5 files:
-        fleHdf5.close()
+            # Close hdf5 file with results of spatial smoothing:
+            fleHdf5Out.close()
+
+            # Remove input file (only if spatial smoothing was applied,
+            # otherwise it will be needed in next step.
+            #os.remove(strPthHdf5In)
+
+        # Close input hdf5 file:
+        fleHdf5In.close()
 
         # ---------------------------------------------------------------------
         # Apply mask
 
+        if 0.0 < varSdSmthSpt:
+
+            # Input path (after spatial smoothing).
+            strPthHdf5In = os.path.join(strFlePth,
+                                        (strFleNme + '_sptlsmth.hdf5'))
+
+        else:
+
+            # Input path (if without spatial smoothing).
+            strPthHdf5In = os.path.join(strFlePth, (strFleNme + '.hdf5'))
+
         # Read hdf5 file:
-        fleHdf5 = h5py.File(strPthHdf5, 'r')
+        fleHdf5In = h5py.File(strPthHdf5In, 'r')
 
         # Access dataset in current hdf5 file:
-        dtsFunc = fleHdf5['func']
+        dtsFuncIn = fleHdf5In['func']
 
         # Path of hdf5 file for masked functional data:
         strPthHdf5Msk = os.path.join(strFlePth, (strFleNme + '_masked.hdf5'))
@@ -256,10 +286,10 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         lstFleMsk[idxRun] = strPthHdf5Msk
 
         # Create hdf5 file:
-        fleHdf5Msk = h5py.File(strPthHdf5Msk, 'w')
+        fleHdf5Out = h5py.File(strPthHdf5Msk, 'w')
 
         # Create dataset within hdf5 file:
-        dtsFuncMsk = fleHdf5Msk.create_dataset('func',
+        dtsFuncMsk = fleHdf5Out.create_dataset('func',
                                                (varNumVol, varNumVoxMsk),
                                                dtype=np.float32)
 
@@ -279,17 +309,17 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # mask in new hdf5 file:
         for idxVox in range(varNumVox):
             if vecLgcMsk[idxVox]:
-                objQ.put(dtsFunc[:, idxVox])
+                objQ.put(dtsFuncIn[:, idxVox])
 
         # Close thread:
         objThrd.join()
 
         # Close hdf5 files:
-        fleHdf5.close()
-        fleHdf5Msk.close()
+        fleHdf5In.close()
+        fleHdf5Out.close()
 
         # Remove un-maksed (i.e. large) hdf5 file.
-        # os.remove(strPthHdf5)
+        #os.remove(strPthHdf5In)
 
         # ---------------------------------------------------------------------
         # Linear trend removal
@@ -299,14 +329,14 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             print('---------Linear trend removal')
 
             # Read & write file (after masking):
-            fleHdf5Msk = h5py.File(strPthHdf5Msk, 'r+')
+            fleHdf5Out = h5py.File(strPthHdf5Msk, 'r+')
 
             # Access dataset in current hdf5 file:
-            dtsFunc = fleHdf5Msk['func']
+            dtsFunc = fleHdf5Out['func']
 
             # Looping voxel by voxel is too slow. Instead, read & write a
             # chunks of voxels at a time. Indices of chunks:
-            varStpSze = 1000
+            varStpSze = 10
             vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
             # Concatenate stop index of last chunk (only if there are remaining
@@ -352,7 +382,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             objThrd.join()
 
             # Close hdf5 files:
-            fleHdf5Msk.close()
+            fleHdf5Out.close()
 
         # ---------------------------------------------------------------------
         # Temporal smoothing
@@ -362,14 +392,14 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             print('---------Temporal smoothing')
 
             # Read & write file (after masking):
-            fleHdf5Msk = h5py.File(strPthHdf5Msk, 'r+')
+            fleHdf5Out = h5py.File(strPthHdf5Msk, 'r+')
 
             # Access dataset in current hdf5 file:
-            dtsFunc = fleHdf5Msk['func']
+            dtsFunc = fleHdf5Out['func']
 
             # Looping voxel by voxel is too slow. Instead, read & write a
             # chunks of voxels at a time. Indices of chunks:
-            varStpSze = 1000
+            varStpSze = 100
             vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
             # Concatenate stop index of last chunk (only if there are remaining
@@ -415,7 +445,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             objThrd.join()
 
             # Close hdf5 files:
-            fleHdf5Msk.close()
+            fleHdf5Out.close()
 
         # ---------------------------------------------------------------------
         # Z-scoring
@@ -423,14 +453,14 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         print('---------Z-score functional data')
 
         # Read & write file (after masking):
-        fleHdf5Msk = h5py.File(strPthHdf5Msk, 'r+')
+        fleHdf5Out = h5py.File(strPthHdf5Msk, 'r+')
 
         # Access dataset in current hdf5 file:
-        dtsFunc = fleHdf5Msk['func']
+        dtsFunc = fleHdf5Out['func']
 
         # Looping voxel by voxel is too slow. Instead, read & write a chunks of
         # voxels at a time. Indices of chunks:
-        varStpSze = 1000
+        varStpSze = 100
         vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
         # Concatenate stop index of last chunk (only if there are remaining
@@ -497,7 +527,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         objThrd.join()
 
         # Close hdf5 file:
-        fleHdf5Msk.close()
+        fleHdf5Out.close()
 
     # -------------------------------------------------------------------------
     # Combine runs
@@ -521,10 +551,10 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     for idxRun in range(varNumRun):
 
         # Read hdf5 file (masked timecourses of current run):
-        fleHdf5Msk = h5py.File(lstFleMsk[idxRun], 'r')
+        fleHdf5Out = h5py.File(lstFleMsk[idxRun], 'r')
 
         # Access dataset in current hdf5 file:
-        dtsFuncMsk = fleHdf5Msk['func']
+        dtsFuncMsk = fleHdf5Out['func']
 
         # Volumes in current run:
         varNumVolTmp = dtsFuncMsk.shape[0]
@@ -576,7 +606,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         objThrd.join()
 
         # Close hdf5 file (masked single run):
-        fleHdf5Msk.close()
+        fleHdf5Out.close()
 
         # Remove maksed hdf5 file.
         # os.remove(lstFleMsk[idxRun])
@@ -611,7 +641,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     # Looping voxel by voxel is too slow. Instead, read & write a chunks of
     # voxels at a time. Indices of chunks:
-    varStpSze = 1000
+    varStpSze = 100
     vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
     # Concatenate stop index of last chunk (only if there are remaining
