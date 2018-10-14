@@ -336,7 +336,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Looping voxel by voxel is too slow. Instead, read & write a
             # chunks of voxels at a time. Indices of chunks:
-            varStpSze = 10
+            varStpSze = 1000
             vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
             # Concatenate stop index of last chunk (only if there are remaining
@@ -399,7 +399,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Looping voxel by voxel is too slow. Instead, read & write a
             # chunks of voxels at a time. Indices of chunks:
-            varStpSze = 100
+            varStpSze = 1000
             vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
             # Concatenate stop index of last chunk (only if there are remaining
@@ -460,7 +460,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Looping voxel by voxel is too slow. Instead, read & write a chunks of
         # voxels at a time. Indices of chunks:
-        varStpSze = 100
+        varStpSze = 1000
         vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
         # Concatenate stop index of last chunk (only if there are remaining
@@ -561,12 +561,12 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Looping volume by volume is too slow. Instead, read & write a chunk
         # of volumes at a time. Indices of chunks:
-        varStpSze = 50
+        varStpSze = 100
         vecSplt = np.arange(0, (varNumVolTmp + 1), varStpSze)
 
         # Concatenate stop index of last chunk (only if there are remaining
         # voxels after the last chunk).
-        if not(vecSplt[-1] == varNumVoxMsk):
+        if not(vecSplt[-1] == varNumVolTmp):
             vecSplt = np.concatenate((vecSplt, np.array([varNumVolTmp])))
 
         # Number of chunks:
@@ -641,7 +641,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     # Looping voxel by voxel is too slow. Instead, read & write a chunks of
     # voxels at a time. Indices of chunks:
-    varStpSze = 100
+    varStpSze = 1000
     vecSplt = np.arange(0, (varNumVoxMsk + 1), varStpSze)
 
     # Concatenate stop index of last chunk (only if there are remaining
