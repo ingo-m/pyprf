@@ -820,7 +820,7 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
 
             # Subtract the mean over time form the pRF model time courses.
             aryPrfTcTmean = np.mean(aryPrfTcOut[:, :, :, idxCon, :], axis=3)
-            aryPrfTcOut[:, :, :, idxCon, :] = np.subtract(aryPrfTcOut, aryPrfTcTmean[:, :, :, None])
+            aryPrfTcOut[:, :, :, idxCon, :] = np.subtract(aryPrfTcOut[:, :, :, idxCon, :], aryPrfTcTmean[:, :, :, None])
 
     aryPrfTcVar = np.zeros((tplPrfDim[0],
                             tplPrfDim[1],
