@@ -264,6 +264,8 @@ def crt_prf_tcmdl(aryPixConv, strPathMdl, tplVslSpcSze=(200, 200), varNumX=40,
         lstPrcs[idxPrc].join()
 
     # lstOut:
+    #        idxPrc : int
+    #            Process ID.
     #        vecMdlIdx : np.array
     #            1D numpy array with model indices (for sorting of models after
     #            parallel function. Shape: vecMdlIdx[varNumMdls].
@@ -280,8 +282,9 @@ def crt_prf_tcmdl(aryPixConv, strPathMdl, tplVslSpcSze=(200, 200), varNumX=40,
     # Get vectors with model indicies (vecMdlIdx) and pRF model time courses
     #  from parallel output list.
     for idxPrc in range(varPar):
-        lstMdlIdx[idxPrc] = lstOut[idxPrc][0]
-        lstPrfTc[idxPrc] = lstOut[idxPrc][1]
+        varPrcId = lstOut[idxPrc][0]
+        lstMdlIdx[varPrcId] = lstOut[idxPrc][1]
+        lstPrfTc[varPrcId] = lstOut[idxPrc][2]
 
     # In case of small parameter space, sort pRF time courses and return them
     # to partent function.

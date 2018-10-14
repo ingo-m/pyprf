@@ -58,6 +58,8 @@ def prf_par(idxPrc, aryMdlParamsChnk, tplVslSpcSze, aryPixConv, strPathMdl,
     -------
     lstOut : list
         List containing the following object:
+        idxPrc : int
+            Process ID.
         vecMdlIdx : np.array
             1D numpy array with model indices (for sorting of models after
             parallel function. Shape: vecMdlIdx[varNumMdls].
@@ -180,7 +182,7 @@ def prf_par(idxPrc, aryMdlParamsChnk, tplVslSpcSze, aryPixConv, strPathMdl,
     vecMdlIdx = aryMdlParamsChnk[:, 0]
 
     # Output list:
-    lstOut = [vecMdlIdx, aryPrfTc]
+    lstOut = [idxPrc, vecMdlIdx, aryPrfTc]
 
     # Put output to queue:
     queOut.put(lstOut)
