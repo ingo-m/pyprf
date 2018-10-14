@@ -495,7 +495,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         print('---------Linear trend removal')
         aryFunc = funcParVox(funcLnTrRm,
                              aryFunc,
-                             aryMask,
+                             np.array([], dtype=np.int16),  # aryMask,
                              0,
                              varPar)
 

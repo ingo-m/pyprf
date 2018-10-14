@@ -110,8 +110,11 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     aryMask = np.reshape(aryMask, varNumVox)
 
     # Make mask boolean:
-    vecLgcMsk = np.greater(aryMask.astype(np.int16),
-                           np.array([0], dtype=np.int16)[0])
+    #vecLgcMsk = np.greater(aryMask.astype(np.int16),
+    #                       np.array([0], dtype=np.int16)[0])
+
+    #aryMask = np.reshape(aryMask, varNumEleTlt)
+    vecLgcMsk = np.greater(aryMask, 0)
 
     # Number of voxels after masking:
     varNumVoxMsk = np.sum(vecLgcMsk)
@@ -191,7 +194,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             objThrd.setDaemon(True)
             objThrd.start()
 
-            # Loop through chunks of volumes:
+            # Loop through chunks of voxels:
             for idxChnk in range((varNumCnk - 1)):
 
                 # Start index of current chunk:
@@ -203,8 +206,12 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
                 # Get chunk of functional data from hdf5 file:
                 aryFunc = dtsFunc[:, varIdx01:varIdx02]
 
-                # Perform linear trend removal:
-                aryFunc = funcLnTrRm(0, aryFunc, 0.0, None)
+                # vecLgcMskChnk = vecLgcMsk[varIdx01:varIdx02]
+
+                if True:  # 0 < np.sum(vecLgcMskChnk):
+                    # Perform linear trend removal:
+                    # aryFunc[:, vecLgcMskChnk] = funcLnTrRm(0, aryFunc[:, vecLgcMskChnk], 0.0, None)
+                    aryFunc = funcLnTrRm(0, aryFunc, 0.0, None)
 
                 # Put result on queue (from where it will be saved to disk in a
                 # separate thread).
@@ -254,18 +261,17 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
                 # varNumVolTmp = varIdx02 - varIdx01
 
                 # Get chunk of functional data from hdf5 file:
-                aryFunc = dtsFunc[varIdx01:varIdx02, :]
+                aryFunc = np.copy(dtsFunc[varIdx01:varIdx02, :])
 
                 # Loop through volumes (within current chunk):
                 varChnkNumVol = aryFunc.shape[0]
                 for idxVol in range(varChnkNumVol):
 
                     # Reshape into original shape (for spatial smoothing):
-                    # aryTmp = np.reshape(aryFunc[idxVol, :], [tplNiiShp[0], tplNiiShp[1], tplNiiShp[2]])
-                    # aryTmp = np.reshape(aryFunc[idxVol, :], [58, 33, 25], order='C') # : {‘C’, ‘F’, ‘A’}, optional)
-                    aryTmp = np.reshape(
-                                        np.reshape(aryFunc[idxVol, :], (varNumVox, 1)).T,
-                                        [tplNiiShp[0], tplNiiShp[1], tplNiiShp[2]])
+                    aryTmp = np.reshape(aryFunc[idxVol, :],
+                                        [tplNiiShp[0],
+                                         tplNiiShp[1],
+                                         tplNiiShp[2]])
 
                     # Perform smoothing:
                     aryTmp = gaussian_filter(
@@ -276,7 +282,6 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
                         truncate=4.0).astype(np.float32)
 
                     # Back to shape: func[time, voxel].
-                    #aryFunc[idxVol, :] = aryTmp.reshape(varNumVox)
                     aryFunc[idxVol, :] = np.reshape(aryTmp, [varNumVox])
 
                 # Put current volume on queue.
