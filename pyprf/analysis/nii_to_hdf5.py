@@ -66,7 +66,7 @@ def nii_to_hdf5(strPathIn):
     # Only create hdf5 file if it does not exist yet:
     if not(os.path.isfile(strPthHdf5)):
 
-        print('------Copy fMRI data from nii file to hdf5 file.')
+        print(('---------File: ' + strFleNme + '.hdf5'))
 
         # Create hdf5 file:
         fleHdf5 = h5py.File(strPthHdf5, 'w')
@@ -90,9 +90,13 @@ def nii_to_hdf5(strPathIn):
 
         # Looping volume by volume is too slow. Instead, read & write a chunk
         # of volumes at a time. Indices of chunks:
-        varStpSze = 25
+        varStpSze = 50
         vecSplt = np.arange(0, (varNumVol + 1), varStpSze)
-        vecSplt = np.concatenate((vecSplt, np.array([varNumVol])))
+
+        # Concatenate stop index of last chunk (only if there are remaining
+        # voxels after the last chunk).
+        if not(vecSplt[-1] == varNumVol):
+            vecSplt = np.concatenate((vecSplt, np.array([varNumVol])))
 
         # Number of chunks:
         varNumCnk = vecSplt.shape[0]
