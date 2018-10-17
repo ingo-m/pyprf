@@ -31,7 +31,6 @@ import h5py
 
 from pyprf.analysis.load_config import load_config
 from pyprf.analysis.utilities import cls_set_config
-from pyprf.analysis.nii_to_hdf5 import nii_to_hdf5
 from pyprf.analysis.model_creation_main import model_creation
 from pyprf.analysis.preprocessing_main import pre_pro_models
 from pyprf.analysis.preprocessing_main import pre_pro_func
@@ -93,7 +92,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # nii files. Switch to hdf5 mode in case of more than three functional
     # runs:
     # lgcHdf5 = 3 < len(cfg.lstPathNiiFunc)
-    lgcHdf5 = False
+    lgcHdf5 = True
 
     # Array with pRF time course models, shape:
     # aryPrfTc[x-position, y-position, SD, condition, volume].
@@ -104,17 +103,9 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *************************************************************************
     # *** Preprocessing
 
-    # if lgcHdf5:
-    if True:
+    if lgcHdf5:
 
         print('---Hdf5 mode.')
-
-        print('------Copy fMRI data from nii file to hdf5 file.')
-
-        # Hdf5 mode. First, copy data from nii to hdf5 files.
-        varNumRun = len(cfg.lstPathNiiFunc)
-        for idxRun in range(varNumRun):
-            nii_to_hdf5(cfg.lstPathNiiFunc[idxRun])
 
         # Preprocessing of functional data:
         vecLgcMsk, hdrMsk, aryAff, vecLgcVar, tplNiiShp, strPthHdf5Func = \
@@ -123,7 +114,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                               lgcLinTrnd=cfg.lgcLinTrnd,
                               varSdSmthTmp=cfg.varSdSmthTmp,
                               varSdSmthSpt=cfg.varSdSmthSpt)
-    if False:
+
         # Preprocessing of pRF model time courses:
         strPrfTc, aryLgcVar = \
             pre_pro_models_hdf5(cfg.strPathMdl,
@@ -131,10 +122,8 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                                 strVersion=cfg.strVersion,
                                 varPar=cfg.varPar)
 
-
         aryPrfTc = None
 
-    if True:
         # Makeshift solution for small data after masking:
 
         # Read hdf5 file (masked timecourses of current run):
@@ -153,13 +142,13 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
 
 
 
-    if True: #else:
+    else:
 
         # Preprocessing of pRF model time courses:
         aryPrfTc = pre_pro_models(aryPrfTc,
                                   varSdSmthTmp=cfg.varSdSmthTmp,
                                   varPar=cfg.varPar)
-    if False:
+
         # Preprocessing of functional data:
         vecLgcMsk, hdrMsk, aryAff, vecLgcVar, aryFunc, tplNiiShp = \
             pre_pro_func(cfg.strPathNiiMask,

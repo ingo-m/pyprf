@@ -26,6 +26,7 @@ from scipy.ndimage.filters import gaussian_filter
 from pyprf.analysis.utilities import load_nii
 from pyprf.analysis.preprocessing_par import funcLnTrRm
 from pyprf.analysis.preprocessing_par import funcSmthTmp
+from pyprf.analysis.nii_to_hdf5 import nii_to_hdf5
 from pyprf.analysis.nii_to_hdf5 import feed_hdf5
 from pyprf.analysis.nii_to_hdf5 import feed_hdf5_spt
 from pyprf.analysis.nii_to_hdf5 import feed_hdf5_tme
@@ -133,6 +134,11 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Path of 4D nii file:
         strPthNii = lstPathNiiFunc[idxRun]
+
+        print('------------Copy fMRI data from nii file to hdf5 file.')
+
+        # Copy data from nii to hdf5 files.
+        nii_to_hdf5(strPthNii)
 
         # File path & file name:
         strFlePth, strFleNme = os.path.split(strPthNii)
