@@ -7,7 +7,7 @@ For development installation:
 
 import numpy as np
 from setuptools import setup, Extension
-from Cython.Build import cythonize
+# from Cython.Build import cythonize
 
 with open('README.rst') as f:
     long_description = f.read()
@@ -64,5 +64,5 @@ setup(name='pyprf',
           'console_scripts': [
               'pyprf = pyprf.analysis.__main__:main',
               ]},
-      ext_modules=cythonize(lstExt)
+      ext_modules=lstExt  # cythonize(lstExt)
       )
