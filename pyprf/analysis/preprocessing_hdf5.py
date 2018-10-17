@@ -168,7 +168,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         if 0.0 < varSdSmthSpt:
 
-            print('---------Spatial smoothing')
+            print('------------Spatial smoothing')
 
             # Path of output hdf5 file:
             strPthHdf5Out = os.path.join(strFlePth,
@@ -184,7 +184,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Looping volume by volume is too slow. Instead, read & write a
             # chunk of volumes at a time. Indices of chunks:
-            varStpSze = 25
+            varStpSze = 100
             vecSplt = np.arange(0, (varNumVol + 1), varStpSze)
 
             # Concatenate stop index of last chunk (only if there are remaining
@@ -254,13 +254,15 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
             # Remove input file (only if spatial smoothing was applied,
             # otherwise it will be needed in next step.
-            #os.remove(strPthHdf5In)
+            os.remove(strPthHdf5In)
 
         # Close input hdf5 file:
         fleHdf5In.close()
 
         # ---------------------------------------------------------------------
         # Apply mask
+
+        print('------------Applying mask')
 
         if 0.0 < varSdSmthSpt:
 
@@ -319,14 +321,14 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         fleHdf5Out.close()
 
         # Remove un-maksed (i.e. large) hdf5 file.
-        #os.remove(strPthHdf5In)
+        os.remove(strPthHdf5In)
 
         # ---------------------------------------------------------------------
         # Linear trend removal
 
         if lgcLinTrnd:
 
-            print('---------Linear trend removal')
+            print('------------Linear trend removal')
 
             # Read & write file (after masking):
             fleHdf5Out = h5py.File(strPthHdf5Msk, 'r+')
@@ -389,7 +391,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         if 0.0 < varSdSmthTmp:
 
-            print('---------Temporal smoothing')
+            print('------------Temporal smoothing')
 
             # Read & write file (after masking):
             fleHdf5Out = h5py.File(strPthHdf5Msk, 'r+')
@@ -450,7 +452,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # ---------------------------------------------------------------------
         # Z-scoring
 
-        print('---------Z-score functional data')
+        print('------------Z-scoring functional data')
 
         # Read & write file (after masking):
         fleHdf5Out = h5py.File(strPthHdf5Msk, 'r+')
@@ -531,6 +533,8 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     # -------------------------------------------------------------------------
     # Combine runs
+
+    print('---------Combining runs')
 
     # Path for hdf5 file with combined functional data from all runs (after
     # application of anatomical mask).
@@ -619,6 +623,8 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     # -------------------------------------------------------------------------
     # Variance mask
+
+    print('---------Applying variance mask')
 
     # Voxels that are outside the brain and have no, or very little, signal
     # should not be included in the pRF model finding. We take the variance
