@@ -17,8 +17,10 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as np
 import h5py
+import threading
+import queue
+import numpy as np
 from pyprf.analysis.cython_leastsquares import cy_lst_sq
 from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
 
@@ -106,6 +108,22 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
     # Number of conditions / GLM predictors:
     varNumCon = aryPrfTc.shape[3]
+
+    # Close hdf5 file (pRF model time courses will be read from disk in a
+    # separate thread, and placed on queue).
+    fleHdf5.close()
+
+    # Buffer size:
+    varBuff = 100
+
+    # Create FIFO queue:
+    objQ = queue.Queue(maxsize=varBuff)
+
+    # Define & run extra thread with graph that places data on queue:
+    objThrd = threading.Thread(target=read_hdf5,
+                               args=(strPrfTc, objQ))
+    objThrd.setDaemon(True)
+    objThrd.start()
 
     # Cython model fitting is only implemented for one or two predictors. If
     # there are more than two predictors, issue warning and shift to numpy.
@@ -227,11 +245,9 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
                         if varNumCon == 1:
 
-                            vecMdlTc = aryPrfTc[idxX, idxY, idxSd, 0, :].flatten()
-
                             # Cythonised model fitting with one predictor:
                             vecTmpRes, vecTmpPe = cy_lst_sq(
-                                vecMdlTc,
+                                objQ.get(),
                                 aryFuncChnk)
                             # Output shape:
                             # Parameter estimates: vecTmpPe[varNumVox]
@@ -239,11 +255,9 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
                         elif varNumCon == 2:
 
-                            vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :, :]
-
                             # Cythonised model fitting with two predictors:
                             vecTmpRes, aryTmpPe = cy_lst_sq_two(
-                                vecMdlTc,
+                                objQ.get(),
                                 aryFuncChnk)
                             # Output shape:
                             # Parameter estimates: aryTmpPe[2, varNumVox]
@@ -252,12 +266,9 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                     # Numpy version:
                     elif strVersion == 'numpy':
 
-                        # Current pRF time course model:
-                        vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :, :]
-
                         # We create a design matrix including the current pRF
                         # time course model, and a constant term:
-                        aryDsgn = np.vstack([vecMdlTc,
+                        aryDsgn = np.vstack([objQ.get(),
                                              vecConst]).T
 
                         # Change type to float32:
@@ -283,31 +294,24 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                     vecBstRes[vecLgcTmpRes] = \
                         vecTmpRes[vecLgcTmpRes].astype(np.float32)
 
-
-
-                    # WORK IN PROGRESS !!!
-
+                    # Replace best fitting PE values:
                     if strVersion == 'numpy':
 
                         # The last row contains the constant term, we skip it.
-                        aryBstPe[:, vecLgcTmpRes] = \
-                            aryTmpPe[:-1, vecLgcTmpRes]  # .astype(np.float32)
+                        aryBstPe[:, vecLgcTmpRes] = aryTmpPe[:-1, vecLgcTmpRes]
 
                     if strVersion == 'cython':
 
                         # One predictor (i.e. PEs are 1D).
                         if varNumCon == 1:
 
-                            aryBstPe[:, vecLgcTmpRes] = \
-                                vecTmpPe[vecLgcTmpRes]  # .astype(np.float32)
+                            aryBstPe[:, vecLgcTmpRes] = vecTmpPe[vecLgcTmpRes]
 
                         # Two predictors (i.e. PEs are 2D).
                         elif varNumCon == 2:
 
                             aryBstPe[:, vecLgcTmpRes] = \
-                                aryTmpPe[:, vecLgcTmpRes]  # .astype(np.float32)
-
-
+                                aryTmpPe[:, vecLgcTmpRes]
 
                 # Status indicator (only used in the first of the parallel
                 # processes):
@@ -316,8 +320,8 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                     # Increment status indicator counter:
                     varCntSts02 = varCntSts02 + 1
 
-    # Close hdf5 file:
-    fleHdf5.close()
+    # Close thread:
+    objThrd.join()
 
     # After finding the best fitting model for each voxel, we still have to
     # calculate the coefficient of determination (R-squared) for each voxel. We
@@ -347,3 +351,64 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
               aryBstPe]
 
     queOut.put(lstOut)
+
+
+def read_hdf5(strPrfTc, objQ):
+    """
+    Read pRF model time courses from disk (hdf5 file), and place them on queue.
+
+    Parameters
+    ----------
+    strPrfTc : str
+        Path of file with pRF time course models (including file extension). In
+        hdf5 mode, time courses are loaded from hdf5 file, so that not all pRF
+        model time courses do not have to be loaded into RAM at once. Hdf5 file
+        contains array with pRF time course models, with shape
+        aryPrfTc[x-position, y-position, SD, condition, volume].
+    objQ : queue.Queue
+        Queue on which to place pRF time courses.
+
+    """
+    # Read file:
+    fleHdf5 = h5py.File(strPrfTc, 'r')
+
+    # Access dataset in current hdf5 file:
+    aryPrfTc = fleHdf5['pRF_time_courses']
+
+    # Number of modelled x-positions in the visual space:
+    varNumX = aryPrfTc.shape[0]
+    # Number of modelled y-positions in the visual space:
+    varNumY = aryPrfTc.shape[1]
+    # Number of modelled pRF sizes:
+    varNumPrfSizes = aryPrfTc.shape[2]
+
+    # Number of conditions / GLM predictors:
+    varNumCon = aryPrfTc.shape[3]
+
+    # Loop through pRF models:
+    for idxX in range(varNumX):
+
+        for idxY in range(varNumY):
+
+            for idxSd in range(varNumPrfSizes):
+
+                # One predictor (e.g. one luminance level):
+                if varNumCon == 1:
+
+                    # Read model time course from disk:
+                    vecMdlTc = aryPrfTc[idxX, idxY, idxSd, 0, :].flatten()
+
+                    # Put model time course on queue.
+                    objQ.put(vecMdlTc)
+
+                # More than one predictor.
+                else:
+
+                    # Read model time course from disk:
+                    aryMdlTc = aryPrfTc[idxX, idxY, idxSd, :, :]
+
+                    # Put model time course on queue.
+                    objQ.put(aryMdlTc)
+
+    # Close file:
+    fleHdf5.close()
