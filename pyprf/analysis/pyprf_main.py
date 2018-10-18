@@ -116,6 +116,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                                 strVersion=cfg.strVersion,
                                 varPar=cfg.varPar)
 
+        # Dummy pRF time courses (for compatibility with regular mode):
         aryPrfTc = None
 
         # Makeshift solution for small data after masking:
@@ -131,8 +132,6 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         aryFunc = np.copy(aryFunc)
 
         fleHdfFunc.close()
-
-
 
     else:
 
@@ -150,8 +149,9 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                          varSdSmthSpt=cfg.varSdSmthSpt,
                          varPar=cfg.varPar)
 
+        # Dummy variables (for compatibility with hdf5 mode):
         strPrfTc = None
-
+        aryLgcMdlVar = None
     # *************************************************************************
 
     # *************************************************************************
