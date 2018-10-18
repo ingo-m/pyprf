@@ -135,7 +135,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         # Reshape functional nii data, from now on of the form
         # aryTmpFunc[time, voxel]:
-        aryTmpFunc = np.reshape(aryTmpFunc, [tplNiiShp[3], varNumVoxTlt])
+        aryTmpFunc = np.reshape(aryTmpFunc, [varNumVoxTlt, tplNiiShp[3]]).T
 
         # Apply mask:
         aryTmpFunc = aryTmpFunc[:, vecLgcMsk]

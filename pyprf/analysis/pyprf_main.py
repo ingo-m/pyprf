@@ -72,6 +72,13 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # voxels):
     cfg.varSdSmthTmp = np.divide(cfg.varSdSmthTmp, cfg.varTr)
     cfg.varSdSmthSpt = np.divide(cfg.varSdSmthSpt, cfg.varVoxRes)
+
+    # For the GPU version, we need to set down the parallelisation to 1 now,
+    # because no separate CPU threads are to be created. We may still use CPU
+    # parallelisation for preprocessing, which is why the parallelisation
+    # factor is only reduced now, not earlier.
+    if cfg.strVersion == 'gpu':
+        cfg.varPar = 1
     # *************************************************************************
 
     # *************************************************************************
