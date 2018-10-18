@@ -121,7 +121,7 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
     # Define & run extra thread with graph that places data on queue:
     objThrd = threading.Thread(target=read_hdf5,
-                               args=(strPrfTc, objQ))
+                               args=(strPrfTc, aryLgcVar, objQ))
     objThrd.setDaemon(True)
     objThrd.start()
 
@@ -353,7 +353,7 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     queOut.put(lstOut)
 
 
-def read_hdf5(strPrfTc, objQ):
+def read_hdf5(strPrfTc, aryLgcVar, objQ):
     """
     Read pRF model time courses from disk (hdf5 file), and place them on queue.
 
@@ -365,6 +365,11 @@ def read_hdf5(strPrfTc, objQ):
         model time courses do not have to be loaded into RAM at once. Hdf5 file
         contains array with pRF time course models, with shape
         aryPrfTc[x-position, y-position, SD, condition, volume].
+    aryLgcVar : np.array
+        Mask for pRF time courses with temporal variance greater than zero
+        (i.e. models that are responsive to the stimulus). Can be used to
+        restricted to models with a variance greater than zero. Shape:
+        `aryLgcVar[model-x-pos, model-y-pos, pRF-size]`.
     objQ : queue.Queue
         Queue on which to place pRF time courses.
 
@@ -392,23 +397,27 @@ def read_hdf5(strPrfTc, objQ):
 
             for idxSd in range(varNumPrfSizes):
 
-                # One predictor (e.g. one luminance level):
-                if varNumCon == 1:
+                # Only fit pRF model if variance greater than zero for all
+                # predictors:
+                if aryLgcVar[idxX, idxY, idxSd]:
 
-                    # Read model time course from disk:
-                    vecMdlTc = aryPrfTc[idxX, idxY, idxSd, 0, :].flatten()
+                    # One predictor (e.g. one luminance level):
+                    if varNumCon == 1:
 
-                    # Put model time course on queue.
-                    objQ.put(vecMdlTc)
+                        # Read model time course from disk:
+                        vecMdlTc = aryPrfTc[idxX, idxY, idxSd, 0, :].flatten()
 
-                # More than one predictor.
-                else:
+                        # Put model time course on queue.
+                        objQ.put(vecMdlTc)
 
-                    # Read model time course from disk:
-                    aryMdlTc = aryPrfTc[idxX, idxY, idxSd, :, :]
+                    # More than one predictor.
+                    else:
 
-                    # Put model time course on queue.
-                    objQ.put(aryMdlTc)
+                        # Read model time course from disk:
+                        aryMdlTc = aryPrfTc[idxX, idxY, idxSd, :, :]
+
+                        # Put model time course on queue.
+                        objQ.put(aryMdlTc)
 
     # Close file:
     fleHdf5.close()
