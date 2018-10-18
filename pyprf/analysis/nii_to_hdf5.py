@@ -66,7 +66,7 @@ def nii_to_hdf5(strPathIn):
     # Only create hdf5 file if it does not exist yet:
     if not(os.path.isfile(strPthHdf5)):
 
-        print(('---------File: ' + strFleNme + '.hdf5'))
+        print(('------------File: ' + strFleNme + '.hdf5'))
 
         # Create hdf5 file:
         fleHdf5 = h5py.File(strPthHdf5, 'w')
