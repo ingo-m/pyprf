@@ -26,7 +26,6 @@ Use `import pRF_config_motion as cfg` for pRF analysis with motion stimuli.
 import time
 import numpy as np
 import nibabel as nb
-import multiprocessing as mp
 import h5py
 
 from pyprf.analysis.load_config import load_config
@@ -37,6 +36,8 @@ from pyprf.analysis.preprocessing_main import pre_pro_func
 
 from pyprf.analysis.preprocessing_hdf5 import pre_pro_models_hdf5
 from pyprf.analysis.preprocessing_hdf5 import pre_pro_func_hdf5
+
+from pyprf.analysis.find_prf import find_prf
 
 
 def pyprf(strCsvCnfg, lgcTest=False):  #noqa
@@ -66,13 +67,6 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # Load config parameters from dictionary into namespace:
     cfg = cls_set_config(dicCnfg)
 
-    # Conditional imports:
-    if cfg.strVersion == 'gpu':
-        from pyprf.analysis.find_prf_gpu import find_prf_gpu
-    if ((cfg.strVersion == 'cython') or (cfg.strVersion == 'numpy')):
-        from pyprf.analysis.find_prf_cpu import find_prf_cpu
-        from pyprf.analysis.find_prf_cpu_hdf5 import find_prf_cpu_hdf5
-
     # Convert preprocessing parameters (for temporal and spatial smoothing)
     # from SI units (i.e. [s] and [mm]) into units of data array (volumes and
     # voxels):
@@ -92,7 +86,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # nii files. Switch to hdf5 mode in case of more than three functional
     # runs:
     # lgcHdf5 = 3 < len(cfg.lstPathNiiFunc)
-    lgcHdf5 = True
+    lgcHdf5 = False
 
     # Array with pRF time course models, shape:
     # aryPrfTc[x-position, y-position, SD, condition, volume].
@@ -116,7 +110,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                               varSdSmthSpt=cfg.varSdSmthSpt)
 
         # Preprocessing of pRF model time courses:
-        strPrfTc, aryLgcVar = \
+        strPrfTc, aryLgcMdlVar = \
             pre_pro_models_hdf5(cfg.strPathMdl,
                                 varSdSmthTmp=cfg.varSdSmthTmp,
                                 strVersion=cfg.strVersion,
@@ -135,8 +129,6 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         aryFunc = dtsFunc[:, :]
 
         aryFunc = np.copy(aryFunc)
-
-        aryFunc = aryFunc.T
 
         fleHdfFunc.close()
 
@@ -158,177 +150,15 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
                          varSdSmthSpt=cfg.varSdSmthSpt,
                          varPar=cfg.varPar)
 
-
-
-    # *************************************************************************
+        strPrfTc = None
 
     # *************************************************************************
-    # *** Find pRF models for voxel time courses
 
-    print('------Find pRF models for voxel time courses')
+    # *************************************************************************
+    # *** Find pRF models for voxel time courses.
 
-    # Number of voxels for which pRF finding will be performed:
-    varNumVoxInc = aryFunc.shape[0]
-
-    print('---------Number of voxels on which pRF finding will be performed: '
-          + str(varNumVoxInc))
-
-    print('---------Preparing parallel pRF model finding')
-
-    # For the GPU version, we need to set down the parallelisation to 1 now,
-    # because no separate CPU threads are to be created. We may still use CPU
-    # parallelisation for preprocessing, which is why the parallelisation
-    # factor is only reduced now, not earlier.
-    if cfg.strVersion == 'gpu':
-        cfg.varPar = 1
-
-    # Vector with the moddeled x-positions of the pRFs:
-    vecMdlXpos = np.linspace(cfg.varExtXmin,
-                             cfg.varExtXmax,
-                             cfg.varNumX,
-                             endpoint=True,
-                             dtype=np.float32)
-
-    # Vector with the moddeled y-positions of the pRFs:
-    vecMdlYpos = np.linspace(cfg.varExtYmin,
-                             cfg.varExtYmax,
-                             cfg.varNumY,
-                             endpoint=True,
-                             dtype=np.float32)
-
-    # Vector with the moddeled standard deviations of the pRFs:
-    vecMdlSd = np.linspace(cfg.varPrfStdMin,
-                           cfg.varPrfStdMax,
-                           cfg.varNumPrfSizes,
-                           endpoint=True,
-                           dtype=np.float32)
-
-    # Empty list for results (parameters of best fitting pRF model):
-    lstPrfRes = [None] * cfg.varPar
-
-    # Empty list for processes:
-    lstPrcs = [None] * cfg.varPar
-
-    # Create a queue to put the results in:
-    queOut = mp.Queue()
-
-    # List into which the chunks of functional data for the parallel processes
-    # will be put:
-    lstFunc = [None] * cfg.varPar
-
-    # Vector with the indicies at which the functional data will be separated
-    # in order to be chunked up for the parallel processes:
-    vecIdxChnks = np.linspace(0,
-                              varNumVoxInc,
-                              num=cfg.varPar,
-                              endpoint=False)
-    vecIdxChnks = np.hstack((vecIdxChnks, varNumVoxInc))
-
-    # Make sure type is float32:
-    aryFunc = aryFunc.astype(np.float32)
-
-    # In hdf5-mode, pRF time courses models are not loaded into RAM but
-    # accessed from hdf5 file.
-    if not(aryPrfTc is None):
-        aryPrfTc = aryPrfTc.astype(np.float32)
-
-    # Put functional data into chunks:
-    for idxChnk in range(cfg.varPar):
-        # Index of first voxel to be included in current chunk:
-        varTmpChnkSrt = int(vecIdxChnks[idxChnk])
-        # Index of last voxel to be included in current chunk:
-        varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
-        # Put voxel array into list:
-        lstFunc[idxChnk] = aryFunc[varTmpChnkSrt:varTmpChnkEnd, :]
-
-    # We don't need the original array with the functional data anymore:
-    del(aryFunc)
-
-    # CPU version (using numpy or cython for pRF finding):
-    if ((cfg.strVersion == 'numpy') or (cfg.strVersion == 'cython')):
-
-        print('---------pRF finding on CPU')
-
-        print('---------Creating parallel processes')
-
-        # Create processes:
-        for idxPrc in range(cfg.varPar):
-
-            # Hdf5-mode?
-            if aryPrfTc is None:
-
-                # Hdf5-mode (access pRF model time courses from disk in order
-                # to avoid out of memory).
-                lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu_hdf5,
-                                             args=(idxPrc,
-                                                   vecMdlXpos,
-                                                   vecMdlYpos,
-                                                   vecMdlSd,
-                                                   lstFunc[idxPrc],
-                                                   strPrfTc,
-                                                   aryLgcVar,
-                                                   cfg.strVersion,
-                                                   queOut)
-                                             )
-
-            else:
-
-                # Regualar CPU mode.
-                lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu,
-                                             args=(idxPrc,
-                                                   vecMdlXpos,
-                                                   vecMdlYpos,
-                                                   vecMdlSd,
-                                                   lstFunc[idxPrc],
-                                                   aryPrfTc,
-                                                   cfg.strVersion,
-                                                   queOut)
-                                             )
-
-            # Daemon (kills processes when exiting):
-            lstPrcs[idxPrc].Daemon = True
-
-    # GPU version (using tensorflow for pRF finding):
-    elif cfg.strVersion == 'gpu':
-
-
-
-        # REMOVE THIS LINE - FOR DEVELOPMENT ONLY
-        aryPrfTc = aryPrfTc[:, :, :, 0, :]
-
-
-
-        print('---------pRF finding on GPU')
-
-        # Create processes:
-        for idxPrc in range(cfg.varPar):
-            lstPrcs[idxPrc] = mp.Process(target=find_prf_gpu,
-                                         args=(idxPrc,
-                                               vecMdlXpos,
-                                               vecMdlYpos,
-                                               vecMdlSd,
-                                               lstFunc[idxPrc],
-                                               aryPrfTc,
-                                               queOut)
-                                         )
-            # Daemon (kills processes when exiting):
-            lstPrcs[idxPrc].Daemon = True
-
-    # Start processes:
-    for idxPrc in range(cfg.varPar):
-        lstPrcs[idxPrc].start()
-
-    # Delete reference to list with function data (the data continues to exists
-    # in child process):
-    del(lstFunc)
-
-    # Collect results from queue:
-    for idxPrc in range(cfg.varPar):
-        lstPrfRes[idxPrc] = queOut.get(True)
-
-    # Join processes:
-    for idxPrc in range(cfg.varPar):
-        lstPrcs[idxPrc].join()
+    lstPrfRes = find_prf(dicCnfg, aryFunc, aryPrfTc=aryPrfTc,
+                         aryLgcMdlVar=aryLgcMdlVar, strPrfTc=strPrfTc)
     # *************************************************************************
 
     # *************************************************************************

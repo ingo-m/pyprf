@@ -41,7 +41,7 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
     vecMdlSd : np.array
         1D array with pRF model sizes (SD of Gaussian).
     aryFunc : np.array
-        2D array with functional MRI data, with shape aryFunc[voxel, time].
+        2D array with functional MRI data, with shape aryFunc[time, voxel].
     aryPrfTc : np.array
         Array with pRF model time courses, with shape
         aryPrfTc[x-pos, y-pos, SD, time]
@@ -169,14 +169,10 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
     print('------Prepare functional data for graph')
 
     # Number of voxels to be fitted:
-    varNumVox = aryFunc.shape[0]
+    varNumVox = aryFunc.shape[1]
 
     # Number of volumes:
-    # varNumVol = aryFunc.shape[1]
-
-    # We reshape the voxel time courses, so that time goes down the column,
-    # i.e. from top to bottom.
-    aryFunc = aryFunc.T
+    # varNumVol = aryFunc.shape[0]
 
     # Change type to float 32:
     aryFunc = aryFunc.astype(np.float32)

@@ -770,11 +770,11 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
     -------
     strPthOut : str
         Path of hdf5 file with preprocessed model time courses.
-    aryLgcVar : np.array
+    aryLgcMdlVar : np.array
         Mask for pRF time courses with temporal variance greater than zero
         (i.e. models that are responsive to the stimulus). Can be used to
         restricted to models with a variance greater than zero. Shape:
-        `aryLgcVar[model-x-pos, model-y-pos, pRF-size]`.
+        `aryLgcMdlVar[model-x-pos, model-y-pos, pRF-size]`.
 
     Notes
     -----
@@ -853,9 +853,9 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
 
     # Only fit pRF model if variance greater than zero for all
     # predictors:
-    aryLgcVar = np.greater(np.amin(aryPrfTcVar, axis=3), varZero32)
+    aryLgcMdlVar = np.greater(np.amin(aryPrfTcVar, axis=3), varZero32)
 
     # Close hdf5 file:
     fleHdf5Out.close()
 
-    return strPthOut, aryLgcVar
+    return strPthOut, aryLgcMdlVar

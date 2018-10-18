@@ -67,7 +67,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         fitting.
     aryFunc : np.array
         2D numpy array containing preprocessed functional data, of the form
-        aryFunc[voxelCount, time].
+        aryFunc[time, voxel].
     tplNiiShp : tuple
         Spatial dimensions of input nii data (number of voxels in x, y, z
         direction). The data are reshaped during preprocessing, this
@@ -77,8 +77,8 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     Notes
     -----
     Functional data is loaded from disk. Temporal and spatial smoothing can be
-    applied. The functional data is reshaped, into the form aryFunc[voxel,
-    time]. A mask is applied (externally supplied, e.g. a grey matter mask).
+    applied. The functional data is reshaped, into the form aryFunc[time,
+    voxel]. A mask is applied (externally supplied, e.g. a grey matter mask).
     Subsequently, the functional data is de-meaned, and intensities are
     converted into z-scores.
 
@@ -134,43 +134,43 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
                                  varPar=varPar)
 
         # Reshape functional nii data, from now on of the form
-        # aryTmpFunc[voxelCount, time]:
-        aryTmpFunc = np.reshape(aryTmpFunc, [varNumVoxTlt, tplNiiShp[3]])
+        # aryTmpFunc[time, voxel]:
+        aryTmpFunc = np.reshape(aryTmpFunc, [tplNiiShp[3], varNumVoxTlt])
 
         # Apply mask:
-        aryTmpFunc = aryTmpFunc[vecLgcMsk, :]
+        aryTmpFunc = aryTmpFunc[:, vecLgcMsk]
 
         # De-mean functional data:
         aryTmpFunc = np.subtract(aryTmpFunc,
                                  np.mean(aryTmpFunc,
-                                         axis=1,
-                                         dtype=np.float32)[:, None])
+                                         axis=0,
+                                         dtype=np.float32)[None, :])
 
         # Convert intensities into z-scores. If there are several pRF runs,
         # these are concatenated. Z-scoring ensures that differences in mean
         # image intensity and/or variance between runs do not confound the
         # analysis. Possible enhancement: Explicitly model across-runs variance
         # with a nuisance regressor in the GLM.
-        aryTmpStd = np.std(aryTmpFunc, axis=1)
+        aryTmpStd = np.std(aryTmpFunc, axis=0)
 
         # In order to avoid devision by zero, only divide those voxels with a
         # standard deviation greater than zero:
         aryTmpLgc = np.greater(aryTmpStd.astype(np.float32),
                                np.array([0.0], dtype=np.float32)[0])
         # Z-scoring:
-        aryTmpFunc[aryTmpLgc, :] = np.divide(aryTmpFunc[aryTmpLgc, :],
-                                             aryTmpStd[aryTmpLgc, None])
+        aryTmpFunc[:, aryTmpLgc] = np.divide(aryTmpFunc[:, aryTmpLgc],
+                                             aryTmpStd[None, aryTmpLgc])
         # Set voxels with a variance of zero to intensity zero:
         aryTmpLgc = np.not_equal(aryTmpLgc, True)
-        aryTmpFunc[aryTmpLgc, :] = np.array([0.0], dtype=np.float32)[0]
+        aryTmpFunc[:, aryTmpLgc] = np.array([0.0], dtype=np.float32)[0]
 
         # Put preprocessed functional data of current run into list:
         lstFunc.append(aryTmpFunc)
         del(aryTmpFunc)
 
     # Put functional data from separate runs into one array. 2D array of the
-    # form aryFunc[voxelCount, time]
-    aryFunc = np.concatenate(lstFunc, axis=1).astype(np.float32, copy=False)
+    # form aryFunc[time, voxel]
+    aryFunc = np.concatenate(lstFunc, axis=0).astype(np.float32, copy=False)
     del(lstFunc)
 
     # Voxels that are outside the brain and have no, or very little, signal
@@ -178,7 +178,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     # over time and exclude voxels with a suspiciously low variance. Because
     # the data given into the cython or GPU function has float32 precision, we
     # calculate the variance on data with float32 precision.
-    aryFuncVar = np.var(aryFunc, axis=1, dtype=np.float32)
+    aryFuncVar = np.var(aryFunc, axis=0, dtype=np.float32)
 
     # Is the variance greater than zero?
     vecLgcVar = np.greater(aryFuncVar,
@@ -186,7 +186,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     # Array with functional data for which conditions (mask inclusion and
     # cutoff value) are fullfilled:
-    aryFunc = aryFunc[vecLgcVar, :]
+    aryFunc = aryFunc[:, vecLgcVar]
 
     return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, aryFunc, tplNiiShp
 
