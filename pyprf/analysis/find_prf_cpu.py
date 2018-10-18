@@ -76,6 +76,7 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     The list with results is not returned directly, but placed on a
     multiprocessing queue. This version performs the model finding on the CPU,
     using numpy or cython (depending on the value of `strVersion`).
+
     """
     # Number of modelled x-positions in the visual space:
     varNumX = aryPrfTc.shape[0]
@@ -276,31 +277,24 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
                     vecBstRes[vecLgcTmpRes] = \
                         vecTmpRes[vecLgcTmpRes].astype(np.float32)
 
-
-
-                    # WORK IN PROGRESS !!!
-
+                    # Replace best fitting PE values:
                     if strVersion == 'numpy':
 
                         # The last row contains the constant term, we skip it.
-                        aryBstPe[:, vecLgcTmpRes] = \
-                            aryTmpPe[:-1, vecLgcTmpRes]  # .astype(np.float32)
+                        aryBstPe[:, vecLgcTmpRes] = aryTmpPe[:-1, vecLgcTmpRes]
 
                     if strVersion == 'cython':
 
                         # One predictor (i.e. PEs are 1D).
                         if varNumCon == 1:
 
-                            aryBstPe[:, vecLgcTmpRes] = \
-                                vecTmpPe[vecLgcTmpRes]  # .astype(np.float32)
+                            aryBstPe[:, vecLgcTmpRes] = vecTmpPe[vecLgcTmpRes]
 
                         # Two predictors (i.e. PEs are 2D).
                         elif varNumCon == 2:
 
                             aryBstPe[:, vecLgcTmpRes] = \
-                                aryTmpPe[:, vecLgcTmpRes]  # .astype(np.float32)
-
-
+                                aryTmpPe[:, vecLgcTmpRes]
 
                 # Status indicator (only used in the first of the parallel
                 # processes):

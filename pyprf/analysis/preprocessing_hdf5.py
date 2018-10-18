@@ -823,8 +823,6 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
     # Close hdf5 file:
     fleHdf5In.close()
 
-
-
     # Prepare data for cython (i.e. accelerated) least squares finding:
     if strVersion == 'cython':
 
@@ -832,8 +830,11 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
 
             # Subtract the mean over time form the pRF model time courses.
             aryPrfTcTmean = np.mean(aryPrfTcOut[:, :, :, idxCon, :], axis=3)
-            aryPrfTcOut[:, :, :, idxCon, :] = np.subtract(aryPrfTcOut[:, :, :, idxCon, :], aryPrfTcTmean[:, :, :, None])
+            aryPrfTcOut[:, :, :, idxCon, :] = \
+                np.subtract(aryPrfTcOut[:, :, :, idxCon, :],
+                            aryPrfTcTmean[:, :, :, None])
 
+    # Array for pRF time courses with zero variance (to be masked out):
     aryPrfTcVar = np.zeros((tplPrfDim[0],
                             tplPrfDim[1],
                             tplPrfDim[2],
@@ -846,7 +847,8 @@ def pre_pro_models_hdf5(strPathMdl, varSdSmthTmp=2.0, strVersion='cython',
         # models that are not actually responsive to the stimuli). For
         # computational efficiency, and in order to avoid division by zero, we
         # ignore these model time courses.
-        aryPrfTcVar[:, :, :, idxCon] = np.var(aryPrfTcOut[:, :, :, idxCon, :], axis=3).astype(np.float32)
+        aryPrfTcVar[:, :, :, idxCon] = \
+            np.var(aryPrfTcOut[:, :, :, idxCon, :], axis=3).astype(np.float32)
 
     # Zero with float32 precision for comparison:
     varZero32 = np.array(([0.0001])).astype(np.float32)[0]
