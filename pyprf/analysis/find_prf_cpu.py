@@ -124,8 +124,8 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
         # Instead of fitting a constant term, we subtract the mean from the
         # data and from the model ("FSL style"). First, we subtract the mean
         # over time from the data:
-        aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
-        aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[None, 0])
+        aryFuncChnkTmean = np.mean(aryFuncChnk, axis=0)
+        aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[None, :])
         # Secondly, we subtract the mean over time form the pRF model time
         # courses.
         aryPrfTcTmean = np.mean(aryPrfTc, axis=4)

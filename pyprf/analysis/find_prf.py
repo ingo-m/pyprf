@@ -162,7 +162,8 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
             # Hdf5-mode?
             if aryPrfTc is None:
 
-
+                # TODO: IMPELEMENT FULL HDF5 MODE FOR READING OF FUNC DATA FROM
+                #       DISK.
 
                 # Hdf5-mode (access pRF model time courses from disk in order
                 # to avoid out of memory).
@@ -198,12 +199,10 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
     # GPU version (using tensorflow for pRF finding):
     elif cfg.strVersion == 'gpu':
 
-
+        # TODO: IMPELEMENT FULL HDF5 GPU MODE.
 
         # REMOVE THIS LINE - FOR DEVELOPMENT ONLY
         aryPrfTc = aryPrfTc[:, :, :, 0, :]
-
-
 
         print('---------pRF finding on GPU')
 

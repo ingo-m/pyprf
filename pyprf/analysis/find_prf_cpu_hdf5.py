@@ -119,10 +119,10 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
             print(strWrng)
 
     # Number of voxels to be fitted in this chunk:
-    varNumVoxChnk = aryFuncChnk.shape[0]
+    varNumVoxChnk = aryFuncChnk.shape[1]
 
     # Number of volumes:
-    varNumVol = aryFuncChnk.shape[1]
+    varNumVol = aryFuncChnk.shape[0]
 
     # Vectors for pRF finding results [number-of-voxels times one]:
     vecBstXpos = np.zeros(varNumVoxChnk, dtype=np.float32)
@@ -138,10 +138,6 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
 
     # Vector that will hold the temporary residuals from the model fitting:
     # vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
-
-    # We reshape the voxel time courses, so that time goes down the column,
-    # i.e. from top to bottom.
-    aryFuncChnk = aryFuncChnk.T
 
     # Prepare data for cython (i.e. accelerated) least squares finding:
     if strVersion == 'cython':

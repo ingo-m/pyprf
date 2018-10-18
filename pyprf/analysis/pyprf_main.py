@@ -119,18 +119,17 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         # Dummy pRF time courses (for compatibility with regular mode):
         aryPrfTc = None
 
-        # Makeshift solution for small data after masking:
+        # ---Makeshift solution for small data after masking---
+
+        # TODO: IMPLEMENT FULL HDF5 MODE FOR READING OF FUNCTIONAL DATA.
 
         # Read hdf5 file (masked timecourses of current run):
         fleHdfFunc = h5py.File(strPthHdf5Func, 'r')
 
         # Access dataset in current hdf5 file:
         dtsFunc = fleHdfFunc['func']
-
         aryFunc = dtsFunc[:, :]
-
         aryFunc = np.copy(aryFunc)
-
         fleHdfFunc.close()
 
     else:
