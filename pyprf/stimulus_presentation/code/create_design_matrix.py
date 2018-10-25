@@ -509,17 +509,17 @@ if __name__ == "__main__":
 
     # Dictionary with experiment parameters.
     dicParam = {'Output file name': 'Run_01',
-                'TR [s]': 1.8,
+                'TR [s]': 1.947,
                 'Number of bar orientations': [4, 2],
                 'Number of bar positions on x-axis': 14,
                 'Number of bar positions on y-axis': 8,
-                'Number of blocks': 2,
+                'Number of blocks': 4,
                 'Number of rest trials': 1,
                 'Inter-trial interval for targets [s]': 15.0,
                 'Initial rest period [volumes]': 10,
                 'Final rest period [volumes]': 10,
                 'Full screen:': [True, False],
-                'Stimulus contrasts': [[0.05, 1.0], [1.0]]}
+                'Stimulus contrasts': [[1.0], [0.05, 1.0]]}
 
     # Luminance constrasts for LGN pRF mapping experiment:
     # Maximum contrast = 0.99, at pixel value 1.0
