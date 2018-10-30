@@ -270,16 +270,14 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
         print('------------Applying mask')
 
+        # Input path:
+        strPthHdf5In = os.path.join(strFlePth, (strFleNme + '.hdf5'))
+
         if 0.0 < varSdSmthSpt:
 
             # Input path (after spatial smoothing).
             strPthHdf5In = os.path.join(strFlePth,
                                         (strFleNme + '_sptlsmth.hdf5'))
-
-        else:
-
-            # Input path (if without spatial smoothing).
-            strPthHdf5In = os.path.join(strFlePth, (strFleNme + '.hdf5'))
 
         # Read hdf5 file:
         fleHdf5In = h5py.File(strPthHdf5In, 'r')
