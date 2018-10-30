@@ -52,7 +52,7 @@ def test_main():
 
     # Test numpy, cython, and tensorflow version. List with version
     # abbreviations:
-    lstVrsn = ['np', 'cy', 'tf', 'cy_hdf5']
+    lstVrsn = ['np', 'cy', 'tf', 'cy_hdf5', 'np_hdf5']
 
     # Path of config file for tests (version abbreviation left open):
     strCsvCnfg = (strDir + '/config_testing_{}.csv')
