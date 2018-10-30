@@ -62,9 +62,6 @@ varSdSmthSpt = 1.0
 # Perform linear trend removal on fMRI data?
 lgcLinTrnd = True
 
-# Number of fMRI volumes per run:
-varNumVol = 200
-
 # Number of processes to run in parallel:
 varPar = 3
 

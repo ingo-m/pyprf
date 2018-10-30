@@ -154,12 +154,6 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
     if lgcPrint:
         print('---Linear trend removal: ' + str(dicCnfg['lgcLinTrnd']))
 
-    # Number of fMRI volumes and png files to load:
-    dicCnfg['varNumVol'] = int(dicCnfg['varNumVol'])
-    if lgcPrint:
-        print('---Total number of fMRI volumes and png files: '
-              + str(dicCnfg['varNumVol']))
-
     # Number of processes to run in parallel:
     dicCnfg['varPar'] = int(dicCnfg['varPar'])
     if lgcPrint:

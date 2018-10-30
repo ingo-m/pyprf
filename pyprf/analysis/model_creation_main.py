@@ -62,8 +62,7 @@ def model_creation(dicCnfg, lgcHdf5=False):
 
         print('------Load stimulus information from PNG files')
 
-        aryPngData = load_png(cfg.varNumVol,
-                              cfg.lstPathPng,
+        aryPngData = load_png(cfg.lstPathPng,
                               cfg.tplVslSpcSze,
                               varStrtIdx=cfg.varStrtIdx,
                               varZfill=cfg.varZfill)
