@@ -90,21 +90,18 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # fMRI data are hold in hdf5 files (on disk). The location of the hdf5 file
     # for model time courses is specified by 'strPathMdl' (in the config file).
     # The hdf5 file with fMRI data are stored at the same location as the input
-    # nii files. Switch to hdf5 mode in case of more than three functional
-    # runs:
-    # lgcHdf5 = 3 < len(cfg.lstPathNiiFunc)
-    lgcHdf5 = False
+    # nii files.
 
     # Array with pRF time course models, shape:
     # aryPrfTc[x-position, y-position, SD, condition, volume].
     # If in hdf5 mode, `aryPrfTc` is `None`.
-    aryPrfTc = model_creation(dicCnfg, lgcHdf5=lgcHdf5)
+    aryPrfTc = model_creation(dicCnfg, lgcHdf5=cfg.lgcHdf5)
     # *************************************************************************
 
     # *************************************************************************
     # *** Preprocessing
 
-    if lgcHdf5:
+    if cfg.lgcHdf5:
 
         print('---Hdf5 mode.')
 
@@ -333,19 +330,20 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii.gz')
         nb.save(niiOut, strTmp)
 
-    # Save PEs to nii:
-    for idxCon in range(varNumCon):
-        # Create nii object for results:
-        niiOut = nb.Nifti1Image(aryBstPe[:, :, :, idxCon],
-                                aryAff,
-                                header=hdrMsk
-                                )
-        # Save nii:
-        strTmp = (cfg.strPathOut
-                  + '_PE_'
-                  + str(idxCon + 1).zfill(2)
-                  + '.nii.gz')
-        nb.save(niiOut, strTmp)
+    # Save PEs to nii (not implemented for gpu mode):
+    if cfg.strVersion != 'gpu':
+        for idxCon in range(varNumCon):
+            # Create nii object for results:
+            niiOut = nb.Nifti1Image(aryBstPe[:, :, :, idxCon],
+                                    aryAff,
+                                    header=hdrMsk
+                                    )
+            # Save nii:
+            strTmp = (cfg.strPathOut
+                      + '_PE_'
+                      + str(idxCon + 1).zfill(2)
+                      + '.nii.gz')
+            nb.save(niiOut, strTmp)
     # *************************************************************************
 
     # *************************************************************************

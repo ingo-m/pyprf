@@ -162,9 +162,6 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
             # Hdf5-mode?
             if aryPrfTc is None:
 
-                # TODO: IMPELEMENT FULL HDF5 MODE FOR READING OF FUNC DATA FROM
-                #       DISK.
-
                 # Hdf5-mode (access pRF model time courses from disk in order
                 # to avoid out of memory).
                 lstPrcs[idxPrc] = mp.Process(target=find_prf_cpu_hdf5,
@@ -199,15 +196,31 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
     # GPU version (using tensorflow for pRF finding):
     elif cfg.strVersion == 'gpu':
 
-        # TODO: IMPELEMENT FULL HDF5 GPU MODE.
+        # The following features are currently not available in GPU mode:
+        # - Handling of multiple predictors (e.g. contrast levels).
+        # - Export of parameter estimates.
+        # - Hdf5 mode.
 
-        # REMOVE THIS LINE - FOR DEVELOPMENT ONLY
+        # Assert that hdf5 mode has not been requested.
+        strMsg = ('Hdf5 mode not implemented for GPU mode.')
+        assert not(aryPrfTc is None), strMsg
+
+        # Assert that there is only one contrast level.
+        strMsg = ('Handling of multiple predictors (e.g. contrast levels) not '
+                  + 'implemented for GPU mode (switch to numpy or cython '
+                  + 'mode.')
+        assert (aryPrfTc.shape[3] == 1), strMsg
+
+        # Reshape:
         aryPrfTc = aryPrfTc[:, :, :, 0, :]
 
         print('---------pRF finding on GPU')
 
         # Create processes:
         for idxPrc in range(cfg.varPar):
+
+            # Hdf5-mode (access pRF model time courses from disk in order
+            # to avoid out of memory).
             lstPrcs[idxPrc] = mp.Process(target=find_prf_gpu,
                                          args=(idxPrc,
                                                vecMdlXpos,
@@ -217,6 +230,7 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
                                                aryPrfTc,
                                                queOut)
                                          )
+
             # Daemon (kills processes when exiting):
             lstPrcs[idxPrc].Daemon = True
 

@@ -380,7 +380,6 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
             with tf.device(strPu):
                 objFunc = tf.Variable(aryTmp01)
 
-
             # The computational graph. Operation that solves matrix (in the
             # least squares sense), and calculates residuals along time
             # dimension:
@@ -528,7 +527,7 @@ def find_prf_gpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFunc,  #noqa
                            )
 
     # Dummy array for PEs - TODO: PE retrieval for GPU.
-    #: aryBstPe[varNumVoxChnk, varNumCon].
+    # aryBstPe[varNumVoxChnk, varNumCon].
     aryBstPe = np.zeros((varNumVox, 1), dtype=np.float32)
 
     # Output list:
