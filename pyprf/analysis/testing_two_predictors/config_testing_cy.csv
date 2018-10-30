@@ -87,7 +87,7 @@ lstPathNiiFunc = ['/testing_two_predictors/exmpl_data_func_01.nii.gz', '/testing
 strPathNiiMask = '/testing_two_predictors/exmpl_data_mask.nii.gz'
 
 # Output basename:
-strPathOut = '/testing_two_predictors/result/pRF_test_results_np'
+strPathOut = '/testing_two_predictors/result/pRF_test_results_cy'
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.
