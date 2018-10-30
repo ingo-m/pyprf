@@ -1,7 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/pyprf.svg)](https://badge.fury.io/py/pyprf)
 [![Build Status](https://travis-ci.org/ingo-m/pyprf.svg?branch=master)](https://travis-ci.org/ingo-m/pyprf)
 [![codecov](https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg)](https://codecov.io/gh/ingo-m/pyprf)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1421970.svg)](https://doi.org/10.5281/zenodo.1421970)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1475439.svg)](https://doi.org/10.5281/zenodo.1475439)
 
 # PyPRF
 <img src="logo/logo.png" width=200 align="right" />

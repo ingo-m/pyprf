@@ -1,7 +1,4 @@
-`PyPI version <https://badge.fury.io/py/pyprf>`__ `Build
-Status <https://travis-ci.org/ingo-m/pyprf>`__
-`codecov <https://codecov.io/gh/ingo-m/pyprf>`__
-`DOI <https://doi.org/10.5281/zenodo.1421970>`__
+|PyPI version| |Build Status| |codecov| |DOI|
 
 PyPRF
 =====
@@ -38,8 +35,8 @@ How to use - stimulus presentation
 
 The stimulus presentation is implemented in
 `Psychopy <http://psychopy.org/>`__, so if you would like to run the
-experiment, you first need to install it (if you already have data and
-just would like to run the analysis, you can skip this step). On
+experiment, you first need to install Psychopy (if you already have fMRI
+data and would like to run the analysis, you can skip this step). On
 `debian <https://www.debian.org/>`__, Psychopy can easily be installed
 using ``apt-get``:
 
@@ -51,7 +48,7 @@ If you’re running some other operating system, please refer to the
 `Psychopy website <http://psychopy.org/>`__.
 
 For the stimulus presentation, you do not need to install ``pyprf``. You
-only need a copy of the folder ``~/pyprf/pyprf/stimulus_presentation``
+only need a copy of the folder ``~/pyprf/pyprf/stimulus_presentation``.
 The easiest way to get the ``pyprf`` stimuli is to clone the github
 repository:
 
@@ -137,8 +134,9 @@ The stimulus presentation log is created in the folder
 ``~/pyprf/pyprf/stimulus_presentation/log/Run_*_frames/``.
 
 The analysis parameters are set in a config file. An example file can be
-found at ``~/pyprf/pyprf/analysis/config_default.csv``. See comments
-therein for more information.
+found
+`here <https://github.com/ingo-m/pyprf/blob/master/pyprf/analysis/config_default.csv>`__.
+See comments therein for more information.
 
 Run the analysis:
 
@@ -182,6 +180,8 @@ Simply follow the above installation instructions.
 | `Pillow <https://pypi.python.org/pypi/Pillow/4.3.0>`__ | 5.0.0          |
 +--------------------------------------------------------+----------------+
 | `Tensorflow <https://www.tensorflow.org/>`__\ ²        | 1.4.0          |
++--------------------------------------------------------+----------------+
+| `h5py <http://www.h5py.org/>`__                        | 2.8.0          |
 +--------------------------------------------------------+----------------+
 
 ¹: For considerably faster performance
@@ -239,11 +239,21 @@ Support
 
 Please use the `github
 issues <https://github.com/ingo-m/pyprf/issues>`__ for questions or bug
-reports. You can also contact us on the ``pyprf``
-`gitter <https://gitter.im/pyprf/Lobby>`__ channel.
+reports. You can also contact us on the ``pyprf`` |gitter| channel.
 
 License
 ~~~~~~~
 
 The project is licensed under `GNU General Public License Version
 3 <http://www.gnu.org/licenses/gpl.html>`__.
+
+.. |PyPI version| image:: https://badge.fury.io/py/pyprf.svg
+   :target: https://badge.fury.io/py/pyprf
+.. |Build Status| image:: https://travis-ci.org/ingo-m/pyprf.svg?branch=master
+   :target: https://travis-ci.org/ingo-m/pyprf
+.. |codecov| image:: https://codecov.io/gh/ingo-m/pyprf/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/ingo-m/pyprf
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1475439.svg
+   :target: https://doi.org/10.5281/zenodo.1475439
+.. |gitter| image:: https://badges.gitter.im/gitterHQ/gitter.png
+   :target: https://gitter.im/pyprf/Lobby
