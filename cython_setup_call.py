@@ -15,8 +15,8 @@ def cython_setup_call():
     strDir = os.path.dirname(os.path.abspath(__file__))
 
     # Go down two directories:
-    strDir = os.path.split(strDir)[0]
-    strDir = os.path.split(strDir)[0]
+    # strDir = os.path.split(strDir)[0]
+    # strDir = os.path.split(strDir)[0]
 
     # Call the script that compiles the cython code:
     sp.call(['python cython_setup.py build_ext --inplace'],
@@ -24,6 +24,6 @@ def cython_setup_call():
             shell=True)
 
 
-# if __name__ == '__main__':
-#
-#     cython_setup_call()
+if __name__ == '__main__':
+
+    cython_setup_call()

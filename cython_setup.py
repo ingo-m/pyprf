@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Compile cython function for pRF finding.
-
-The same cythonisatin & setup as in setup.py is performed. Necessary for
-compilation of cython code before local testing (with pytest).
+Compile cython functions.
 
 Call this file with the following bash command:
     python cython_setup.py build_ext --inplace
