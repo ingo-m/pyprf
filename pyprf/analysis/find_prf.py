@@ -203,7 +203,8 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
 
         # Assert that hdf5 mode has not been requested.
         strMsg = ('Hdf5 mode not implemented for GPU mode.')
-        assert not(aryPrfTc is None), strMsg
+        # assert not(aryPrfTc is None), strMsg
+        assert not(cfg.lgcHdf5), strMsg
 
         # Assert that there is only one contrast level.
         strMsg = ('Handling of multiple predictors (e.g. contrast levels) not '
