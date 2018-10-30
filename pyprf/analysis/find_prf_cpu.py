@@ -89,15 +89,10 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     varNumCon = aryPrfTc.shape[3]
 
     # Cython model fitting is only implemented for one or two predictors. If
-    # there are more than two predictors, issue warning and shift to numpy.
-    if (strVersion == 'cython' and 2 < varNumCon):
-        strVersion = 'numpy'
-        # Only print warning if this is the first parallel process.
-        if idxPrc == 0:
-            strWrng = ('WARNING: cython model fitting only implemented for '
-                       + 'one or two predictors. Will use numpy version '
-                       + 'instead.')
-            print(strWrng)
+    # there are more than two predictors, throw error.
+    strWrng = ('Cython model fitting only implemented for one or two '
+               + 'predictors. Please use numpy version instead.')
+    assert not(strVersion == 'cython' and 2 < varNumCon), strWrng
 
     # Number of voxels to be fitted in this chunk:
     varNumVoxChnk = aryFuncChnk.shape[1]
