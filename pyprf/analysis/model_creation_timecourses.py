@@ -19,22 +19,28 @@
 
 import numpy as np
 import multiprocessing as mp
+import h5py
 from pyprf.analysis.model_creation_timecourses_par import prf_par
 
 
-def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  #noqa
-                  varExtXmin=-5.19, varExtXmax=5.19, varExtYmin=-5.19,
-                  varExtYmax=5.19, varPrfStdMin=0.1, varPrfStdMax=7.0,
-                  varNumPrfSizes=40, varPar=10):
+def crt_prf_tcmdl(aryPixConv, strPathMdl, tplVslSpcSze=(200, 200), varNumX=40,
+                  varNumY=40, varExtXmin=-5.19, varExtXmax=5.19,
+                  varExtYmin=-5.19, varExtYmax=5.19, varPrfStdMin=0.1,
+                  varPrfStdMax=7.0, varNumPrfSizes=40, varPar=10):
     """
     Create pRF time courses models.
 
     Parameters
     ----------
     aryPixConv : np.array
-        3D numpy array containing the pixel-wise, HRF-convolved design matrix,
-        with the following structure: `aryPixConv[x-pixel-index, y-pixel-index,
-        PngNumber]`
+        4D numpy array containing the pixel-wise, HRF-convolved design matrix,
+        with the following structure: `aryPixConv[aryPixConv[x-pixels,
+        y-pixels, conditions, volumes]`.
+    strPathMdl : str
+        Filepath of pRF time course models (including file name, but without
+        file extension). If `strPathMdl` is not `None`, model time courses are
+        saved to disk in hdf5 format during model creation in order to avoid
+        out of memory problems.
     tplVslSpcSze : tuple
         Pixel size of visual space model in which the pRF models are created
         (x- and y-dimension).
@@ -71,17 +77,21 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
 
     Returns
     -------
-    aryPrfTc4D : np.array
-        4D numpy array with pRF time course models, with following dimensions:
-        `aryPrfTc4D[x-position, y-position, SD, volume]`.
+    aryPrfTc5D : np.array
+        5D numpy array with pRF time course models, with following dimensions:
+        `aryPrfTc5D[x-position, y-position, SD, condition, volume]`.
 
     Notes
     -----
     This function creates the pRF time course models, from which the best-
     fitting model for each voxel will be selected.
+
     """
+    # Number of conditions:
+    varNumCon = aryPixConv.shape[2]
+
     # Number of volumes:
-    varNumVol = aryPixConv.shape[2]
+    varNumVol = aryPixConv.shape[3]
 
     # Only fit pRF models if dimensions of pRF time course models are
     # correct.
@@ -151,23 +161,43 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     # Counter for parameter array:
     varCntMdlPrms = 0
 
+    # In hdf5-mode (i.e. parameter space too large for RAM), we need an array
+    # for sorting the hdf5 files.
+    if not(strPathMdl is None):
+
+        # Array for sorting pRF time courses into large hdf5 file, shape:
+        # arySort[models, 3], where the three columns correspond to indices of
+        # (1) x position, (2) y position, (3) pRF size (SD). This array can be
+        # used to look up model parameters based on model index (i.e. positions
+        # and size of n-th model). Whereas `aryMdlParams` contains the actual
+        # parameters (e.g. x-position in coordinates of visual space model),
+        # `arySort` contains the indices for the pRF time course array (e.g.
+        # model 1234 has index idxX in pRF model time course array).
+        arySort = np.zeros((varNumMdls, 3), dtype=np.uint32)
+
     # Put all combinations of x-position, y-position, and standard deviations
     # into the array:
 
     # Loop through x-positions:
-    for idxX in range(0, varNumX):
+    for idxX in range(varNumX):
 
         # Loop through y-positions:
-        for idxY in range(0, varNumY):
+        for idxY in range(varNumY):
 
             # Loop through standard deviations (of Gaussian pRF models):
-            for idxSd in range(0, varNumPrfSizes):
+            for idxSd in range(varNumPrfSizes):
 
                 # Place index and parameters in array:
                 aryMdlParams[varCntMdlPrms, 0] = float(varCntMdlPrms)
                 aryMdlParams[varCntMdlPrms, 1] = vecX[idxX]
                 aryMdlParams[varCntMdlPrms, 2] = vecY[idxY]
                 aryMdlParams[varCntMdlPrms, 3] = vecPrfSd[idxSd]
+
+                # Put position & size indices into array for hdf5 lookup.
+                if not(strPathMdl is None):
+                    arySort[varCntMdlPrms, 0] = idxX
+                    arySort[varCntMdlPrms, 1] = idxY
+                    arySort[varCntMdlPrms, 2] = idxSd
 
                 # Increment parameter index:
                 varCntMdlPrms = varCntMdlPrms + 1
@@ -197,7 +227,7 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
 
     # Empty list for results from parallel processes (for pRF model time course
     # results):
-    lstPrfTc = [None] * varPar
+    lstOut = [None] * varPar
 
     # Empty list for processes:
     lstPrcs = [None] * varPar
@@ -205,82 +235,183 @@ def crt_prf_tcmdl(aryPixConv, tplVslSpcSze=(200, 200), varNumX=40, varNumY=40,  
     # Create a queue to put the results in:
     queOut = mp.Queue()
 
-    # print('---------Creating parallel processes')
+    # Make sure datatype of pixeltimecourses is float32:
+    aryPixConv = aryPixConv.astype(np.float32)
 
     # Create processes:
-    for idxPrc in range(0, varPar):
+    for idxPrc in range(varPar):
         lstPrcs[idxPrc] = mp.Process(target=prf_par,
-                                     args=(lstMdlParams[idxPrc],
+                                     args=(idxPrc,
+                                           lstMdlParams[idxPrc],
                                            tplVslSpcSze,
-                                           varNumVol,
                                            aryPixConv,
+                                           strPathMdl,
                                            queOut)
                                      )
         # Daemon (kills processes when exiting):
         lstPrcs[idxPrc].Daemon = True
 
     # Start processes:
-    for idxPrc in range(0, varPar):
+    for idxPrc in range(varPar):
         lstPrcs[idxPrc].start()
 
     # Collect results from queue:
-    for idxPrc in range(0, varPar):
-        lstPrfTc[idxPrc] = queOut.get(True)
+    for idxPrc in range(varPar):
+        lstOut[idxPrc] = queOut.get(True)
 
     # Join processes:
-    for idxPrc in range(0, varPar):
+    for idxPrc in range(varPar):
         lstPrcs[idxPrc].join()
 
-    # print('---------Collecting results from parallel processes')
+    # lstOut:
+    #        idxPrc : int
+    #            Process ID.
+    #        vecMdlIdx : np.array
+    #            1D numpy array with model indices (for sorting of models after
+    #            parallel function. Shape: vecMdlIdx[varNumMdls].
+    #        aryPrfTc : np.array or None
+    #            3D numpy array with pRF model time courses, shape:
+    #            aryPrfTc[varNumMdls, varNumCon, varNumVol]. `None` in case of
+    #            large parameter space (pRF time courses are saved to hdf5 file
+    #            instead).
 
-    # Put output arrays from parallel process into one big array (where each
-    # row corresponds to one model time course, the first column corresponds to
-    # the index number of the model time course, and the remaining columns
-    # correspond to time points):
-    aryPrfTc = np.vstack(lstPrfTc)
+    # Combine model time courses from parallel processes.
+    lstMdlIdx = [None] * varPar
+    lstPrfTc = [None] * varPar
 
-    # Clean up:
-    del(aryMdlParams)
-    del(lstMdlParams)
-    del(lstPrfTc)
+    # Get vectors with model indicies (vecMdlIdx) and pRF model time courses
+    #  from parallel output list.
+    for idxPrc in range(varPar):
+        varPrcId = lstOut[idxPrc][0]
+        lstMdlIdx[varPrcId] = lstOut[idxPrc][1]
+        lstPrfTc[varPrcId] = lstOut[idxPrc][2]
 
-    # Sort output along the first column (which contains the indicies), so that
-    # the output is in the same order as the list of combination of model
-    # parameters which we created before the parallelisation:
-    aryPrfTc = aryPrfTc[np.argsort(aryPrfTc[:, 0])]
+    # In case of small parameter space, sort pRF time courses and return them
+    # to partent function.
+    if (strPathMdl is None):
 
-    # Array representing the low-resolution visual space, of the form
-    # aryPrfTc[x-position, y-position, pRF-size, varNum Vol], which will hold
-    # the pRF model time courses.
-    aryPrfTc4D = np.zeros([varNumX,
-                           varNumY,
-                           varNumPrfSizes,
-                           varNumVol],
-                          dtype=np.float32)
+        # List to array, concatenating along model-index-dimension:
+        vecMdlIdx = np.concatenate(lstMdlIdx, axis=0)
+        aryPrfTc = np.concatenate(lstPrfTc, axis=0)
 
-    # We use the same loop structure for organising the pRF model time courses
-    # that we used for creating the parameter array. Counter:
-    varCntMdlPrms = 0
+        # Clean up:
+        del(aryMdlParams)
+        del(lstMdlParams)
+        del(lstPrfTc)
+        del(lstMdlIdx)
+        del(lstOut)
 
-    # Put all combinations of x-position, y-position, and standard deviations
-    # into the array:
+        # Sort output along the first column (which contains the indicies), so
+        # that the output is in the same order as the list of combination of
+        # model parameters which we created before the parallelisation:
+        aryPrfTc = aryPrfTc[np.argsort(vecMdlIdx, axis=0), :, :]
 
-    # Loop through x-positions:
-    for idxX in range(0, varNumX):
+        # Array representing the low-resolution visual space, of the form
+        # aryPrfTc[x-position, y-position, pRF-size, varNumCon, varNumVol],
+        # which will hold the pRF model time courses.
+        aryPrfTc5D = np.zeros([varNumX,
+                               varNumY,
+                               varNumPrfSizes,
+                               varNumCon,
+                               varNumVol],
+                              dtype=np.float32)
 
-        # Loop through y-positions:
-        for idxY in range(0, varNumY):
+        # We use the same loop structure for organising the pRF model time
+        # courses that we used for creating the parameter array. Counter:
+        varCntMdlPrms = 0
 
-            # Loop through standard deviations (of Gaussian pRF models):
-            for idxSd in range(0, varNumPrfSizes):
+        # Put all combinations of x-position, y-position, and standard
+        # deviations into the array:
 
-                # Put the pRF model time course into its correct position in
-                # the 4D array, leaving out the first column (which contains
-                # the index):
-                aryPrfTc4D[idxX, idxY, idxSd, :] = aryPrfTc[varCntMdlPrms, 1:]
+        # Loop through x-positions:
+        for idxX in range(varNumX):
 
-                # Increment parameter index:
-                varCntMdlPrms = varCntMdlPrms + 1
+            # Loop through y-positions:
+            for idxY in range(varNumY):
+
+                # Loop through standard deviations (of Gaussian pRF models):
+                for idxSd in range(varNumPrfSizes):
+
+                    # Put the pRF model time course into its correct position
+                    # in the 5D array:
+                    aryPrfTc5D[idxX, idxY, idxSd, :, :] = \
+                        aryPrfTc[varCntMdlPrms, :, :]
+
+                    # Increment parameter index:
+                    varCntMdlPrms = varCntMdlPrms + 1
+
+    else:
+
+        print('------Sort pRF model time courses in hdf5 file.')
+
+        # In case of a large parameter space, create large hdf5 file and place
+        # pRF time courses from parallel processes therein.
+
+        # Path of hdf5 file:
+        strPthHdf5 = (strPathMdl + '.hdf5')
+
+        # Create hdf5 file:
+        fleHdf5 = h5py.File(strPthHdf5, 'w')
+
+        # Create dataset within hdf5 file (same shape as `aryPrfTc5D`, and
+        # containing the same data as `aryPrfTc5D`).
+        dtsPrfTc = fleHdf5.create_dataset('pRF_time_courses',
+                                          (varNumX,
+                                           varNumY,
+                                           varNumPrfSizes,
+                                           varNumCon,
+                                           varNumVol),
+                                          dtype=np.float32)
+
+        # Loop through processes:
+        for idxPrc in range(varPar):
+
+            # Path of hdf5 file with chunk of results (from parallel child
+            # process):
+            strPthHdf5Par = (strPathMdl + '_' + str(idxPrc) + '.hdf5')
+
+            # Read file:
+            fleHdf5Par = h5py.File(strPthHdf5Par, 'r')
+
+            # Access dataset in current hdf5 file:
+            dtsPrfTcPar = fleHdf5Par['pRF_time_courses']
+
+            # Vector with model indices for current data chunk (for sorting of
+            # pRF time course models). Shape: vecMdlIdx[varNumMdls].
+            vecMdlIdxPar = lstMdlIdx[idxPrc]
+
+            # Number of models in the current chunk:
+            varNumMdlPar = vecMdlIdxPar.shape[0]
+
+            # Indices need to be integer:
+            vecMdlIdxPar = np.around(vecMdlIdxPar).astype(np.int32)
+
+            # Loop through models, and place the respective timecourse in the
+            # final hdf5 file.
+            for idxMdl in range(varNumMdlPar):
+
+                # Model index (in the range of all models, from all processes)
+                # of the current model:
+                varIdxMdlTmp = vecMdlIdxPar[idxMdl]
+
+                # Get model indices (wrt pRF model time course array).
+                idxX = arySort[varIdxMdlTmp, 0]
+                idxY = arySort[varIdxMdlTmp, 1]
+                idxSd = arySort[varIdxMdlTmp, 2]
+
+                # Get data from chunk hdf5 file (from parallel child process)
+                # and place them at the correct position in the final hdf5 file
+                # (whole model space).
+                dtsPrfTc[idxX, idxY, idxSd, :, :] = dtsPrfTcPar[idxMdl, :, :]
+
+            # Close file:
+            fleHdf5Par.close()
+
+        # Close file:
+        fleHdf5.close()
+
+        # Dummy pRF object:
+        aryPrfTc5D = None
 
     # Return
-    return aryPrfTc4D
+    return aryPrfTc5D

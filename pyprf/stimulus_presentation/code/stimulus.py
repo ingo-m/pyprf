@@ -472,8 +472,8 @@ def prf_stim(dicParam):
                 pos=(0.0, 0.0),
                 radius=varRad,
                 edges=128,
-                lineWidth=2.0,
-                lineColor=[1.0, 1.0, 1.0],
+                lineWidth=1.0,
+                lineColor=[-0.8, -0.8, -0.8],
                 lineColorSpace='rgb',
                 fillColor=None,
                 fillColorSpace='rgb',
@@ -491,8 +491,8 @@ def prf_stim(dicParam):
                 start=(int(-varPixY), 0),
                 end=(int(varPixY), 0),
                 pos=(0.0, 0.0),
-                lineWidth=2.0,
-                lineColor=[1.0, 1.0, 1.0],
+                lineWidth=1.0,
+                lineColor=[-0.8, -0.8, -0.8],
                 lineColorSpace='rgb',
                 fillColor=None,
                 fillColorSpace='rgb',
@@ -890,7 +890,7 @@ def prf_stim(dicParam):
                            + ' targets out of '
                            + str(varCntHit + varCntMis)
                            + '\n'
-                           + 'There is still room for improvement.')
+                           + 'There is still room for improvement ;)')
         else:
             # Low performance:
             strFeedback = ('You have detected '
@@ -898,7 +898,7 @@ def prf_stim(dicParam):
                            + ' targets out of '
                            + str(varCntHit + varCntMis)
                            + '\n'
-                           + 'Please try to focus more.')
+                           + 'Please try to focus more :(')
 
         # Create text object:
         objTxtTmr = visual.TextStim(objWin,
@@ -1092,7 +1092,7 @@ if __name__ == "__main__":
                 'Width of monitor [pixels]': 1920,
                 'Height of monitor [pixels]': 1200,
                 'Background colour [-1 to 1]': 0.0,
-                'Show fixation grid?': [False, True]}
+                'Show fixation grid?': [True, False]}
 
     if not(strFleNme is None):
 

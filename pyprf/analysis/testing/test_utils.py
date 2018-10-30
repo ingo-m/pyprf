@@ -1,14 +1,13 @@
 """Test utility functions."""
 
+
 import os
 from os.path import isfile, join
 import numpy as np
+
 from pyprf.analysis import pyprf_main
 from pyprf.analysis import utilities as util
-from pyprf.analysis.cython_leastsquares_setup_call import setup_cython
 
-# Compile cython code:
-setup_cython()
 
 # Get directory of this file:
 strDir = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +48,7 @@ def test_main():
 
     # Test numpy, cython, and tensorflow version. List with version
     # abbreviations:
-    lstVrsn = ['np', 'cy', 'tf']
+    lstVrsn = ['np', 'cy', 'tf', 'cy_hdf5', 'np_hdf5']
 
     # Path of config file for tests (version abbreviation left open):
     strCsvCnfg = (strDir + '/config_testing_{}.csv')
@@ -86,6 +85,8 @@ def test_main():
         aryTestSd = np.around(aryTestSd, decimals=varRnd).astype(np.float32)
 
         # Test whether the template and test results correspond:
+        # print('np.max(np.abs(np.subtract(aryTmplR2, aryTestR2)))')
+        # print(np.max(np.abs(np.subtract(aryTmplR2, aryTestR2))))
         lgcTestR2 = np.all(np.equal(aryTmplR2, aryTestR2))
         lgcTestEcc = np.all(np.equal(aryTmplEcc, aryTestEcc))
         lgcTestPol = np.all(np.equal(aryTmplPol, aryTestPol))
@@ -98,7 +99,7 @@ def test_main():
         assert lgcTestSd
 
     # -------------------------------------------------------------------------
-    # *** Clean up
+    # *** Clean up testing results
 
     # Path of directory with results:
     strDirRes = strDir + '/result/'
@@ -112,6 +113,24 @@ def test_main():
             # print(strTmp)
             os.remove((strDirRes + '/' + strTmp))
         elif '.npy' in strTmp:
+            # print(strTmp)
+            os.remove((strDirRes + '/' + strTmp))
+        elif '.hdf5' in strTmp:
+            # print(strTmp)
+            os.remove((strDirRes + '/' + strTmp))
+
+    # -------------------------------------------------------------------------
+    # *** Clean up intermediate results (hdf5 files)
+
+    # Path of directory with time courses converted to hdf5:
+    strDirRes = strDir + '/'
+
+    # Get list of files in results directory:
+    lstFls = [f for f in os.listdir(strDirRes) if isfile(join(strDirRes, f))]
+
+    # Delete results of test:
+    for strTmp in lstFls:
+        if '.hdf5' in strTmp:
             # print(strTmp)
             os.remove((strDirRes + '/' + strTmp))
     # -------------------------------------------------------------------------

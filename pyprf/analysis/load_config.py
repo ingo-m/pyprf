@@ -154,12 +154,6 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
     if lgcPrint:
         print('---Linear trend removal: ' + str(dicCnfg['lgcLinTrnd']))
 
-    # Number of fMRI volumes and png files to load:
-    dicCnfg['varNumVol'] = int(dicCnfg['varNumVol'])
-    if lgcPrint:
-        print('---Total number of fMRI volumes and png files: '
-              + str(dicCnfg['varNumVol']))
-
     # Number of processes to run in parallel:
     dicCnfg['varPar'] = int(dicCnfg['varPar'])
     if lgcPrint:
@@ -242,6 +236,13 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
         if lgcPrint:
             print('---Zero padding of PNG file names: '
                   + str(dicCnfg['varZfill']))
+
+    # In case of a multi-run experiment, data may not fit into memory. In that
+    # case, you can switch to hdf5 mode, with reduced memory impact. Data are
+    # stored on disk (in hdf5 format). Performance may be slower.
+    dicCnfg['lgcHdf5'] = (dicCnfg['lgcHdf5'] == 'True')
+    if lgcPrint:
+        print('---Hdf5 mode: ' + str(dicCnfg['lgcHdf5']))
 
     # Is this a test?
     if lgcTest:

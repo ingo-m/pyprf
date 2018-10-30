@@ -18,7 +18,7 @@ Analysis tools for fMRI data from retinotopic mapping experiment. A pRF is estim
 
 1. Installation
 
-The stimulus presentation is implemented in [Psychopy](http://psychopy.org/), so if you would like to run the experiment, you first need to install it (if you already have data and just would like to run the analysis, you can skip this step). On [debian](https://www.debian.org/), Psychopy can easily be installed using `apt-get`:
+The stimulus presentation is implemented in [Psychopy](http://psychopy.org/), so if you would like to run the experiment, you first need to install Psychopy (if you already have fMRI data and would like to run the analysis, you can skip this step). On [debian](https://www.debian.org/), Psychopy can easily be installed using `apt-get`:
 
 ```bash
 sudo apt-get install psychopy
@@ -26,7 +26,7 @@ sudo apt-get install psychopy
 
 If you're running some other operating system, please refer to the [Psychopy website](http://psychopy.org/).
 
-For the stimulus presentation, you do not need to install `pyprf`. You only need a copy of the folder `~/pyprf/pyprf/stimulus_presentation` The easiest way to get the `pyprf` stimuli is to clone the github repository:
+For the stimulus presentation, you do not need to install `pyprf`. You only need a copy of the folder `~/pyprf/pyprf/stimulus_presentation`. The easiest way to get the `pyprf` stimuli is to clone the github repository:
 
 ```bash
 git clone https://github.com/ingo-m/pyprf.git
@@ -86,7 +86,7 @@ In order to prepare the analysis, you need to run the stimulus presentation scri
 
 The stimulus presentation log is created in the folder `~/pyprf/pyprf/stimulus_presentation/log/Run_*_frames/`.
 
-The analysis parameters are set in a config file. An example file can be found at `~/pyprf/pyprf/analysis/config_default.csv`. See comments therein for more information.
+The analysis parameters are set in a config file. An example file can be found [here](https://github.com/ingo-m/pyprf/blob/master/pyprf/analysis/config_default.csv). See comments therein for more information.
 
 Run the analysis:
 ``` bash
@@ -114,6 +114,7 @@ If you install `pyprf` using `pip` (as described above), all of the following de
 | [Cython](http://cython.org/)¹                         | 0.27.1         |
 | [Pillow](https://pypi.python.org/pypi/Pillow/4.3.0)   | 5.0.0          |
 | [Tensorflow](https://www.tensorflow.org/)²            | 1.4.0          |
+| [h5py](http://www.h5py.org/)                          | 2.8.0          |
 
 ¹: For considerably faster performance
 

@@ -1,7 +1,7 @@
-# PyPRF config file for pytest.
+# PyPRF config file.
 
 # Part of pyprf library
-# Copyright (C) 2017  Ingo Marquardt
+# Copyright (C) 2018  Ingo Marquardt
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -46,34 +46,31 @@ varPrfStdMin = 0.2
 varPrfStdMax = 7.0
 
 # Volume TR of input data [s]:
-varTr = 2.83
+varTr = 2.0
 
 # Voxel resolution of the fMRI data [mm]:
-varVoxRes = 0.7
+varVoxRes = 0.8
 
 # Extent of temporal smoothing for fMRI data and pRF time course models
 # [standard deviation of the Gaussian kernel, in seconds]:
-varSdSmthTmp = 3.0
+varSdSmthTmp = 2.5
 
 # Extent of spatial smoothing for fMRI data [standard deviation of the Gaussian
 # kernel, in mm]
-varSdSmthSpt = 0.0
+varSdSmthSpt = 1.0
 
 # Perform linear trend removal on fMRI data?
 lgcLinTrnd = True
 
-# Number of fMRI volumes and png files to load:
-varNumVol = 400
-
 # Number of processes to run in parallel:
-varPar = 11
+varPar = 8
 
 # Size of high-resolution visual space model in which the pRF models are
 # created (x- and y-dimension). The x and y dimensions specified here need to
 # be the same integer multiple of the number of x- and y-positions to model, as
 # specified above. In other words, if the the resolution in x-direction of the
 # visual space model is ten times that of varNumX, the resolution in
-# y-direction also has to be ten times varNumY. The order is: first x, then y.
+# y-direction also has to be ten times varNumY.
 varVslSpcSzeX = 200
 varVslSpcSzeY = 200
 
@@ -81,13 +78,13 @@ varVslSpcSzeY = 200
 # functional runs. The order of functional volumes, and their number, has to
 # correspond to the order and number of PNG files containing the stimulus
 # information. Note: Do not insert a line break.
-lstPathNiiFunc = ['~/data_func.nii.gz']
+lstPathNiiFunc = ['/my_data/run_01.nii.gz', '/my_data/run_02.nii.gz']
 
 # Path of mask (to restrict pRF model finding):
-strPathNiiMask = '~/mask.nii.gz'
+strPathNiiMask = '/my_data/brain_mask.nii.gz'
 
 # Output basename:
-strPathOut = '~/pRF_test_results'
+strPathOut = '/my_data/results'
 
 # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding on
 # CPU, 'gpu' for using GPU.
@@ -99,14 +96,17 @@ lgcCrteMdl = True
 # If we create new pRF time course models, the following parameters have to
 # be provided:
 
-# Basename of the 'binary stimulus files'. The files need to be in png
-# format and number in the order of their presentation during the
-# experiment.
-strPathPng = '~/stimuli/Frame_'
+# Basename of the screenshots (PNG images) of pRF stimuli. A list with one path
+# per experimental run. Can be created by running
+# `~/pyprf/stimulus_presentation/code/stimulus.py` with 'Logging mode' set to
+# 'True'. (Number & order of entries in `lstPathNiiFunc` and `lstPathPng` has
+# to match). Note: Do not insert a line break (i.e. all runs on one line).
+lstPathPng = ['/my_data/Run_01_frames/frame_', '/my_data/Run_02_frames/frame_']
 
 # Start index of PNG files. For instance, `varStrtIdx = 0` if the name of
-# the first PNG file is `file_000.png`, or `varStrtIdx = 1` if it is
-# `file_001.png`.
+# the first PNG file is `frame_000.png`, or `varStrtIdx = 1` if it is
+# `frame_001.png`. When using the default pyprf stimulus presentation, the
+# start index will be `1`.
 varStrtIdx = 1
 
 # Zero padding of PNG file names. For instance, `varStrtIdx = 3` if the
@@ -116,4 +116,9 @@ varZfill = 3
 
 # Path to npy file with pRF time course models (to save or laod). Without file
 # extension.
-strPathMdl = '~/pRF_test_model_tc'
+strPathMdl = '/my_data/result/pRF_test_model_tc'
+
+# In case of a multi-run experiment, data may not fit into memory. In that
+# case, you can switch to hdf5 mode, with reduced memory impact. Data are
+# stored on disk (in hdf5 format). Performance may be slower.
+lgcHdf5 = False

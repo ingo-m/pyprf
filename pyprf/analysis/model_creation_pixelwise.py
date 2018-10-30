@@ -41,17 +41,50 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
     Returns
     -------
     aryPixConv : np.array
-        Numpy array with same dimensions as input (`aryPngData`), with
-        convolved design matrix.
+        Numpy array with convolved design matrix, shape:
+        aryPixConv[x-pixels, y-pixels, conditions, volumes].
 
     Notes
     -----
     After concatenating all stimulus frames (png files) into an array, this
     stimulus array is effectively a boxcar design matrix with value `zero` if
-    no stimulus was present at that pixel at that frame, and `one` if a
-    stimulus was present. In this function, this boxcar design matrix is
+    no stimulus was present at that pixel at that frame, and pixel intensity (1
+    to 255) if a stimulus was present. Here, this boxcar design matrix is
     convolved with an HRF model.
+
+    The number of GLM predictors is inferred from the number of unique values
+    in the image (e.g. greyscale values of 25 and 255 if the stimulus was
+    presented at two contrast level).
     """
+    # Error message if image is not of expected type:
+    strErr = 'Image is not of expected type (not uint8).'
+
+    # Images are expected to have uint8 type.
+    assert (type(aryPngData[0, 0, 0]) is np.uint8), strErr
+
+    # Input array is of uint8 datatype (0 to 255). Higher precision is not
+    # necessary and not possible, because stimulus screenshots (created in
+    # `~/pyprf/pyprf/stimulus_presentation/code/stimulus.py`) are of uint8
+    # type. The number of GLM predictors is inferred from the number of unique
+    # values in the image. For example, if stimuli were presented at one
+    # contrast level only (e.g. maximum contrast, 255) there would be two
+    # unique values in the screenshot (0 for rest/background, 255 for
+    # stimulus). On the other hand, if there were two different contrast
+    # levels, (e.g. greyscale values of 25 and 255), there would be three
+    # unique values in the image.
+    vecCon = np.unique(aryPngData)
+    # NOTE: `np.unique` 'Returns the sorted unique elements of an array.' This
+    # is important, because GLM predictors will be assigned in order of
+    # ascending contrast.
+
+    # Remove first entry, which should correspond to the rest/background pixel
+    # intensity. It should be zero.
+    assert (vecCon[0] == 0), 'Rest/background pixel intensity is not zero.'
+    vecCon = vecCon[1:]
+
+    # Number of contrast levels.
+    varNumCon = vecCon.shape[0]
+
     # Get number of volumes from input array:
     varNumVol = aryPngData.shape[2]
 
@@ -110,6 +143,7 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
         lstPrcs[idxPrc] = mp.Process(target=conv_par,
                                      args=(idxPrc,
                                            lstParData[idxPrc],
+                                           vecCon,
                                            vecHrf,
                                            queOut)
                                      )
@@ -136,7 +170,7 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
     lstPixConv = [None] * varPar
 
     # Put output into correct order:
-    for idxRes in range(0, varPar):
+    for idxRes in range(varPar):
 
         # Index of results (first item in output list):
         varTmpIdx = lstRes[idxRes][0]
@@ -145,10 +179,9 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
         lstPixConv[varTmpIdx] = lstRes[idxRes][1]
 
     # Concatenate convolved pixel time courses (into the same order as they
-    # were entered into the analysis):
-    aryPixConv = np.zeros(0, dtype=np.float32)
-    for idxRes in range(0, varPar):
-        aryPixConv = np.append(aryPixConv, lstPixConv[idxRes])
+    # were entered into the analysis). Shape: aryPixConv[(x*y pixels),
+    # conditions, volumes]
+    aryPixConv = np.concatenate(lstPixConv, axis=0)
 
     # Delete unneeded large objects:
     # del(lstRes)
@@ -156,9 +189,11 @@ def conv_dsgn_mat(aryPngData, varTr, varPar=10):
 
     # Reshape results:
     aryPixConv = np.reshape(aryPixConv,
-                            [tplPngSize[0],
+                            (tplPngSize[0],
                              tplPngSize[1],
-                             varNumVol]).astype(np.float32)
+                             varNumCon,
+                             varNumVol)).astype(np.float32)
+    # New shape: aryPixConv[x-pixels, y-pixels, conditions, volumes]
 
     # Return:
     return aryPixConv

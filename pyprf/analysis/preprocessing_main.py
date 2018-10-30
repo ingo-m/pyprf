@@ -23,7 +23,7 @@ from pyprf.analysis.preprocessing_par import pre_pro_par
 
 
 def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
-                 varSdSmthTmp=2.0, varSdSmthSpt=0.0, varPar=10.0):
+                 varSdSmthTmp=2.0, varSdSmthSpt=0.0, varPar=10):
     """
     Load & preprocess functional data.
 
@@ -48,15 +48,15 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
 
     Returns
     -------
-    aryLgcMsk : np.array
-        3D numpy array with logial values. Externally supplied mask (e.g grey
+    vecLgcMsk : np.array
+        1D numpy array with logial values. Externally supplied mask (e.g grey
         matter mask). Voxels that are `False` in the mask are excluded.
     hdrMsk : nibabel-header-object
         Nii header of mask.
     aryAff : np.array
         Array containing 'affine', i.e. information about spatial positioning
         of mask nii data.
-    aryLgcVar : np.array
+    vecLgcVar : np.array
         1D numpy array containing logical values. One value per voxel after
         mask has been applied. If `True`, the variance of the voxel's time
         course is larger than zero, and the voxel is included in the output
@@ -67,7 +67,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         fitting.
     aryFunc : np.array
         2D numpy array containing preprocessed functional data, of the form
-        aryFunc[voxelCount, time].
+        aryFunc[time, voxel].
     tplNiiShp : tuple
         Spatial dimensions of input nii data (number of voxels in x, y, z
         direction). The data are reshaped during preprocessing, this
@@ -77,10 +77,11 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     Notes
     -----
     Functional data is loaded from disk. Temporal and spatial smoothing can be
-    applied. The functional data is reshaped, into the form aryFunc[voxel,
-    time]. A mask is applied (externally supplied, e.g. a grey matter mask).
+    applied. The functional data is reshaped, into the form aryFunc[time,
+    voxel]. A mask is applied (externally supplied, e.g. a grey matter mask).
     Subsequently, the functional data is de-meaned, and intensities are
     converted into z-scores.
+
     """
     print('------Load & preprocess nii data')
 
@@ -99,8 +100,12 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     # Total number of voxels:
     varNumVoxTlt = (tplNiiShp[0] * tplNiiShp[1] * tplNiiShp[2])
 
-    # Reshape mask:
-    aryMask = np.reshape(aryMask, varNumVoxTlt)
+    # Reshape mask (flatten):
+    vecMaskFlt = np.reshape(aryMask, varNumVoxTlt)
+
+    # Boolean mask:
+    vecLgcMsk = np.greater(vecMaskFlt.astype(np.int16),
+                           np.array([0], dtype=np.int16)[0])
 
     # List for arrays with functional data (possibly several runs):
     lstFunc = []
@@ -129,45 +134,43 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
                                  varPar=varPar)
 
         # Reshape functional nii data, from now on of the form
-        # aryTmpFunc[voxelCount, time]:
-        aryTmpFunc = np.reshape(aryTmpFunc, [varNumVoxTlt, tplNiiShp[3]])
+        # aryTmpFunc[time, voxel]:
+        aryTmpFunc = np.reshape(aryTmpFunc, [varNumVoxTlt, tplNiiShp[3]]).T
 
         # Apply mask:
-        aryLgcMsk = np.greater(aryMask.astype(np.int16),
-                               np.array([0], dtype=np.int16)[0])
-        aryTmpFunc = aryTmpFunc[aryLgcMsk, :]
+        aryTmpFunc = aryTmpFunc[:, vecLgcMsk]
 
         # De-mean functional data:
         aryTmpFunc = np.subtract(aryTmpFunc,
                                  np.mean(aryTmpFunc,
-                                         axis=1,
-                                         dtype=np.float32)[:, None])
+                                         axis=0,
+                                         dtype=np.float32)[None, :])
 
         # Convert intensities into z-scores. If there are several pRF runs,
         # these are concatenated. Z-scoring ensures that differences in mean
         # image intensity and/or variance between runs do not confound the
         # analysis. Possible enhancement: Explicitly model across-runs variance
         # with a nuisance regressor in the GLM.
-        aryTmpStd = np.std(aryTmpFunc, axis=1)
+        aryTmpStd = np.std(aryTmpFunc, axis=0)
 
         # In order to avoid devision by zero, only divide those voxels with a
         # standard deviation greater than zero:
         aryTmpLgc = np.greater(aryTmpStd.astype(np.float32),
                                np.array([0.0], dtype=np.float32)[0])
         # Z-scoring:
-        aryTmpFunc[aryTmpLgc, :] = np.divide(aryTmpFunc[aryTmpLgc, :],
-                                             aryTmpStd[aryTmpLgc, None])
+        aryTmpFunc[:, aryTmpLgc] = np.divide(aryTmpFunc[:, aryTmpLgc],
+                                             aryTmpStd[None, aryTmpLgc])
         # Set voxels with a variance of zero to intensity zero:
         aryTmpLgc = np.not_equal(aryTmpLgc, True)
-        aryTmpFunc[aryTmpLgc, :] = np.array([0.0], dtype=np.float32)[0]
+        aryTmpFunc[:, aryTmpLgc] = np.array([0.0], dtype=np.float32)[0]
 
         # Put preprocessed functional data of current run into list:
         lstFunc.append(aryTmpFunc)
         del(aryTmpFunc)
 
     # Put functional data from separate runs into one array. 2D array of the
-    # form aryFunc[voxelCount, time]
-    aryFunc = np.concatenate(lstFunc, axis=1).astype(np.float32, copy=False)
+    # form aryFunc[time, voxel]
+    aryFunc = np.concatenate(lstFunc, axis=0).astype(np.float32, copy=False)
     del(lstFunc)
 
     # Voxels that are outside the brain and have no, or very little, signal
@@ -175,17 +178,17 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     # over time and exclude voxels with a suspiciously low variance. Because
     # the data given into the cython or GPU function has float32 precision, we
     # calculate the variance on data with float32 precision.
-    aryFuncVar = np.var(aryFunc, axis=1, dtype=np.float32)
+    aryFuncVar = np.var(aryFunc, axis=0, dtype=np.float32)
 
     # Is the variance greater than zero?
-    aryLgcVar = np.greater(aryFuncVar,
+    vecLgcVar = np.greater(aryFuncVar,
                            np.array([0.0001]).astype(np.float32)[0])
 
     # Array with functional data for which conditions (mask inclusion and
     # cutoff value) are fullfilled:
-    aryFunc = aryFunc[aryLgcVar, :]
+    aryFunc = aryFunc[:, vecLgcVar]
 
-    return aryLgcMsk, hdrMsk, aryAff, aryLgcVar, aryFunc, tplNiiShp
+    return vecLgcMsk, hdrMsk, aryAff, vecLgcVar, aryFunc, tplNiiShp
 
 
 def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
@@ -194,9 +197,9 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
 
     Parameters
     ----------
-    aryPrfTc : np.array
-        4D numpy array with pRF time course models, with following dimensions:
-        `aryPrfTc[x-position, y-position, SD, volume]`.
+    aryPrfTc : np.array or None
+        Array with pRF time course models, shape:
+        aryPrfTc[x-position, y-position, SD, condition, volume].
     varSdSmthTmp : float
         Extent of temporal smoothing that is applied to functional data and
         pRF time course models, [SD of Gaussian kernel, in seconds]. If `zero`,
@@ -207,20 +210,27 @@ def pre_pro_models(aryPrfTc, varSdSmthTmp=2.0, varPar=10):
     Returns
     -------
     aryPrfTc : np.array
-        4D numpy array with preprocessed pRF time course models, same
-        dimensions as input (`aryPrfTc[x-position, y-position, SD, volume]`).
+        Array with preprocessed pRF time course models, same shape as input
+        (aryPrfTc[x-position, y-position, SD, condition, volume]).
 
     Notes
     -----
     Only temporal smoothing is applied to the pRF model time courses.
+
     """
     print('------Preprocess pRF time course models')
-    # Preprocessing of pRF time course models:
-    aryPrfTc = pre_pro_par(aryPrfTc,
-                           aryMask=np.array([]),
-                           lgcLinTrnd=False,
-                           varSdSmthTmp=varSdSmthTmp,
-                           varSdSmthSpt=0.0,
-                           varPar=varPar)
+
+    # Loop through stimulus conditions, because the array needs to the 4D,
+    # with time as last dimension, for the preprocessing. Otherwise the
+    # same functions could not be used for the functional data and model
+    # time courses (which would increase redundancy).
+    varNumCon = aryPrfTc.shape[3]
+    for idxCon in range(varNumCon):
+
+        # Preprocessing of pRF time course models:
+        aryPrfTc[:, :, :, idxCon, :] = pre_pro_par(
+            aryPrfTc[:, :, :, idxCon, :], aryMask=np.array([]),
+            lgcLinTrnd=False, varSdSmthTmp=varSdSmthTmp, varSdSmthSpt=0.0,
+            varPar=varPar)
 
     return aryPrfTc

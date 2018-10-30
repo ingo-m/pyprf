@@ -17,21 +17,17 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from os.path import isfile
 import numpy as np
 from PIL import Image
 
 
-def load_png(varNumVol, lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
-             varZfill=3):
+def load_png(lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0, varZfill=3):
     """
     Load PNGs with stimulus information for pRF model creation.
 
     Parameters
     ----------
-
-    varNumVol : int
-        Number of PNG files.
-
     lstPathPng : lst
         Basename of the screenshots (PNG images) of pRF stimuli. List of
         strings with one path per experimental run. PNG files can be created by
@@ -59,22 +55,51 @@ def load_png(varNumVol, lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
     Notes
     -----
     Part of py_pRF_mapping library.
+
     """
     # Number of runs:
     varNumRun = len(lstPathPng)
 
-    # Total number of PNGs (i.e. total number of frames in all runs):
-    varNumPng = int(varNumVol) * varNumRun
+    # List for complete path & file names of all of png files to load.
+    lstAllPngs = []
 
-    # Create list with complete path & file names of all of png files to load.
-    lstAllPngs = [None] * varNumPng
-    varCntPng = 0
+    # Loop through runs:
     for idxRun in range(varNumRun):
-        for idxVol in range(varNumVol):
-            lstAllPngs[varCntPng] = (lstPathPng[idxRun]
-                                     + str(idxVol + varStrtIdx).zfill(varZfill)
-                                     + '.png')
-            varCntPng += 1
+
+        # Counter for input png images:
+        varCntPng = 0
+
+        # Switch:
+        lgcSwt = True
+
+        while lgcSwt:
+
+            # Temporary path of current png file:
+            strTmpPng = (lstPathPng[idxRun]
+                         + str(varCntPng + varStrtIdx).zfill(varZfill)
+                         + '.png')
+
+            # Does the current png file exist?
+            lgcFile = isfile(strTmpPng)
+
+            if lgcFile:
+
+                # If file exist, append file name to list:
+                lstAllPngs.append(strTmpPng)
+
+                # Increment counter:
+                varCntPng += 1
+
+            else:
+
+                # If file doesn't exist, break loop and go to next run,
+                # assuming that the last png file for this run has been
+                # reached. While there would be alternative ways to do this,
+                # and probably faster ones, this solutin may be more portable.
+                lgcSwt = False
+
+    # Total number of PNGs (i.e. total number of frames in all runs):
+    varNumPng = len(lstAllPngs)
 
     # The png data will be saved in a numpy array of the following order:
     # aryPngData[x-pixel, y-pixel, PngNumber].
@@ -82,20 +107,11 @@ def load_png(varNumVol, lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
                            tplVslSpcSze[1],
                            varNumPng)).astype(np.uint8)
 
-    # # Open first image in order to check dimensions (greyscale or RGB, i.e. 2D
-    # # or 3D).
-    # objIm = Image.open(lstAllPngs[0])
-    # aryTest = np.array(objIm.resize((objIm.size[0], objIm.size[1]),
-    #                                 Image.ANTIALIAS))
-    # varNumDim = aryTest.ndim
-    # del(aryTest)
+    # Error message if image is not of expected type:
+    strErr = 'Image is not of expected type (not uint8).'
 
     # Loop trough PNG files:
     for idxPng in range(varNumPng):
-
-        # Old version of reading images with scipy
-        # aryPngData[:, :, idxVol] = sp.misc.imread(lstAllPngs[idxVol])[:, :, 0]
-        # aryPngData[:, :, idxVol] = sp.misc.imread(lstAllPngs[idxVol])[:, :]
 
         # Load & resize image:
         objIm = Image.open(lstAllPngs[idxPng])
@@ -119,12 +135,18 @@ def load_png(varNumVol, lstPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,
             # greyscale, so all three RGB values are assumed to be the same).
             aryTmp = aryTmp[:, :, 0]
 
+        # Images are expected to have uint8 type.
+        assert (type(aryTmp[0, 0]) is np.uint8), strErr
+
         # x and y dimension of png image and data array do not match, we
         # turn the image to fit:
         aryTmp = np.rot90(aryTmp, k=3, axes=(0, 1))
         aryPngData[:, :, idxPng] = np.copy(aryTmp)
 
-    # Convert RGB values (0 to 255) to integer ones and zeros:
-    aryPngData = (aryPngData > 200).astype(np.int8)
+    # Output array is of uint8 datatype (0 to 255). Higher precision is not
+    # necessary and not possible, because stimulus screenshots (created in
+    # `~/pyprf/pyprf/stimulus_presentation/code/stimulus.py`) are of uint8
+    # type.
+    aryPngData = aryPngData.astype(np.uint8)
 
     return aryPngData

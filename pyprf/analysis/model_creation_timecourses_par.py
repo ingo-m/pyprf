@@ -14,19 +14,25 @@
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+import h5py
+import threading
+import queue
 from pyprf.analysis.utilities import crt_gauss
 
 
-def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
+def prf_par(idxPrc, aryMdlParamsChnk, tplVslSpcSze, aryPixConv, strPathMdl,
+            queOut):
     """
     Create pRF time course models.
 
     Parameters
     ----------
+    idxPrc : int
+        Process ID.
     aryMdlParamsChnk : np.array
         2D numpy array containing the parameters for the pRF models to be
         created. Dimensionality: `aryMdlParamsChnk[model-ID, parameter-value]`.
@@ -36,12 +42,15 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     tplVslSpcSze : tuple
         Pixel size of visual space model in which the pRF models are created
         (x- and y-dimension).
-    varNumVol : int
-        Number of time points (volumes).
     aryPixConv : np.array
-        3D numpy array containing the pixel-wise, HRF-convolved design matrix,
-        with the following structure: `aryPixConv[x-pixel-index, y-pixel-index,
-        PngNumber]`
+        4D numpy array containing the pixel-wise, HRF-convolved design matrix,
+        with the following structure: `aryPixConv[x-pixels, y-pixels,
+        conditions, volumes]`.
+    strPathMdl : str
+        Filepath of pRF time course models (including file name, but without
+        file extension). If `strPathMdl` is not `None`, model time courses are
+        saved to disk in hdf5 format during model creation in order to avoid
+        out of memory problems.
     queOut : multiprocessing.queues.Queue
         Queue to put the results on.
 
@@ -49,25 +58,75 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
     -------
     lstOut : list
         List containing the following object:
-        aryOut : np.array
-            2D numpy array, where each row corresponds to one model time
-            course, the first column corresponds to the index number of the
-            model time course, and the remaining columns correspond to time
-            points).
+        idxPrc : int
+            Process ID.
+        vecMdlIdx : np.array
+            1D numpy array with model indices (for sorting of models after
+            parallel function. Shape: vecMdlIdx[varNumMdls].
+        aryPrfTc : np.array
+            3D numpy array with pRF model time courses, shape:
+            aryPrfTc[varNumMdls, varNumCon, varNumVol].
 
     Notes
     -----
     The list with results is not returned directly, but placed on a
     multiprocessing queue.
-    """
-    # Number of combinations of model parameters in the current chunk:
-    varChnkSze = np.size(aryMdlParamsChnk, axis=0)
 
-    # Output array with pRF model time courses:
-    aryOut = np.zeros([varChnkSze, varNumVol])
+    """
+    # Number of models (i.e., number of combinations of model parameters in the
+    # parallel processing current chunk):
+    varNumMdls = aryMdlParamsChnk.shape[0]
+
+    # Number of conditions:
+    varNumCon = aryPixConv.shape[2]
+
+    # Number of volumes:
+    varNumVol = aryPixConv.shape[3]
+
+    # Number of combinations of model parameters in the current chunk:
+    # varNumMdls = np.size(aryMdlParamsChnk, axis=0)
+
+    # Only place model time courses on RAM if the parameter space is not too
+    # large. Whether this is the case is signalled by whether a file path for
+    # storing of an hdf5 file was provided.
+    if strPathMdl is None:
+
+        # Output array with pRF model time courses:
+        aryPrfTc = np.zeros([varNumMdls, varNumCon, varNumVol],
+                            dtype=np.float32)
+
+    else:
+
+        # Prepare memory-efficient placement of pRF model time courses in hdf5
+        # file.
+
+        # Buffer size:
+        varBuff = 100
+
+        # Create FIFO queue:
+        objQ = queue.Queue(maxsize=varBuff)
+
+        # Path of hdf5 file:
+        strPthHdf5 = (strPathMdl + '_' + str(idxPrc) + '.hdf5')
+
+        # Create hdf5 file:
+        fleHdf5 = h5py.File(strPthHdf5, 'w')
+
+        # Create dataset within hdf5 file:
+        dtsPrfTc = fleHdf5.create_dataset('pRF_time_courses',
+                                          (varNumMdls,
+                                           varNumCon,
+                                           varNumVol),
+                                          dtype=np.float32)
+
+        # Define & run extra thread with graph that places data on queue:
+        objThrd = threading.Thread(target=feed_hdf5_q,
+                                   args=(dtsPrfTc, objQ, varNumMdls))
+        objThrd.setDaemon(True)
+        objThrd.start()
 
     # Loop through combinations of model parameters:
-    for idxMdl in range(0, varChnkSze):
+    for idxMdl in range(varNumMdls):
 
         # Spatial parameters of current model:
         varTmpX = aryMdlParamsChnk[idxMdl, 1]
@@ -81,30 +140,71 @@ def prf_par(aryMdlParamsChnk, tplVslSpcSze, varNumVol, aryPixConv, queOut):
                              varTmpY,
                              varTmpSd)
 
-        # Multiply super-sampled pixel-time courses with Gaussian pRF models:
-        aryPrfTcTmp = np.multiply(aryPixConv, aryGauss[:, :, None])
+        # Multiply super-sampled pixel-time courses with Gaussian pRF
+        # models:
+        aryPrfTcTmp = np.multiply(aryPixConv, aryGauss[:, :, None, None])
+        # Shape: aryPrfTcTmp[x-pixels, y-pixels, conditions, volumes]
 
         # Calculate sum across x- and y-dimensions - the 'area under the
-        # Gaussian surface'. This is essentially an unscaled version of the pRF
-        # time course model (i.e. not yet scaled for the size of the pRF).
-        aryPrfTcTmp = np.sum(aryPrfTcTmp, axis=(0, 1))
+        # Gaussian surface'. This gives us the ratio of 'activation' of the pRF
+        # at each time point, or, in other words, the pRF time course model.
+        # Note: Normalisation of pRFs takes at funcGauss(); pRF models are
+        # normalised to have an area under the curve of one when they are
+        # created.
+        aryPrfTcTmp = np.sum(aryPrfTcTmp, axis=(0, 1), dtype=np.float32)
+        # New shape: aryPrfTcTmp[conditions, volumes]
 
-        # Normalise the pRF time course model to the size of the pRF. This
-        # gives us the ratio of 'activation' of the pRF at each time point, or,
-        # in other words, the pRF time course model. REMOVED - normalisation
-        # has been moved to funcGauss(); pRF models are normalised when to have
-        # an area under the curve of one when they are created.
-        # aryPrfTcTmp = np.divide(aryPrfTcTmp,
-        #                         np.sum(aryGauss, axis=(0, 1)))
+        if strPathMdl is None:
 
-        # Put model time courses into the function's output array:
-        aryOut[idxMdl, :] = aryPrfTcTmp
+            # Put model time courses into the function's output array:
+            aryPrfTc[idxMdl, :, :] = np.copy(aryPrfTcTmp)
+
+        else:
+
+            # Place model time courses on queue:
+            objQ.put(aryPrfTcTmp)
+
+    # Close queue feeding thread, and hdf5 file.
+    if not(strPathMdl is None):
+
+        # Close thread:
+        objThrd.join()
+
+        # Close file:
+        fleHdf5.close()
+
+        # Dummy pRF time course array:
+        aryPrfTc = None
 
     # Put column with the indicies of model-parameter-combinations into the
-    # output array (in order to be able to put the pRF model time courses into
+    # output list (in order to be able to put the pRF model time courses into
     # the correct order after the parallelised function):
-    aryOut = np.hstack((np.array(aryMdlParamsChnk[:, 0], ndmin=2).T,
-                        aryOut)).astype(np.float32)
+    vecMdlIdx = aryMdlParamsChnk[:, 0]
+
+    # Output list:
+    lstOut = [idxPrc, vecMdlIdx, aryPrfTc]
 
     # Put output to queue:
-    queOut.put(aryOut)
+    queOut.put(lstOut)
+
+
+def feed_hdf5_q(dtsPrfTc, objQ, varNumMdls):
+    """
+    Feed FIFO queue for placement of pRF time courses in hdf5 file.
+
+    Parameters
+    ----------
+    dtsPrfTc : h5py dataset
+        Dataset within h5py file.
+    objQ : queue.Queue
+        Queue from which pRF model time courses are retrieved.
+    varNumMdls : int
+        Number of models (i.e., number of combinations of model parameters in
+        the processing chunk).
+
+    """
+    # Loop through combinations of model parameters:
+    for idxMdl in range(varNumMdls):
+
+            # Take model time course from queue, and put in hdf5 file:
+            dtsPrfTc[idxMdl, :, :] = objQ.get()

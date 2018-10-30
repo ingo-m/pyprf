@@ -4,26 +4,26 @@
 # Part of py_pRF_mapping library
 # Copyright (C) 2016  Ingo Marquardt
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-from pyprf.analysis.utilities import cls_set_config
 from pyprf.analysis.cython_leastsquares import cy_lst_sq
+from pyprf.analysis.cython_leastsquares_two import cy_lst_sq_two
 
 
-def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
-                 aryFuncChnk, aryPrfTc, strVersion, queOut):
+def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
+                 aryPrfTc, strVersion, queOut):
     """
     Find best fitting pRF model for voxel time course, using the CPU.
 
@@ -42,10 +42,10 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     vecMdlSd : np.array
         1D array with pRF model sizes (SD of Gaussian).
     aryFunc : np.array
-        2D array with functional MRI data, with shape aryFunc[voxel, time].
+        2D array with functional MRI data, with shape aryFunc[time, voxel].
     aryPrfTc : np.array
         Array with pRF model time courses, with shape
-        aryPrfTc[x-pos, y-pos, SD, time]
+        aryPrfTc[x-position, y-position, SD, condition, volume]
     strVersion : str
         Which version to use for pRF finding; 'numpy' or 'cython'.
     queOut : multiprocessing.queues.Queue
@@ -76,14 +76,8 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     The list with results is not returned directly, but placed on a
     multiprocessing queue. This version performs the model finding on the CPU,
     using numpy or cython (depending on the value of `strVersion`).
+
     """
-    # Load config parameters from dictionary into namespace:
-    cfg = cls_set_config(dicCnfg)
-
-    # Conditional imports:
-    #if cfg.strVersion == 'cython':
-    #    from cython_leastsquares import cy_lst_sq
-
     # Number of modelled x-positions in the visual space:
     varNumX = aryPrfTc.shape[0]
     # Number of modelled y-positions in the visual space:
@@ -91,17 +85,27 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     # Number of modelled pRF sizes:
     varNumPrfSizes = aryPrfTc.shape[2]
 
+    # Number of conditions / GLM predictors:
+    varNumCon = aryPrfTc.shape[3]
+
+    # Cython model fitting is only implemented for one or two predictors. If
+    # there are more than two predictors, throw error.
+    strWrng = ('Cython model fitting only implemented for one or two '
+               + 'predictors. Please use numpy version instead.')
+    assert not(strVersion == 'cython' and 2 < varNumCon), strWrng
+
     # Number of voxels to be fitted in this chunk:
-    varNumVoxChnk = aryFuncChnk.shape[0]
+    varNumVoxChnk = aryFuncChnk.shape[1]
 
     # Number of volumes:
-    varNumVol = aryFuncChnk.shape[1]
+    varNumVol = aryFuncChnk.shape[0]
 
     # Vectors for pRF finding results [number-of-voxels times one]:
     vecBstXpos = np.zeros(varNumVoxChnk, dtype=np.float32)
     vecBstYpos = np.zeros(varNumVoxChnk, dtype=np.float32)
     vecBstSd = np.zeros(varNumVoxChnk, dtype=np.float32)
     # vecBstR2 = np.zeros(varNumVoxChnk, dtype=np.float32)
+    aryBstPe = np.zeros((varNumCon, varNumVoxChnk), dtype=np.float32)
 
     # Vector for best R-square value. For each model fit, the R-square value is
     # compared to this, and updated if it is lower than the best-fitting
@@ -111,22 +115,17 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
     # Vector that will hold the temporary residuals from the model fitting:
     # vecTmpRes = np.zeros(varNumVoxChnk).astype(np.float32)
 
-    # We reshape the voxel time courses, so that time goes down the column,
-    # i.e. from top to bottom.
-    aryFuncChnk = aryFuncChnk.T
-
     # Prepare data for cython (i.e. accelerated) least squares finding:
     if strVersion == 'cython':
         # Instead of fitting a constant term, we subtract the mean from the
         # data and from the model ("FSL style"). First, we subtract the mean
         # over time from the data:
-        aryFuncChnkTmean = np.array(np.mean(aryFuncChnk, axis=0), ndmin=2)
-        aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[0, None])
+        aryFuncChnkTmean = np.mean(aryFuncChnk, axis=0)
+        aryFuncChnk = np.subtract(aryFuncChnk, aryFuncChnkTmean[None, :])
         # Secondly, we subtract the mean over time form the pRF model time
-        # courses. The array has four dimensions, the 4th is time (one to three
-        # are x-position, y-position, and pRF size (SD)).
-        aryPrfTcTmean = np.mean(aryPrfTc, axis=3)
-        aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, None])
+        # courses.
+        aryPrfTcTmean = np.mean(aryPrfTc, axis=4)
+        aryPrfTc = np.subtract(aryPrfTc, aryPrfTcTmean[:, :, :, :, None])
     # Otherwise, create constant term for numpy least squares finding:
     elif strVersion == 'numpy':
         # Constant term for the model:
@@ -164,20 +163,24 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
         varCntSts02 = 0
 
     # There can be pRF model time courses with a variance of zero (i.e. pRF
-    # models that are not actually responsive to the stimuli). For time
-    # efficiency, and in order to avoid division by zero, we ignore these
-    # model time courses.
-    aryPrfTcVar = np.var(aryPrfTc, axis=3)
+    # models that are not actually responsive to the stimuli). For
+    # computational efficiency, and in order to avoid division by zero, we
+    # ignore these model time courses.
+    aryPrfTcVar = np.var(aryPrfTc, axis=4).astype(np.float32)
 
     # Zero with float32 precision for comparison:
-    varZero32 = np.array(([0.0])).astype(np.float32)[0]
+    varZero32 = np.array(([0.0001])).astype(np.float32)[0]
+
+    # Only fit pRF model if variance greater than zero for all
+    # predictors:
+    aryLgcVar = np.greater(np.amin(aryPrfTcVar, axis=3), varZero32)
 
     # Loop through pRF models:
-    for idxX in range(0, varNumX):
+    for idxX in range(varNumX):
 
-        for idxY in range(0, varNumY):
+        for idxY in range(varNumY):
 
-            for idxSd in range(0, varNumPrfSizes):
+            for idxSd in range(varNumPrfSizes):
 
                 # Status indicator (only used in the first of the parallel
                 # processes):
@@ -201,8 +204,9 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                         if varCntSts01 < varStsStpSze:
                             varCntSts01 = varCntSts01 + int(1)
 
-                # Only fit pRF model if variance is not zero:
-                if np.greater(aryPrfTcVar[idxX, idxY, idxSd], varZero32):
+                # Only fit pRF model if variance greater than zero for all
+                # predictors:
+                if aryLgcVar[idxX, idxY, idxSd]:
 
                     # Calculation of the ratio of the explained variance (R
                     # square) for the current model for all voxel time courses.
@@ -210,17 +214,35 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                     # Cython version:
                     if strVersion == 'cython':
 
-                        # A cython function is used to calculate the residuals
-                        # of the current model:
-                        vecTmpRes = cy_lst_sq(
-                            aryPrfTc[idxX, idxY, idxSd, :].flatten(),
-                            aryFuncChnk)
+                        # Two different cython functions are needed for data
+                        # with one / two predictors. Models with more than two
+                        # predictors have to be solved with numpy.
+
+                        if varNumCon == 1:
+
+                            # Cythonised model fitting with one predictor:
+                            vecTmpRes, vecTmpPe = cy_lst_sq(
+                                aryPrfTc[idxX, idxY, idxSd, 0, :].flatten(),
+                                aryFuncChnk)
+                            # Output shape:
+                            # Parameter estimates: vecTmpPe[varNumVox]
+                            # Residuals: vecTmpRes[varNumVox]
+
+                        elif varNumCon == 2:
+
+                            # Cythonised model fitting with two predictors:
+                            vecTmpRes, aryTmpPe = cy_lst_sq_two(
+                                aryPrfTc[idxX, idxY, idxSd, :, :],
+                                aryFuncChnk)
+                            # Output shape:
+                            # Parameter estimates: aryTmpPe[2, varNumVox]
+                            # Residuals: vecTmpRes[varNumVox]
 
                     # Numpy version:
                     elif strVersion == 'numpy':
 
                         # Current pRF time course model:
-                        vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :].flatten()
+                        vecMdlTc = aryPrfTc[idxX, idxY, idxSd, :, :]
 
                         # We create a design matrix including the current pRF
                         # time course model, and a constant term:
@@ -231,9 +253,11 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                         # aryDsgn = aryDsgn.astype(np.float32)
 
                         # Calculate the least-squares solution for all voxels:
-                        vecTmpRes = np.linalg.lstsq(aryDsgn,
-                                                    aryFuncChnk,
-                                                    rcond=None)[1]
+                        aryTmpPe, vecTmpRes, _, _ = np.linalg.lstsq(
+                            aryDsgn, aryFuncChnk, rcond=None)
+                        # Output shape:
+                        # Parameter estimates: aryTmpPe[varNumCon, varNumVox]
+                        # Residuals: vecTmpRes[varNumVox]
 
                     # Check whether current residuals are lower than previously
                     # calculated ones:
@@ -244,8 +268,28 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                     vecBstYpos[vecLgcTmpRes] = vecMdlYpos[idxY]
                     vecBstSd[vecLgcTmpRes] = vecMdlSd[idxSd]
 
-                    # Replace best residual values:
-                    vecBstRes[vecLgcTmpRes] = vecTmpRes[vecLgcTmpRes]
+                    # Replace best residual values & parameter estimates:
+                    vecBstRes[vecLgcTmpRes] = \
+                        vecTmpRes[vecLgcTmpRes].astype(np.float32)
+
+                    # Replace best fitting PE values:
+                    if strVersion == 'numpy':
+
+                        # The last row contains the constant term, we skip it.
+                        aryBstPe[:, vecLgcTmpRes] = aryTmpPe[:-1, vecLgcTmpRes]
+
+                    if strVersion == 'cython':
+
+                        # One predictor (i.e. PEs are 1D).
+                        if varNumCon == 1:
+
+                            aryBstPe[:, vecLgcTmpRes] = vecTmpPe[vecLgcTmpRes]
+
+                        # Two predictors (i.e. PEs are 2D).
+                        elif varNumCon == 2:
+
+                            aryBstPe[:, vecLgcTmpRes] = \
+                                aryTmpPe[:, vecLgcTmpRes]
 
                 # Status indicator (only used in the first of the parallel
                 # processes):
@@ -270,11 +314,15 @@ def find_prf_cpu(idxPrc, dicCnfg, vecMdlXpos, vecMdlYpos, vecMdlSd,  #noqa
                            np.divide(vecBstRes,
                                      vecSsTot))
 
+    # Reshape PEs, new shape: aryBstPe[varNumVoxChnk, varNumCon].
+    aryBstPe = aryBstPe.T
+
     # Output list:
     lstOut = [idxPrc,
               vecBstXpos,
               vecBstYpos,
               vecBstSd,
-              vecBstR2]
+              vecBstR2,
+              aryBstPe]
 
     queOut.put(lstOut)

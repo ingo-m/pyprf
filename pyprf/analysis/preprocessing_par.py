@@ -24,6 +24,162 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.filters import gaussian_filter1d
 
 
+# *****************************************************************************
+# *** Linear trend removal for fMRI data
+
+def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
+    """
+    Perform linear trend removal on the input fMRI data.
+
+    Parameters
+    ----------
+    idxPrc : int
+        Process ID for parallel processes (for sorting results from multiple
+        parallel processes).
+    aryFuncChnk : np.array
+        Array with data (fMRI data or pRF model time courses). Shape:
+        `aryFuncChnk[time, voxels/models]`.
+    varSdSmthSpt : float
+        Dummy variable (has no effect). Needed for modularity wrt
+        parallelisation function.
+    queOut : multiprocessing.queue or None
+        Queue on which to put results. Results are a list containing the
+        process ID (`idxPrc`) and the filtered data (same shape as input
+        `aryFuncChnk`). If `None`, only `aryFuncChnk` is returned directly.
+
+    Returns
+    -------
+    lstOut or aryFuncChnk
+        If `queOut` is a multiprocessing.queue, a list containing the process
+        ID (`idxPrc`) and the filtered data (same shape as input `aryFuncChnk`)
+        are put on this queue. Otherwise, `aryFuncChnk` is returned directly.
+
+    Notes
+    -----
+    The variable varSdSmthSpt is not needed, only included for consistency
+    with other functions using the same parallelisation.
+
+    """
+    # Number of time points in this chunk:
+    varNumVol = aryFuncChnk.shape[0]
+
+    # Linear mode to fit to the voxel time courses:
+    vecMdlTc = np.linspace(0,
+                           1,
+                           num=varNumVol,
+                           endpoint=True,
+                           dtype=np.float32)
+
+    # We create a design matrix including the linear trend and a
+    # constant term:
+    aryDsgn = np.vstack([vecMdlTc,
+                         np.ones(len(vecMdlTc), dtype=np.float32)]).T
+    aryDsgn = aryDsgn.astype(np.float32, copy=False)
+
+    # Calculate the least-squares solution for all voxels:
+    aryLstSqFt = np.linalg.lstsq(aryDsgn, aryFuncChnk, rcond=None)[0]
+
+    # Multiply the linear term with the respective parameters to obtain the
+    # fitted line for all voxels:
+    aryLneFt = np.multiply(vecMdlTc[:, None],
+                           aryLstSqFt[0, :],
+                           dtype=np.float32)
+
+    # Using the least-square fitted model parameters, we remove the linear
+    # term from the data:
+    aryFuncChnk = np.subtract(aryFuncChnk,
+                              aryLneFt,
+                              dtype=np.float32)
+
+    # Using the constant term, we remove the mean from the data:
+    # aryFuncChnk = np.subtract(aryFuncChnk,
+    #                           aryLstSqFt[1, :])
+
+    if queOut is None:
+
+        return aryFuncChnk.astype(np.float32)
+
+    else:
+
+        # Output list:
+        lstOut = [idxPrc,
+                  aryFuncChnk.astype(np.float32, copy=False)]
+
+        queOut.put(lstOut)
+# *************************************************************************
+
+
+# *************************************************************************
+# *** Temporal smoothing of fMRI data & pRF time course models
+
+def funcSmthTmp(idxPrc, aryFuncChnk, varSdSmthTmp, queOut):
+    """
+    Apply temporal smoothing.
+
+    Parameters
+    ----------
+    idxPrc : int
+        Process ID for parallel processes (for sorting results from multiple
+        parallel processes).
+    aryFuncChnk : np.array
+        Array with data (fMRI data or pRF model time courses). Shape:
+        `aryFuncChnk[time, voxels/models]`.
+    varSdSmthTmp : float
+        Extent of temporal smoothing (SD) in units of array indices.
+    queOut : multiprocessing.queue or None
+        Queue on which to put results. Results are a list containing the
+        process ID (`idxPrc`) and the filtered data (same shape as input
+        `aryFuncChnk`). If `None`, only `aryFuncChnk` is returned directly.
+
+    Returns
+    -------
+    lstOut or aryFuncChnk
+        If `queOut` is a multiprocessing.queue, a list containing the process
+        ID (`idxPrc`) and the filtered data (same shape as input `aryFuncChnk`)
+        are put on this queue. Otherwise, `aryFuncChnk` is returned directly.
+
+    """
+    # For the filtering to perform well at the ends of the time series, we
+    # set the method to 'nearest' and place a volume with mean intensity
+    # (over time) at the beginning and at the end.
+    aryFuncChnkMean = np.mean(aryFuncChnk,
+                              axis=0,
+                              keepdims=True,
+                              dtype=np.float32)
+
+    aryFuncChnk = np.concatenate((aryFuncChnkMean,
+                                  aryFuncChnk,
+                                  aryFuncChnkMean), axis=0)
+
+    # In the input data, time goes from left to right. Therefore, we apply
+    # the filter along axis=1.
+    aryFuncChnk = gaussian_filter1d(aryFuncChnk,
+                                    varSdSmthTmp,
+                                    axis=0,
+                                    order=0,
+                                    mode='nearest',
+                                    truncate=4.0)
+
+    # Remove mean-intensity volumes at the beginning and at the end:
+    aryFuncChnk = aryFuncChnk[1:-1, :]
+
+    if queOut is None:
+
+        return aryFuncChnk.astype(np.float32)
+
+    else:
+
+        # Output list:
+        lstOut = [idxPrc,
+                  aryFuncChnk.astype(np.float32, copy=False)]
+
+        queOut.put(lstOut)
+# *****************************************************************************
+
+
+# *****************************************************************************
+# *** Parent function for preprocessing of fMRI data and pRF time courses.
+
 def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
                 lgcLinTrnd=False, varSdSmthTmp=0.0, varSdSmthSpt=0.0,
                 varPar=1):
@@ -34,6 +190,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     ----------
     aryFunc : np.array
         Array with fMRI data or pRF time course models (four-dimensional).
+        Time has to be last dimension (e.g. [x, y, z, time]).
     aryMask : np.array
         If temporal smoothing is supposed to be restricted to a subset of
         voxels, a mask can be provided (e.g. brain mask). 3D, with same spatial
@@ -92,8 +249,8 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         # Total number of elements to loop over (voxels):
         varNumEleTlt = (vecInShp[0] * vecInShp[1] * vecInShp[2])
 
-        # Reshape data:
-        aryData = np.reshape(aryData, [varNumEleTlt, varNumVol])
+        # Reshape data (new shape: `aryData[time, voxels]`).
+        aryData = np.reshape(aryData, [varNumEleTlt, varNumVol]).T
 
         # The exclusion of voxels based on the mask is only used for the fMRI
         # data, not for the pRF time course models. For the pRF time course
@@ -105,7 +262,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             aryMask = np.reshape(aryMask, varNumEleTlt)
 
             # Take mean over time:
-            # aryDataMean = np.mean(aryData, axis=1)
+            # aryDataMean = np.mean(aryData, axis=0)
 
             # Logical test for voxel inclusion: is the voxel value greater than
             # zero in the mask, and is the mean of the functional time series
@@ -114,10 +271,10 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
             # Array with functional data for which conditions (mask inclusion
             # and cutoff value) are fullfilled:
-            aryData = aryData[aryLgc, :]
+            aryData = aryData[:, aryLgc]
 
         # Number of elements on which function will be applied:
-        varNumEleInc = aryData.shape[0]
+        varNumEleInc = aryData.shape[1]
 
         print('------------Number of voxels/pRF time courses on which ' +
               'function will be applied: ' + str(varNumEleInc))
@@ -141,7 +298,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             # Index of last element to be included in current chunk:
             varTmpChnkEnd = int(vecIdxChnks[(idxChnk+1)])
             # Put array chunk into list:
-            lstFunc[idxChnk] = aryData[varTmpChnkSrt:varTmpChnkEnd, :]
+            lstFunc[idxChnk] = aryData[:, varTmpChnkSrt:varTmpChnkEnd]
 
         # We don't need the original array with the functional data anymore:
         del(aryData)
@@ -187,9 +344,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
 
         # Merge output vectors (into the same order with which they were put
         # into this function):
-        aryRes = np.array([], dtype=np.float32).reshape(0, varNumVol)
-        for idxRes in range(0, varPar):
-            aryRes = np.append(aryRes, lstRes[idxRes], axis=0)
+        aryRes = np.concatenate(lstRes, axis=1).astype(np.float32).T
 
         # Delete unneeded large objects:
         del(lstRes)
@@ -198,7 +353,7 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
         # Array for output, same size as input (i.e. accounting for those
         # elements that were masked out):
         aryOut = np.zeros((varNumEleTlt,
-                           vecInShp[3]),
+                           varNumVol),
                           dtype=np.float32)
 
         if 0 < aryMask.size:
@@ -330,159 +485,10 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
     # *************************************************************************
 
     # *************************************************************************
-    # *** Linear trend removal for fMRI data
-
-    def funcLnTrRm(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
-        """
-        Perform linear trend removal on the input fMRI data.
-
-        The variable varSdSmthSpt is not needed, only included for consistency
-        with other functions using the same parallelisation.
-        """
-        # Number of voxels in this chunk:
-        # varNumVoxChnk = aryFuncChnk.shape[0]
-
-        # Number of time points in this chunk:
-        varNumVol = aryFuncChnk.shape[1]
-
-        # We reshape the voxel time courses, so that time goes down the column,
-        # i.e. from top to bottom.
-        aryFuncChnk = aryFuncChnk.T
-
-        # Linear mode to fit to the voxel time courses:
-        vecMdlTc = np.linspace(0,
-                               1,
-                               num=varNumVol,
-                               endpoint=True,
-                               dtype=np.float32)
-        # vecMdlTc = vecMdlTc.flatten()
-
-        # We create a design matrix including the linear trend and a
-        # constant term:
-        aryDsgn = np.vstack([vecMdlTc,
-                             np.ones(len(vecMdlTc), dtype=np.float32)]).T
-        aryDsgn = aryDsgn.astype(np.float32, copy=False)
-
-        # Calculate the least-squares solution for all voxels:
-        aryLstSqFt = np.linalg.lstsq(aryDsgn, aryFuncChnk, rcond=None)[0]
-
-        # Multiply the linear term with the respective parameters to obtain the
-        # fitted line for all voxels:
-        aryLneFt = np.multiply(vecMdlTc[:, None],
-                               aryLstSqFt[0, :],
-                               dtype=np.float32)
-
-        # Using the least-square fitted model parameters, we remove the linear
-        # term from the data:
-        aryFuncChnk = np.subtract(aryFuncChnk,
-                                  aryLneFt,
-                                  dtype=np.float32)
-
-        # Using the constant term, we remove the mean from the data:
-        # aryFuncChnk = np.subtract(aryFuncChnk,
-        #                           aryLstSqFt[1, :])
-
-        # Bring array into original order (time from left to right):
-        aryFuncChnk = aryFuncChnk.T
-
-        # Output list:
-        lstOut = [idxPrc,
-                  aryFuncChnk.astype(np.float32, copy=False)]
-
-        queOut.put(lstOut)
-    # *************************************************************************
-
-    # *************************************************************************
-    # ***  Spatial smoothing of fMRI data
-
-    # NOTE: This function is not used; because of memory limitations the
-    # spatial smoothing should not be parallelised over volumes. The spatial
-    # smoothing is performed below without a parallelisation wrapper, using a
-    # direct call to the respective numpy function.
-
-    # def funcSmthSpt(idxPrc, aryFuncChnk, varSdSmthSpt, queOut):
-    #     """
-    #     Apply spatial smoothing to the input data.
-
-    #     The extent of smoothing needs to be specified as an input parameter.
-    #     """
-    #     # Number of time points in this chunk:
-    #     varNumVol = aryFuncChnk.shape[3]
-
-    #     # Input data should already be float32. Just to be sure:
-    #     aryFuncChnk = aryFuncChnk.astype(np.float32, copy=False)
-
-    #     # Loop through volumes:
-    #     for idxVol in range(0, varNumVol):
-
-    #         aryFuncChnk[:, :, :, idxVol] = gaussian_filter(
-    #             aryFuncChnk[:, :, :, idxVol],
-    #             varSdSmthSpt,
-    #             order=0,
-    #             mode='nearest',
-    #             truncate=4.0).astype(np.float32, copy=False)
-
-    #     # Output list:
-    #     lstOut = [idxPrc,
-    #               aryFuncChnk]
-
-    #     queOut.put(lstOut)
-    # *************************************************************************
-
-    # *************************************************************************
-    # *** Temporal smoothing of fMRI data & pRF time course models
-
-    def funcSmthTmp(idxPrc, aryFuncChnk, varSdSmthTmp, queOut):
-        """
-        Apply temporal smoothing to the input data.
-
-        The extend of smoothing needs to be specified as an input parameter.
-        """
-        # For the filtering to perform well at the ends of the time series, we
-        # set the method to 'nearest' and place a volume with mean intensity
-        # (over time) at the beginning and at the end.
-        aryFuncChnkMean = np.mean(aryFuncChnk,
-                                  axis=1,
-                                  keepdims=True,
-                                  dtype=np.float32)
-
-        aryFuncChnk = np.concatenate((aryFuncChnkMean,
-                                      aryFuncChnk,
-                                      aryFuncChnkMean), axis=1)
-
-        # In the input data, time goes from left to right. Therefore, we apply
-        # the filter along axis=1.
-        aryFuncChnk = gaussian_filter1d(aryFuncChnk,
-                                        varSdSmthTmp,
-                                        axis=1,
-                                        order=0,
-                                        mode='nearest',
-                                        truncate=4.0)
-
-        # Remove mean-intensity volumes at the beginning and at the end:
-        aryFuncChnk = aryFuncChnk[:, 1:-1]
-
-        # Output list:
-        lstOut = [idxPrc,
-                  aryFuncChnk.astype(np.float32, copy=False)]
-
-        queOut.put(lstOut)
-    # *************************************************************************
-
-    # *************************************************************************
     # *** Apply functions:
 
     # Data type for all computations should be float32 to avoid memory issues.
     aryFunc = aryFunc.astype(np.float32, copy=False)
-
-    if lgcLinTrnd:
-        # Perform linear trend removal (parallelised over voxels):
-        print('---------Linear trend removal')
-        aryFunc = funcParVox(funcLnTrRm,
-                             aryFunc,
-                             aryMask,
-                             0,
-                             varPar)
 
     # Perform spatial smoothing on fMRI data (reduced parallelisation over
     # volumes because this function is very memory intense):
@@ -514,11 +520,20 @@ def pre_pro_par(aryFunc, aryMask=np.array([], dtype=np.int16),  #noqa
             # print('------------Volume: ' + str(idxVol))
 
             aryFunc[:, :, :, idxVol] = gaussian_filter(
-                aryFunc[:, :, :, idxVol],
+                aryFunc[:, :, :, idxVol].astype(np.float32),
                 varSdSmthSpt,
                 order=0,
                 mode='nearest',
-                truncate=4.0)
+                truncate=4.0).astype(np.float32)
+
+    if lgcLinTrnd:
+        # Perform linear trend removal (parallelised over voxels):
+        print('---------Linear trend removal')
+        aryFunc = funcParVox(funcLnTrRm,
+                             aryFunc,
+                             aryMask,
+                             0,
+                             varPar)
 
     # Perform temporal smoothing:
     if 0.0 < varSdSmthTmp:
