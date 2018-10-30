@@ -1,4 +1,5 @@
 [
   "pyprf/analysis/testing/test_utils.py::test_main",
-  "pyprf/analysis/testing/test_utils.py::test_load_large_nii"
+  "pyprf/analysis/testing/test_utils.py::test_load_large_nii",
+  "pyprf/analysis/testing_two_predictors/test_utils_two_predictors.py::test_main"
 ]

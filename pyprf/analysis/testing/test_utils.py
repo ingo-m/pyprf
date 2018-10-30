@@ -89,9 +89,8 @@ def test_main():
         aryTestSd = np.around(aryTestSd, decimals=varRnd).astype(np.float32)
 
         # Test whether the template and test results correspond:
-        print('np.max(np.abs(np.subtract(aryTmplR2, aryTestR2)))')
-        print(np.max(np.abs(np.subtract(aryTmplR2, aryTestR2))))
-
+        # print('np.max(np.abs(np.subtract(aryTmplR2, aryTestR2)))')
+        # print(np.max(np.abs(np.subtract(aryTmplR2, aryTestR2))))
         lgcTestR2 = np.all(np.equal(aryTmplR2, aryTestR2))
         lgcTestEcc = np.all(np.equal(aryTmplEcc, aryTestEcc))
         lgcTestPol = np.all(np.equal(aryTmplPol, aryTestPol))
