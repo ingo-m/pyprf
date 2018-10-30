@@ -52,7 +52,7 @@ def test_main():
 
     # Test numpy, cython, and tensorflow version. List with version
     # abbreviations:
-    lstVrsn = ['np', 'cy', 'tf']
+    lstVrsn = ['np', 'cy', 'tf', 'cy_hdf5']
 
     # Path of config file for tests (version abbreviation left open):
     strCsvCnfg = (strDir + '/config_testing_{}.csv')
@@ -104,7 +104,7 @@ def test_main():
         assert lgcTestSd
 
     # -------------------------------------------------------------------------
-    # *** Clean up
+    # *** Clean up testing results
 
     # Path of directory with results:
     strDirRes = strDir + '/result/'
@@ -118,6 +118,24 @@ def test_main():
             # print(strTmp)
             os.remove((strDirRes + '/' + strTmp))
         elif '.npy' in strTmp:
+            # print(strTmp)
+            os.remove((strDirRes + '/' + strTmp))
+        elif '.hdf5' in strTmp:
+            # print(strTmp)
+            os.remove((strDirRes + '/' + strTmp))
+
+    # -------------------------------------------------------------------------
+    # *** Clean up intermediate results (hdf5 files)
+
+    # Path of directory with time courses converted to hdf5:
+    strDirRes = strDir + '/'
+
+    # Get list of files in results directory:
+    lstFls = [f for f in os.listdir(strDirRes) if isfile(join(strDirRes, f))]
+
+    # Delete results of test:
+    for strTmp in lstFls:
+        if '.hdf5' in strTmp:
             # print(strTmp)
             os.remove((strDirRes + '/' + strTmp))
     # -------------------------------------------------------------------------
