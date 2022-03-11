@@ -2,7 +2,7 @@ numpy==1.15.1
 scipy==1.1.0
 nibabel==2.2.1
 pytest-cov==2.6.0
-pillow==8.1.1
+pillow==9.0.1
 cython==0.27.1
 tensorflow==1.4.0
 h5py==2.8.0
