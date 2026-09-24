@@ -22,7 +22,7 @@ import numpy as np
 import h5py
 import threading
 import queue
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 from pyprf.analysis.utilities import load_nii
 from pyprf.analysis.preprocessing_par import funcLnTrRm
 from pyprf.analysis.preprocessing_par import funcSmthTmp
@@ -210,7 +210,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Define & run extra thread with graph that places data on queue:
             objThrd = threading.Thread(target=feed_hdf5_tme,
                                        args=(dtsFuncOut, objQ, vecSplt))
-            objThrd.setDaemon(True)
+            objThrd.daemon = True
             objThrd.start()
 
             # Loop through chunks of volumes:
@@ -258,12 +258,14 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Close hdf5 file with results of spatial smoothing:
             fleHdf5Out.close()
 
-            # Remove input file (only if spatial smoothing was applied,
-            # otherwise it will be needed in next step.
-            os.remove(strPthHdf5In)
-
         # Close input hdf5 file:
         fleHdf5In.close()
+
+        # Remove input file (only if spatial smoothing was applied, otherwise
+        # it will be needed in next step). The file has to be closed before it
+        # can be removed (on Windows).
+        if 0.0 < varSdSmthSpt:
+            os.remove(strPthHdf5In)
 
         # ---------------------------------------------------------------------
         # Apply mask
@@ -308,7 +310,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Define & run extra thread with graph that places data on queue:
         objThrd = threading.Thread(target=feed_hdf5,
                                    args=(dtsFuncMsk, objQ, varNumVoxMsk))
-        objThrd.setDaemon(True)
+        objThrd.daemon = True
         objThrd.start()
 
         # Loop through voxel and place voxel time courses that are within the
@@ -362,7 +364,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Define & run extra thread with graph that places data on queue:
             objThrd = threading.Thread(target=feed_hdf5_spt,
                                        args=(dtsFunc, objQ, vecSplt))
-            objThrd.setDaemon(True)
+            objThrd.daemon = True
             objThrd.start()
 
             # Loop through chunks of voxels:
@@ -425,7 +427,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Define & run extra thread with graph that places data on queue:
             objThrd = threading.Thread(target=feed_hdf5_spt,
                                        args=(dtsFunc, objQ, vecSplt))
-            objThrd.setDaemon(True)
+            objThrd.daemon = True
             objThrd.start()
 
             # Loop through chunks of volumes:
@@ -486,7 +488,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Define & run extra thread with graph that places data on queue:
         objThrd = threading.Thread(target=feed_hdf5_spt,
                                    args=(dtsFunc, objQ, vecSplt))
-        objThrd.setDaemon(True)
+        objThrd.daemon = True
         objThrd.start()
 
         # Loop through chunks of volumes:
@@ -592,7 +594,7 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
         # Define & run extra thread with graph that places data on queue:
         objThrd = threading.Thread(target=feed_hdf5_tme,
                                    args=(dtsFuncConc, objQ, vecSpltPlus))
-        objThrd.setDaemon(True)
+        objThrd.daemon = True
         objThrd.start()
 
         # Loop through chunks of volumes:

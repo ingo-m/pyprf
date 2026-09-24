@@ -97,14 +97,16 @@ cpdef tuple cy_lst_sq(np.ndarray[np.float32_t, ndim=1] vecPrfTc,
     for idxVol in range(varNumVols):
         varVarY += vecPrfTc_view[idxVol] ** 2
 
-    # Call optimised cdef function for calculation of residuals & PEs:
-    vecRes_view, vecPe_view = funcCyRes(vecPrfTc_view,
-                                        aryFuncChnk_view,
-                                        vecRes_view,
-                                        vecPe_view,
-                                        varNumVoxChnk,
-                                        varNumVols,
-                                        varVarY)
+    # Call optimised cdef function for calculation of residuals & PEs (the
+    # results are written into the memory views `vecRes_view` and
+    # `vecPe_view`):
+    funcCyRes(vecPrfTc_view,
+              aryFuncChnk_view,
+              vecRes_view,
+              vecPe_view,
+              varNumVoxChnk,
+              varNumVols,
+              varVarY)
 
     # Convert memory view to numpy array before returning it:
     vecRes = np.asarray(vecRes_view)
@@ -117,13 +119,13 @@ cpdef tuple cy_lst_sq(np.ndarray[np.float32_t, ndim=1] vecPrfTc,
 # *****************************************************************************
 # *** Function for fast calculation of residuals
 
-cdef (float[:], float[:]) funcCyRes(float[:] vecPrfTc_view,
-                                    float[:, :] aryFuncChnk_view,
-                                    float[:] vecRes_view,
-                                    float[:] vecPe_view,
-                                    unsigned long varNumVoxChnk,
-                                    unsigned int varNumVols,
-                                    float varVarY):
+cdef void funcCyRes(float[:] vecPrfTc_view,
+                    float[:, :] aryFuncChnk_view,
+                    float[:] vecRes_view,
+                    float[:] vecPe_view,
+                    unsigned long varNumVoxChnk,
+                    unsigned int varNumVols,
+                    float varVarY):
 
     cdef float varCovXy, varRes, varSlope, varXhat
     cdef unsigned int idxVol
@@ -154,7 +156,4 @@ cdef (float[:], float[:]) funcCyRes(float[:] vecPrfTc_view,
 
         vecRes_view[idxVox] = varRes
         vecPe_view[idxVox] = varSlope
-
-    # Return memory views:
-    return vecRes_view, vecPe_view
 # *****************************************************************************

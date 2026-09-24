@@ -34,8 +34,7 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     ----------
     idxPrc : int
         Process ID of the process calling this function (for CPU
-        multi-threading). In GPU version, this parameter is 0 (just one thread
-        on CPU).
+        multi-threading).
     dicCnfg : dict
         Dictionary containing config parameters.
     vecMdlXpos : np.array
@@ -68,7 +67,7 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
         List containing the following objects:
         idxPrc : int
             Process ID of the process calling this function (for CPU
-            multi-threading). In GPU version, this parameter is 0.
+            multi-threading).
         vecBstXpos : np.array
             1D array with best fitting x-position for each voxel, with shape
             vecBstXpos[voxel].
@@ -122,7 +121,7 @@ def find_prf_cpu_hdf5(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     # Define & run extra thread with graph that places data on queue:
     objThrd = threading.Thread(target=read_hdf5,
                                args=(strPrfTc, aryLgcVar, objQ))
-    objThrd.setDaemon(True)
+    objThrd.daemon = True
     objThrd.start()
 
     # Cython model fitting is only implemented for one or two predictors. If

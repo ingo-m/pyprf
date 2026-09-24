@@ -3,9 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-# *.so
-# *.c
+# C extensions (compiled from the cython *.pyx files at build time)
+*.so
+*.pyd
+pyprf/analysis/*.c
+
+# Virtual environments
+.venv/
+venv/
 
 # Distribution / packaging
 .Python
@@ -64,3 +69,10 @@ target/
 
 # mac OS related stuff
 .DS_Store
+
+# Stimulus presentation output (log files and logged frames)
+pyprf/stimulus_presentation/log/*
+!pyprf/stimulus_presentation/log/__init__.py
+
+# pytest
+.pytest_cache/

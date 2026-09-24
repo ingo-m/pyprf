@@ -5,10 +5,9 @@ import os
 import csv
 import argparse
 import numpy as np
-from psychopy import gui, core
 
 
-def crt_design(dicParam):
+def crt_design(dicParam, lgcOvwr=False):
     """
     Create design matrices for pRF mapping experiment.
 
@@ -16,12 +15,16 @@ def crt_design(dicParam):
     ----------
     dicParam : dictionary
         Dictionary containing parameters for creation of design matrix.
+    lgcOvwr : bool
+        Whether to overwrite an existing design matrix with the same name. If
+        False (default), an error is raised if the design matrix exists.
 
     Returns
     -------
-    This function has no return values. A design matrix is created and saved
-    in an npz file in the respective folder
-    (~/pyprf/pyprf/stimulus_presentation/design_matrices/).
+    strPthNpz : str
+        Path of the design matrix. The design matrix is saved in an npz file
+        (and in human-readable format in a txt file) in the respective folder
+        (~/pyprf/pyprf/stimulus_presentation/design_matrices/).
 
     """
     # *************************************************************************
@@ -67,6 +70,15 @@ def crt_design(dicParam):
 
     # Stimulus contrasts:
     lstCon = dicParam['Stimulus contrasts']
+
+    # Path of output file:
+    strPthNpz = os.path.join(strPth, strFleNme) + '.npz'
+
+    # Check whether file already exists:
+    if os.path.isfile(strPthNpz) and not lgcOvwr:
+        strMsg = ('Design matrix already exists: ' + strPthNpz
+                  + ' Please delete it or choose a different file name.')
+        raise FileExistsError(strMsg)
 
     # *************************************************************************
     # *** Preparations
@@ -244,9 +256,11 @@ def crt_design(dicParam):
             if (varTmpOri == 0.0):
 
                 # Check whether horizontal orientation is presented outside of
-                # the screen area:
+                # the screen area. Of the positions 0 to (varNumPosX - 1), the
+                # central varNumPosY positions are kept (i.e. positions varMarg
+                # to (varNumPosX - varMarg - 1)).
                 if ((varTmpPos < varMarg)
-                        or ((float(varNumPosX) - varMarg) < varTmpPos)):
+                        or ((float(varNumPosX) - varMarg) <= varTmpPos)):
 
                     # print((str(varTmpPos) + '   ' + str(varTmpOri)))
                     pass
@@ -391,91 +405,98 @@ def crt_design(dicParam):
     # *************************************************************************
     # *** Save design matrix
 
-    # Concatenate output path and file name:
-    strPthNpz = os.path.join(strPth, strFleNme) + '.npz'
+    # Save design matrix to npz file:
+    np.savez(strPthNpz,
+             aryDsg=aryDsg,
+             vecTrgt=vecTrgt,
+             lgcFull=lgcFull,
+             varTr=varTr,
+             varNumVol=varNumVol,
+             varNumOri=varNumOri,
+             varNumPosX=varNumPosX,
+             varNumPosY=varNumPosY,
+             varNumTrgt=varNumTrgt,
+             varIti=varIti)
 
-    # Check whether file already exists:
-    if os.path.isfile(strPthNpz):
+    # Save information in human-readable format
+    lstCsv = []
+    lstCsv.append('* * *')
+    lstCsv.append('Design matrix')
+    lstCsv.append('    Columns:')
+    lstCsv.append('    (1) Stimulus or rest?')
+    lstCsv.append('    (2) Bar position')
+    lstCsv.append('    (3) Bar orientation')
+    lstCsv.append('    (4) Bar contrast')
+    for strTmp in aryDsg.tolist():
+        lstCsv.append(strTmp)
+    lstCsv.append('* * *')
+    lstCsv.append('Target events')
+    lstCsv.append(list(vecTrgt))
+    lstCsv.append('* * *')
+    lstCsv.append('Full screen mode')
+    lstCsv.append(str(lgcFull))
+    lstCsv.append('* * *')
+    lstCsv.append('Volume TR [s]')
+    lstCsv.append(str(varTr))
+    lstCsv.append('* * *')
+    lstCsv.append('Number of volumes')
+    lstCsv.append(str(varNumVol))
+    lstCsv.append('* * *')
+    lstCsv.append('Number of bar orientations')
+    lstCsv.append(str(varNumOri))
+    lstCsv.append('* * *')
+    lstCsv.append('Number of bar positions on x-axis')
+    lstCsv.append(str(varNumPosX))
+    lstCsv.append('* * *')
+    lstCsv.append('Number of bar positions on y-axis')
+    lstCsv.append(str(varNumPosY))
+    lstCsv.append('* * *')
+    lstCsv.append('Number of target events')
+    lstCsv.append(str(varNumTrgt))
+    lstCsv.append('* * *')
+    lstCsv.append('Inter-trial interval for target events [s]')
+    lstCsv.append(str(varIti))
 
-        strMsg = ('WARNING: File already exists. Please delete or choose '
-                  + 'different file name.')
+    # Output path:
+    strPthTxt = os.path.join(strPth, strFleNme) + '.txt'
 
-        print(strMsg)
+    # Create output csv object:
+    objCsv = open(strPthTxt, 'w')
 
-    else:
+    # Save list to disk:
+    csvOt = csv.writer(objCsv, lineterminator='\n')
 
-        # Save design matrix to npz file:
-        np.savez(strPthNpz,
-                 aryDsg=aryDsg,
-                 vecTrgt=vecTrgt,
-                 lgcFull=lgcFull,
-                 varTr=varTr,
-                 varNumVol=varNumVol,
-                 varNumOri=varNumOri,
-                 varNumPosX=varNumPosX,
-                 varNumPosY=varNumPosY,
-                 varNumTrgt=varNumTrgt,
-                 varIti=varIti)
+    # Write output list data to file (row by row):
+    for strTmp in lstCsv:
+        csvOt.writerow([strTmp])
 
-        # Save information in human-readable format
-        lstCsv = []
-        lstCsv.append('* * *')
-        lstCsv.append('Design matrix')
-        lstCsv.append('    Columns:')
-        lstCsv.append('    (1) Stimulus or rest?')
-        lstCsv.append('    (2) Bar position')
-        lstCsv.append('    (3) Bar orientation')
-        lstCsv.append('    (4) Bar contrast')
-        for strTmp in aryDsg.tolist():
-            lstCsv.append(strTmp)
-        lstCsv.append('* * *')
-        lstCsv.append('Target events')
-        lstCsv.append(list(vecTrgt))
-        lstCsv.append('* * *')
-        lstCsv.append('Full screen mode')
-        lstCsv.append(str(lgcFull))
-        lstCsv.append('* * *')
-        lstCsv.append('Volume TR [s]')
-        lstCsv.append(str(varTr))
-        lstCsv.append('* * *')
-        lstCsv.append('Number of volumes')
-        lstCsv.append(str(varNumVol))
-        lstCsv.append('* * *')
-        lstCsv.append('Number of bar orientations')
-        lstCsv.append(str(varNumOri))
-        lstCsv.append('* * *')
-        lstCsv.append('Number of bar positions on x-axis')
-        lstCsv.append(str(varNumPosX))
-        lstCsv.append('* * *')
-        lstCsv.append('Number of bar positions on y-axis')
-        lstCsv.append(str(varNumPosY))
-        lstCsv.append('* * *')
-        lstCsv.append('Number of target events')
-        lstCsv.append(str(varNumTrgt))
-        lstCsv.append('* * *')
-        lstCsv.append('Inter-trial interval for target events [s]')
-        lstCsv.append(str(varIti))
+    # Close:
+    objCsv.close()
 
-        # Output path:
-        strPthTxt = os.path.join(strPth, strFleNme) + '.txt'
+    return strPthNpz
 
-        # Create output csv object:
-        objCsv = open(strPthTxt, 'w')
 
-        # Save list to disk:
-        csvOt = csv.writer(objCsv, lineterminator='\n')
+def func_free_name(strPth):
+    """
+    Get a name for a new design matrix.
 
-        # Write output list data to file (row by row):
-        for strTmp in lstCsv:
-            csvOt.writerow([strTmp])
-
-        # Close:
-        objCsv.close()
+    Returns the first name of the form 'Run_01', 'Run_02', ... that is not used
+    by a design matrix in the directory `strPth`.
+    """
+    idxRun = 1
+    while os.path.isfile(os.path.join(strPth,
+                                      'Run_' + str(idxRun).zfill(2) + '.npz')):
+        idxRun += 1
+    return 'Run_' + str(idxRun).zfill(2)
 
 
 # *****************************************************************************
 
 if __name__ == "__main__":
+
+    # PsychoPy is only needed for the GUI. (Importing it here allows to use
+    # `crt_design` without PsychoPy, e.g. for testing.)
+    from psychopy import gui, core
 
     # Create parser object:
     objParser = argparse.ArgumentParser()
@@ -487,11 +508,11 @@ if __name__ == "__main__":
                            choices=['True', 'False'],
                            default='True',
                            help='Open a GUI to set parameters for design \
-                                 matrix?'
+                                 matrix? If not, default parameters are \
+                                 used.'
                            )
 
-    # Add argument to namespace - open a GUI for user to specify design matrix
-    # parameters?:
+    # Add argument to namespace - output file name:
     objParser.add_argument('-filename',
                            # metavar='filename',
                            default=None,
@@ -504,12 +525,23 @@ if __name__ == "__main__":
     objNspc = objParser.parse_args()
 
     # Get arguments from argument parser:
-    strGui = objNspc.gui
+    lgcGui = (objNspc.gui == 'True')
     strFleNme = objNspc.filename
 
-    # Dictionary with experiment parameters.
-    dicParam = {'Output file name': 'Run_01',
-                'TR [s]': 1.947,
+    # Output path ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
+    strPth = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    strPth = os.path.join(strPth, 'design_matrices')
+
+    # Default output file name (if no file name is provided): The first name
+    # of the form 'Run_01', 'Run_02', ... that is not used by an existing
+    # design matrix.
+    if strFleNme is None:
+        strFleNme = func_free_name(strPth)
+
+    # Dictionary with experiment parameters (in the order in which they are
+    # shown in the GUI).
+    dicParam = {'Output file name': strFleNme,
+                'TR [s]': 2.079,
                 'Number of bar orientations': [4, 2],
                 'Number of bar positions on x-axis': 14,
                 'Number of bar positions on y-axis': 8,
@@ -525,32 +557,88 @@ if __name__ == "__main__":
     # Maximum contrast = 0.99, at pixel value 1.0
     # Low contrast = 0.1  (precisely: 0.0975), at pixel value: 0.05
 
-    if not(strFleNme is None):
-
-        # If an input file name is provided, put it into the dictionary (as
-        # default, can still be overwritten by user).
-        dicParam['Output file name'] = strFleNme
-
-    if strGui == 'True':
+    if lgcGui:
 
         # Pop-up GUI to let the user select parameters:
         objGui = gui.DlgFromDict(dictionary=dicParam,
-                                 title='Design Matrix Parameters')
+                                 title='Design Matrix Parameters',
+                                 order=list(dicParam.keys()))
 
         # Close if user presses 'cancel':
-        if objGui.OK is True:
-
-            # Output path
-            # ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
-            strPth = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                  '..'))
-            strPth = os.path.join(strPth, 'design_matrices')
-
-            # Add output path to dictionary.
-            dicParam['Output path'] = strPth
-
-            crt_design(dicParam)
-
-        else:
-            # Close if user presses 'cancel':
+        if not objGui.OK:
             core.quit()
+
+    else:
+
+        # Without GUI, use the first option of parameters with several
+        # options:
+        for strKey, varVal in dicParam.items():
+            if isinstance(varVal, list):
+                dicParam[strKey] = varVal[0]
+
+    # Add output path to dictionary.
+    dicParam['Output path'] = strPth
+
+    # If no file name is given, use default name:
+    dicParam['Output file name'] = (str(dicParam['Output file name']).strip()
+                                    or func_free_name(strPth))
+
+    # If a design matrix with this name already exists, the user can choose a
+    # different name, or overwrite the existing design matrix.
+    lgcOvwr = False
+    while (os.path.isfile(os.path.join(strPth, dicParam['Output file name'])
+                          + '.npz')
+           and not lgcOvwr):
+
+        strFleNme = dicParam['Output file name']
+        strMsg = ('There already is a design matrix called "' + strFleNme
+                  + '" in the folder:\n' + strPth)
+
+        if not lgcGui:
+            print(strMsg + '\nPlease choose a different file name.')
+            core.quit()
+
+        objDlg = gui.Dlg(title='Design matrix already exists')
+        objDlg.addText(strMsg + '\n\nPlease choose a different name, or '
+                       + 'overwrite the existing design matrix.')
+        objDlg.addField('Output file name', func_free_name(strPth))
+        objDlg.addField('Overwrite "' + strFleNme + '" instead', False)
+        # Hide note on required fields (PsychoPy Qt GUI; there are none):
+        if hasattr(objDlg, 'validate'):
+            objDlg.validate()
+        lstData = objDlg.show()
+
+        # Close if user presses 'cancel':
+        if not objDlg.OK:
+            core.quit()
+
+        if lstData[1]:
+            lgcOvwr = True
+        else:
+            dicParam['Output file name'] = (str(lstData[0]).strip()
+                                            or func_free_name(strPth))
+
+    # Create design matrix:
+    strPthNpz = crt_design(dicParam, lgcOvwr=lgcOvwr)
+
+    # Show summary. The number of volumes and the TR are needed to set up the
+    # fMRI sequence.
+    objNpz = np.load(strPthNpz)
+    varTr = float(objNpz['varTr'])
+    varNumVol = int(objNpz['varNumVol'])
+    varDur = int(np.around(varTr * varNumVol))
+    strMsg = ('Design matrix saved as:\n' + strPthNpz + '\n\n'
+              + 'Volume TR: ' + str(varTr) + ' s\n'
+              + 'Number of volumes: ' + str(varNumVol) + '\n'
+              + 'Duration: ' + str(varDur // 60) + ' min '
+              + str(varDur % 60) + ' s\n\n'
+              + 'The fMRI sequence has to acquire (at least) '
+              + str(varNumVol) + ' volumes, with a TR of ' + str(varTr)
+              + ' s.')
+    print(strMsg)
+    if lgcGui:
+        objDlg = gui.Dlg(title='Design matrix created')
+        objDlg.addText(strMsg)
+        if hasattr(objDlg, 'validate'):
+            objDlg.validate()
+        objDlg.show()

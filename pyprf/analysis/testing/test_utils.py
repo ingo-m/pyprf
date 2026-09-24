@@ -1,139 +1,28 @@
-"""Test utility functions."""
+"""Test pyprf main pipeline and utility functions."""
 
 
 import os
-from os.path import isfile, join
 import numpy as np
+import pytest
 
-from pyprf.analysis import pyprf_main
 from pyprf.analysis import utilities as util
+from pyprf.analysis.load_config import load_config
 
 
 # Get directory of this file:
 strDir = os.path.dirname(os.path.abspath(__file__))
 
+# Version abbreviation -> version that has to run first, because it creates the
+# pRF model time courses (see `TestRunner` in `/conftest.py`):
+dicDep = {'cy': 'np', 'np_hdf5': 'cy_hdf5'}
 
-def test_main():
+
+@pytest.mark.parametrize('strVrsn', ['np', 'cy', 'cy_hdf5', 'np_hdf5'])
+def test_main(test_runner, strVrsn):
     """Run main pyprf function and compare results with template."""
-    # -------------------------------------------------------------------------
-    # *** Preparations
-
-    # Decimal places to round before comparing template and test results:
-    varRnd = 3
-
-    # Load template result - R2:
-    aryTmplR2, _, _ = util.load_nii((strDir
-                                     + '/exmpl_data_results_R2.nii.gz'))
-
-    # Load template result - eccentricity:
-    aryTmplEcc, _, _ = util.load_nii(
-        (strDir + '/exmpl_data_results_eccentricity.nii.gz'))
-
-    # Load template result - polar angle:
-    aryTmplPol, _, _ = util.load_nii(
-        (strDir + '/exmpl_data_results_polar_angle.nii.gz'))
-
-    # Load template result - SD:
-    aryTmplSd, _, _ = util.load_nii((strDir
-                                     + '/exmpl_data_results_SD.nii.gz'))
-
-    # Round template reults:
-    aryTmplR2 = np.around(aryTmplR2, decimals=varRnd).astype(np.float32)
-    aryTmplEcc = np.around(aryTmplEcc, decimals=varRnd).astype(np.float32)
-    aryTmplPol = np.around(aryTmplPol, decimals=varRnd).astype(np.float32)
-    aryTmplSd = np.around(aryTmplSd, decimals=varRnd).astype(np.float32)
-
-    # -------------------------------------------------------------------------
-    # *** Test pyprf main pipeline
-
-    # Test numpy, cython, and tensorflow version. List with version
-    # abbreviations:
-    lstVrsn = ['np', 'cy', 'tf', 'cy_hdf5', 'np_hdf5']
-
-    # Path of config file for tests (version abbreviation left open):
-    strCsvCnfg = (strDir + '/config_testing_{}.csv')
-
-    for strVrsn in lstVrsn:
-
-        # Call main pyprf function:
-        pyprf_main.pyprf(strCsvCnfg.format(strVrsn), lgcTest=True)
-
-        # Load result - R2:
-        aryTestR2, _, _ = util.load_nii(
-            (strDir + '/result/'
-             + 'pRF_test_results_{}_R2.nii.gz'.format(strVrsn)))
-
-        # Load result - eccentricity:
-        aryTestEcc, _, _ = util.load_nii(
-            (strDir + '/result/'
-             + 'pRF_test_results_{}_eccentricity.nii.gz'.format(strVrsn)))
-
-        # Load result - polar angle:
-        aryTestPol, _, _ = util.load_nii(
-            (strDir + '/result/'
-             + 'pRF_test_results_{}_polar_angle.nii.gz'.format(strVrsn)))
-
-        # Load result - SD:
-        aryTestSd, _, _ = util.load_nii(
-            (strDir + '/result/'
-             + 'pRF_test_results_{}_SD.nii.gz'.format(strVrsn)))
-
-        # Round test results:
-        aryTestR2 = np.around(aryTestR2, decimals=varRnd).astype(np.float32)
-        aryTestEcc = np.around(aryTestEcc, decimals=varRnd).astype(np.float32)
-        aryTestPol = np.around(aryTestPol, decimals=varRnd).astype(np.float32)
-        aryTestSd = np.around(aryTestSd, decimals=varRnd).astype(np.float32)
-
-        # Test whether the template and test results correspond:
-        # print('np.max(np.abs(np.subtract(aryTmplR2, aryTestR2)))')
-        # print(np.max(np.abs(np.subtract(aryTmplR2, aryTestR2))))
-        lgcTestR2 = np.all(np.equal(aryTmplR2, aryTestR2))
-        lgcTestEcc = np.all(np.equal(aryTmplEcc, aryTestEcc))
-        lgcTestPol = np.all(np.equal(aryTmplPol, aryTestPol))
-        lgcTestSd = np.all(np.equal(aryTmplSd, aryTestSd))
-
-        # Did version pass the test?
-        assert lgcTestR2
-        assert lgcTestEcc
-        assert lgcTestPol
-        assert lgcTestSd
-
-    # -------------------------------------------------------------------------
-    # *** Clean up testing results
-
-    # Path of directory with results:
-    strDirRes = strDir + '/result/'
-
-    # Get list of files in results directory:
-    lstFls = [f for f in os.listdir(strDirRes) if isfile(join(strDirRes, f))]
-
-    # Delete results of test:
-    for strTmp in lstFls:
-        if '.nii' in strTmp:
-            # print(strTmp)
-            os.remove((strDirRes + '/' + strTmp))
-        elif '.npy' in strTmp:
-            # print(strTmp)
-            os.remove((strDirRes + '/' + strTmp))
-        elif '.hdf5' in strTmp:
-            # print(strTmp)
-            os.remove((strDirRes + '/' + strTmp))
-
-    # -------------------------------------------------------------------------
-    # *** Clean up intermediate results (hdf5 files)
-
-    # Path of directory with time courses converted to hdf5:
-    strDirRes = strDir + '/'
-
-    # Get list of files in results directory:
-    lstFls = [f for f in os.listdir(strDirRes) if isfile(join(strDirRes, f))]
-
-    # Delete results of test:
-    for strTmp in lstFls:
-        if '.hdf5' in strTmp:
-            # print(strTmp)
-            os.remove((strDirRes + '/' + strTmp))
-    # -------------------------------------------------------------------------
+    test_runner.run(strVrsn)
+    test_runner.assert_results(strVrsn,
+                               ['R2', 'eccentricity', 'polar_angle', 'SD'])
 
 
 def test_load_large_nii():
@@ -146,3 +35,16 @@ def test_load_large_nii():
                                     varSzeThr=0.0)
 
     assert np.all(np.equal(aryFunc01, aryFunc02))
+
+
+def test_unsupported_version(tmp_path):
+    """Test that the removed GPU version gives an informative error."""
+    with open(strDir + '/config_testing_np.csv', 'r') as objFle:
+        strCnfg = objFle.read()
+    strCnfg = strCnfg.replace("strVersion = 'numpy'", "strVersion = 'gpu'")
+    strCsvCnfg = str(tmp_path / 'config_gpu.csv')
+    with open(strCsvCnfg, 'w') as objFle:
+        objFle.write(strCnfg)
+
+    with pytest.raises(ValueError, match="'gpu' version was removed"):
+        load_config(strCsvCnfg)

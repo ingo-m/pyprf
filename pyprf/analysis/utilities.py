@@ -19,7 +19,6 @@
 
 import os
 import numpy as np
-import scipy as sp
 import nibabel as nb
 from scipy.stats import gamma
 
@@ -131,7 +130,7 @@ def crt_gauss(varSizeX, varSizeY, varPosX, varPosY, varSd):
     varPosY = int(varPosY)
     varSd = float(varSd)
 
-    aryX, aryY = sp.mgrid[0:varSizeX,
+    aryX, aryY = np.mgrid[0:varSizeX,
                           0:varSizeY]
 
     # The actual creation of the Gaussian array:

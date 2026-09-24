@@ -1,0 +1,170 @@
+name: publish
+
+# Release a new version of pyprf. Runs on every push to main (i.e. after
+# merging devel into main). If the version in pyproject.toml does not have a
+# git tag yet, this workflow:
+#   1. builds wheels for Linux, macOS & Windows, and runs the tests on each
+#      wheel,
+#   2. publishes the wheels and the source distribution to PyPI,
+#   3. creates a GitHub release (and tag `v<version>`), with a zip file of the
+#      stimulus presentation folder attached. The GitHub release also triggers
+#      Zenodo to archive the new version (new DOI).
+# If the version already has a tag, nothing is released. So to make a release,
+# update the version in pyproject.toml on devel, and merge devel into main.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-version:
+    name: Check whether the version is new
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Get version from pyproject.toml and look for existing tag
+        id: version
+        run: |
+          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
+            echo "Tag v$VERSION already exists, nothing to release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version $VERSION has no tag yet, it will be released."
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    needs: check-version
+    if: needs.check-version.outputs.release == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      matrix:
+        # Linux (x86_64 & ARM), Windows, macOS (Apple silicon & Intel).
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest, macos-15-intel]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # Configuration (Python versions, tests) is in pyproject.toml, under
+      # [tool.cibuildwheel].
+      - name: Build and test wheels
+        uses: pypa/cibuildwheel@v4.2.1
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  build-sdist:
+    name: Build source distribution
+    needs: check-version
+    if: needs.check-version.outputs.release == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Build source distribution
+        run: pipx run build --sdist
+
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v7
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  stimulus-zip:
+    name: Zip stimulus presentation folder
+    needs: check-version
+    if: needs.check-version.outputs.release == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Zip stimulus presentation folder
+        working-directory: pyprf
+        env:
+          VERSION: ${{ needs.check-version.outputs.version }}
+        run: zip -r "../pyprf-stimulus-presentation-v$VERSION.zip" stimulus_presentation -x "*/__pycache__/*"
+
+      - name: Upload zip file
+        uses: actions/upload-artifact@v7
+        with:
+          name: stimulus-zip
+          path: pyprf-stimulus-presentation-v*.zip
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [check-version, build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/pyprf/${{ needs.check-version.outputs.version }}/
+    permissions:
+      # Needed for PyPI trusted publishing (no API token required).
+      id-token: write
+
+    steps:
+      - name: Download wheels
+        uses: actions/download-artifact@v8
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Download source distribution
+        uses: actions/download-artifact@v8
+        with:
+          name: sdist
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # If a previous run published to PyPI but failed afterwards, don't
+          # fail on re-uploading the same files.
+          skip-existing: true
+
+  github-release:
+    name: Create GitHub release
+    needs: [check-version, publish-pypi, stimulus-zip]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download stimulus presentation zip file
+        uses: actions/download-artifact@v8
+        with:
+          name: stimulus-zip
+
+      - name: Create release and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check-version.outputs.version }}
+        run: >
+          gh release create "v$VERSION"
+          --repo "$GITHUB_REPOSITORY"
+          --target "$GITHUB_SHA"
+          --title "pyprf $VERSION"
+          --generate-notes
+          "pyprf-stimulus-presentation-v$VERSION.zip"

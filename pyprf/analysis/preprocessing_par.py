@@ -20,8 +20,8 @@
 import numpy as np
 import time
 import multiprocessing as mp
-from scipy.ndimage.filters import gaussian_filter
-from scipy.ndimage.filters import gaussian_filter1d
+from scipy.ndimage import gaussian_filter
+from scipy.ndimage import gaussian_filter1d
 
 
 # *****************************************************************************

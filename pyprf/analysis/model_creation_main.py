@@ -165,6 +165,13 @@ def model_creation(dicCnfg, lgcHdf5=False):
                                       np.eye(4))
             nb.save(niiPrfTc,
                     (cfg.strPathMdl + '_condition_' + str(idxCon)))
+
+        if lgcHdf5:
+
+            # Close hdf5 file. In hdf5 mode, the pRF time courses are not
+            # returned, they are accessed from the hdf5 file later on.
+            fleHdf5.close()
+            aryPrfTc = None
         # *********************************************************************
 
     else:

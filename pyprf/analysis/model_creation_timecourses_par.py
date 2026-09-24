@@ -122,7 +122,7 @@ def prf_par(idxPrc, aryMdlParamsChnk, tplVslSpcSze, aryPixConv, strPathMdl,
         # Define & run extra thread with graph that places data on queue:
         objThrd = threading.Thread(target=feed_hdf5_q,
                                    args=(dtsPrfTc, objQ, varNumMdls))
-        objThrd.setDaemon(True)
+        objThrd.daemon = True
         objThrd.start()
 
     # Loop through combinations of model parameters:
