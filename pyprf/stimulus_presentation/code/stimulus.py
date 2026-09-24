@@ -544,7 +544,7 @@ def prf_stim(dicParam):
 
         # Temporary array for screenshots, at full screen size and containing
         # RGB values (needed to obtain buffer content from psychopy):
-        aryBuff = np.zeros((varPixY, varPixX, 3), dtype=np.int8)
+        aryBuff = np.zeros((varPixY, varPixX, 3), dtype=np.uint8)
 
         # It is not necessary to sample every pixel; only every second pixel is
         # sampled. Number of pixel to be sampled along x and y direction:
@@ -841,7 +841,7 @@ def prf_stim(dicParam):
             # The pattern inside the stimulus (chequerboard) is not of
             # interest. Therefore, we create a logical array (True = stimulus
             # was present on this pixel).
-            aryRgb = np.not_equal(aryRgb, varBck).astype(np.int8)
+            aryRgb = np.not_equal(aryRgb, varBck).astype(np.uint8)
 
             # Contrast value on current volume:
             varTmpMax = int(np.around(255.0 * aryDsg[idxVol, 3]))
