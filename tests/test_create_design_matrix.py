@@ -121,3 +121,27 @@ def test_crt_design_two_orientations(tmp_path):
     assert set(np.unique(aryStim[:, 3])) == {0.05, 1.0}
     # 4 blocks x 2 orientations x 14 positions x 2 contrasts:
     assert aryStim.shape[0] == 4 * 2 * 14 * 2
+
+
+def test_crt_design_existing_file(tmp_path):
+    """An existing design matrix is only overwritten if requested."""
+    dicParam = get_param(str(tmp_path))
+    strPthNpz = create_design_matrix.crt_design(dicParam)
+    assert strPthNpz == str(tmp_path / 'Run_01.npz')
+    varMtime = os.path.getmtime(strPthNpz)
+
+    with pytest.raises(FileExistsError):
+        create_design_matrix.crt_design(dicParam)
+    assert os.path.getmtime(strPthNpz) == varMtime
+
+    create_design_matrix.crt_design(dicParam, lgcOvwr=True)
+    assert os.path.getmtime(strPthNpz) >= varMtime
+
+
+def test_func_free_name(tmp_path):
+    """The default name of a new design matrix is the first unused name."""
+    assert create_design_matrix.func_free_name(str(tmp_path)) == 'Run_01'
+    for strNme in ['Run_01', 'Run_02', 'Run_04']:
+        create_design_matrix.crt_design(
+            get_param(str(tmp_path), **{'Output file name': strNme}))
+    assert create_design_matrix.func_free_name(str(tmp_path)) == 'Run_03'
