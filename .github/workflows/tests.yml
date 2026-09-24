@@ -1,0 +1,106 @@
+name: tests
+
+on:
+  push:
+    branches: [main, devel]
+  pull_request:
+    branches: [main, devel]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # If a worker process of the analysis crashes, the main process waits for
+    # its results indefinitely. Don't let such a run hang for hours.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install pyprf (compiles the cython code)
+        run: python -m pip install -e ".[test]"
+
+      - name: Run tests
+        run: python -m pytest --cov=pyprf --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+
+  test-oldest-dependencies:
+    name: Python 3.11 with oldest supported dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install pyprf with the lowest dependency versions allowed by pyproject.toml
+        run: |
+          python -m pip install uv
+          uv pip install --system --resolution lowest-direct -e ".[test]"
+
+      - name: Run tests
+        run: python -m pytest
+
+  test-stimulus-presentation:
+    # The stimulus presentation scripts are not part of the pyprf package. They
+    # are run in PsychoPy, so they have to work with the Python versions that
+    # PsychoPy supports (which may be older than those supported by pyprf).
+    name: Stimulus presentation on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies (without PsychoPy)
+        run: python -m pip install numpy pytest
+
+      - name: Check syntax of stimulus presentation scripts
+        run: python -m py_compile pyprf/stimulus_presentation/code/*.py
+
+      # The analysis test fixtures (conftest.py) need pyprf, and are not used
+      # here.
+      - name: Run tests
+        run: python -m pytest tests --noconftest
