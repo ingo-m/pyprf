@@ -258,12 +258,14 @@ def pre_pro_func_hdf5(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
             # Close hdf5 file with results of spatial smoothing:
             fleHdf5Out.close()
 
-            # Remove input file (only if spatial smoothing was applied,
-            # otherwise it will be needed in next step.
-            os.remove(strPthHdf5In)
-
         # Close input hdf5 file:
         fleHdf5In.close()
+
+        # Remove input file (only if spatial smoothing was applied, otherwise
+        # it will be needed in next step). The file has to be closed before it
+        # can be removed (on Windows).
+        if 0.0 < varSdSmthSpt:
+            os.remove(strPthHdf5In)
 
         # ---------------------------------------------------------------------
         # Apply mask
