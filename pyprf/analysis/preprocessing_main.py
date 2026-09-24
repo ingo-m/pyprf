@@ -176,7 +176,7 @@ def pre_pro_func(strPathNiiMask, lstPathNiiFunc, lgcLinTrnd=True,
     # Voxels that are outside the brain and have no, or very little, signal
     # should not be included in the pRF model finding. We take the variance
     # over time and exclude voxels with a suspiciously low variance. Because
-    # the data given into the cython or GPU function has float32 precision, we
+    # the data given into the cython function has float32 precision, we
     # calculate the variance on data with float32 precision.
     aryFuncVar = np.var(aryFunc, axis=0, dtype=np.float32)
 

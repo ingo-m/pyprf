@@ -113,16 +113,17 @@ cpdef tuple cy_lst_sq_two(
         varVarX2 += aryPrfTc_view[1, idxVol] ** 2
         varVarX1X2 += aryPrfTc_view[0, idxVol] * aryPrfTc_view[1, idxVol]
 
-    # Call optimised cdef function for calculation of residuals:
-    vecRes_view, aryPe_view = func_cy_res_two(aryPrfTc_view,
-                                              aryFuncChnk_view,
-                                              vecRes_view,
-                                              aryPe_view,
-                                              varNumVoxChnk,
-                                              varNumVols,
-                                              varVarX1,
-                                              varVarX2,
-                                              varVarX1X2)
+    # Call optimised cdef function for calculation of residuals (the results
+    # are written into the memory views `vecRes_view` and `aryPe_view`):
+    func_cy_res_two(aryPrfTc_view,
+                    aryFuncChnk_view,
+                    vecRes_view,
+                    aryPe_view,
+                    varNumVoxChnk,
+                    varNumVols,
+                    varVarX1,
+                    varVarX2,
+                    varVarX1X2)
 
     # Convert memory view to numpy array before returning it:
     vecRes = np.asarray(vecRes_view)
@@ -134,15 +135,15 @@ cpdef tuple cy_lst_sq_two(
 # *****************************************************************************
 # *** Fast calculation residuals, two predictors
 
-cdef (float[:], float[:, :]) func_cy_res_two(float[:, :] aryPrfTc_view,
-                                             float[:, :] aryFuncChnk_view,
-                                             float[:] vecRes_view,
-                                             float[:, :] aryPe_view,
-                                             unsigned long varNumVoxChnk,
-                                             unsigned int varNumVols,
-                                             float varVarX1,
-                                             float varVarX2,
-                                             float varVarX1X2):
+cdef void func_cy_res_two(float[:, :] aryPrfTc_view,
+                          float[:, :] aryFuncChnk_view,
+                          float[:] vecRes_view,
+                          float[:, :] aryPe_view,
+                          unsigned long varNumVoxChnk,
+                          unsigned int varNumVols,
+                          float varVarX1,
+                          float varVarX2,
+                          float varVarX1X2):
 
     cdef:
         float varCovX1y, varCovX2y, varRes
@@ -185,7 +186,4 @@ cdef (float[:], float[:, :]) func_cy_res_two(float[:, :] aryPrfTc_view,
         vecRes_view[idxVox] = varRes
         aryPe_view[idxVox, 0] = varSlope1
         aryPe_view[idxVox, 1] = varSlope2
-
-    # Return memory view:
-    return vecRes_view, aryPe_view
 # *****************************************************************************

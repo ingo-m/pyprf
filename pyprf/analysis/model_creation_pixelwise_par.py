@@ -49,7 +49,7 @@ def conv_par(idxPrc, aryPngData, vecCon, vecHrf, queOut):
         List containing the following objects:
         idxPrc : int
             Process ID of the process calling this function (for CPU
-            multi-threading). In GPU version, this parameter is 0.
+            multi-threading).
         aryPixConv : np.array
             Numpy array containing convolved design matrix. Dimensionality:
             `aryPixConv[(x*y pixels), conditions, volumes]`.
@@ -84,7 +84,7 @@ def conv_par(idxPrc, aryPngData, vecCon, vecHrf, queOut):
     # whereas originally there is one timecourse for each pixel (containing n
     # contrast levels, e.g. 0, 25, and 255), in the new array there are n
     # timecourses per pixel, each containign only 0 and 1.
-    aryPngCon = np.zeros((varNumPix, varNumCon, varNumVol), dtype=np.bool)
+    aryPngCon = np.zeros((varNumPix, varNumCon, varNumVol), dtype=bool)
 
     # aryPngData = aryPngData.astype(np.uint8)
     # vecCon = vecCon.astype(np.uint8)

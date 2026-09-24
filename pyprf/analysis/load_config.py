@@ -1,14 +1,9 @@
 """Load py_pRF_mapping config file."""
 
-import os
-import csv
 import ast
 
-# Get path of this file:
-strDir = os.path.dirname(os.path.abspath(__file__))
 
-
-def load_config(strCsvCnfg, lgcTest=False):  #noqa
+def load_config(strCsvCnfg):  #noqa
     """
     Load py_pRF_mapping config file.
 
@@ -16,9 +11,6 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
     ----------
     strCsvCnfg : string
         Absolute file path of config file.
-    lgcTest : Boolean
-        Whether this is a test (pytest). If yes, absolute path of this function
-        will be prepended to config file paths.
 
     Returns
     -------
@@ -34,32 +26,22 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
     dicCnfg = {}
 
     # Open file with parameter configuration:
-    # fleConfig = open(strCsvCnfg, 'r')
     with open(strCsvCnfg, 'r') as fleConfig:
 
-        # Read file  with ROI information:
-        csvIn = csv.reader(fleConfig,
-                           delimiter='\n',
-                           skipinitialspace=True)
+        # Loop through lines of config file:
+        for strLine in fleConfig:
 
-        # Loop through csv object to fill list with csv data:
-        for lstTmp in csvIn:
+            # Remove leading and trailing whitespace (including line break):
+            strLine = strLine.strip()
 
             # Skip comments (i.e. lines starting with '#') and empty lines.
-            # Note: Indexing the list (i.e. lstTmp[0][0]) does not work for
-            # empty lines. However, if the first condition is not fullfilled
-            # (i.e. line is empty and 'if lstTmp' evaluates to false), the
-            # second logical test (after the 'and') is not actually carried
-            # out.
-            if lstTmp and not (lstTmp[0][0] == '#'):
+            if strLine and not strLine.startswith('#'):
 
                 # Name of current parameter (e.g. 'varTr'):
-                strParamKey = lstTmp[0].split(' = ')[0]
-                # print(strParamKey)
+                strParamKey = strLine.split(' = ')[0]
 
                 # Current parameter value (e.g. '2.94'):
-                strParamVlu = lstTmp[0].split(' = ')[1]
-                # print(strParamVlu)
+                strParamVlu = strLine.split(' = ')[1]
 
                 # Put paramter name (key) and value (item) into dictionary:
                 dicCnfg[strParamKey] = strParamVlu
@@ -187,12 +169,19 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
         print('---Output basename:')
         print('   ' + str(dicCnfg['strPathOut']))
 
-    # Which version to use for pRF finding. 'numpy' or 'cython' for pRF finding
-    # on CPU, 'gpu' for using GPU.
+    # Which version to use for pRF finding, 'numpy' or 'cython'.
     dicCnfg['strVersion'] = ast.literal_eval(dicCnfg['strVersion'])
     if lgcPrint:
-        print('---Version (numpy, cython, or gpu): '
+        print('---Version (numpy or cython): '
               + str(dicCnfg['strVersion']))
+
+    # The tensorflow (GPU) version was removed in pyprf 3.0.0.
+    if dicCnfg['strVersion'] not in ('numpy', 'cython'):
+        strMsg = ("strVersion = '" + str(dicCnfg['strVersion'])
+                  + "' is not supported. Please set strVersion to 'cython' "
+                  + "or 'numpy' in the config file. (The 'gpu' version was "
+                  + "removed in pyprf 3.0.0.)")
+        raise ValueError(strMsg)
 
     # Create pRF time course models?
     dicCnfg['lgcCrteMdl'] = (dicCnfg['lgcCrteMdl'] == 'True')
@@ -243,33 +232,5 @@ def load_config(strCsvCnfg, lgcTest=False):  #noqa
     dicCnfg['lgcHdf5'] = (dicCnfg['lgcHdf5'] == 'True')
     if lgcPrint:
         print('---Hdf5 mode: ' + str(dicCnfg['lgcHdf5']))
-
-    # Is this a test?
-    if lgcTest:
-
-        # Preprend absolute parent path of testing folder to config file paths:
-        dicCnfg['strPathNiiMask'] = (strDir + dicCnfg['strPathNiiMask'])
-        dicCnfg['strPathOut'] = (strDir + dicCnfg['strPathOut'])
-        dicCnfg['strPathMdl'] = (strDir + dicCnfg['strPathMdl'])
-
-        # Loop through functional runs & prepend absolute path:
-        varNumRun = len(dicCnfg['lstPathNiiFunc'])
-        for idxRun in range(varNumRun):
-            dicCnfg['lstPathNiiFunc'][idxRun] = (
-                strDir
-                + dicCnfg['lstPathNiiFunc'][idxRun]
-                )
-
-        # Preprend absolute parent path of testing folder to config file paths
-        # if new models are supposed to be created:
-        if dicCnfg['lgcCrteMdl']:
-
-            # Loop through functional runs & prepend absolute path:
-            varNumRun = len(dicCnfg['lstPathPng'])
-            for idxRun in range(varNumRun):
-                dicCnfg['lstPathPng'][idxRun] = (
-                    strDir
-                    + dicCnfg['lstPathPng'][idxRun]
-                    )
 
     return dicCnfg

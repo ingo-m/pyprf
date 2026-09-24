@@ -1,6 +1,0 @@
-[run]
-source = pyprf
-
-omit =
-    *__init__*
-    *__main__*

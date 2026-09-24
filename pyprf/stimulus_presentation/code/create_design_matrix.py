@@ -5,7 +5,6 @@ import os
 import csv
 import argparse
 import numpy as np
-from psychopy import gui, core
 
 
 def crt_design(dicParam):
@@ -476,6 +475,10 @@ def crt_design(dicParam):
 # *****************************************************************************
 
 if __name__ == "__main__":
+
+    # PsychoPy is only needed for the GUI. (Importing it here allows to use
+    # `crt_design` without PsychoPy, e.g. for testing.)
+    from psychopy import gui, core
 
     # Create parser object:
     objParser = argparse.ArgumentParser()

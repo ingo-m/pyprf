@@ -40,7 +40,7 @@ from pyprf.analysis.preprocessing_hdf5 import pre_pro_func_hdf5
 from pyprf.analysis.find_prf import find_prf
 
 
-def pyprf(strCsvCnfg, lgcTest=False):  #noqa
+def pyprf(strCsvCnfg):  #noqa
     """
     Main function for pRF mapping.
 
@@ -48,9 +48,6 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     ----------
     strCsvCnfg : str
         Absolute file path of config file.
-    lgcTest : Boolean
-        Whether this is a test (pytest). If yes, absolute path of pyprf libary
-        will be prepended to config file paths.
     """
     # *************************************************************************
     # *** Check time
@@ -62,7 +59,7 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # *** Preparations
 
     # Load config parameters from csv file into dictionary:
-    dicCnfg = load_config(strCsvCnfg, lgcTest=lgcTest)
+    dicCnfg = load_config(strCsvCnfg)
 
     # Load config parameters from dictionary into namespace:
     cfg = cls_set_config(dicCnfg)
@@ -72,13 +69,6 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
     # voxels):
     cfg.varSdSmthTmp = np.divide(cfg.varSdSmthTmp, cfg.varTr)
     cfg.varSdSmthSpt = np.divide(cfg.varSdSmthSpt, cfg.varVoxRes)
-
-    # For the GPU version, we need to set down the parallelisation to 1 now,
-    # because no separate CPU threads are to be created. We may still use CPU
-    # parallelisation for preprocessing, which is why the parallelisation
-    # factor is only reduced now, not earlier.
-    if cfg.strVersion == 'gpu':
-        cfg.varPar = 1
     # *************************************************************************
 
     # *************************************************************************
@@ -330,20 +320,19 @@ def pyprf(strCsvCnfg, lgcTest=False):  #noqa
         strTmp = (cfg.strPathOut + lstNiiNames[idxOut] + '.nii.gz')
         nb.save(niiOut, strTmp)
 
-    # Save PEs to nii (not implemented for gpu mode):
-    if cfg.strVersion != 'gpu':
-        for idxCon in range(varNumCon):
-            # Create nii object for results:
-            niiOut = nb.Nifti1Image(aryBstPe[:, :, :, idxCon],
-                                    aryAff,
-                                    header=hdrMsk
-                                    )
-            # Save nii:
-            strTmp = (cfg.strPathOut
-                      + '_PE_'
-                      + str(idxCon + 1).zfill(2)
-                      + '.nii.gz')
-            nb.save(niiOut, strTmp)
+    # Save PEs to nii:
+    for idxCon in range(varNumCon):
+        # Create nii object for results:
+        niiOut = nb.Nifti1Image(aryBstPe[:, :, :, idxCon],
+                                aryAff,
+                                header=hdrMsk
+                                )
+        # Save nii:
+        strTmp = (cfg.strPathOut
+                  + '_PE_'
+                  + str(idxCon + 1).zfill(2)
+                  + '.nii.gz')
+        nb.save(niiOut, strTmp)
     # *************************************************************************
 
     # *************************************************************************

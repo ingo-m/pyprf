@@ -31,8 +31,7 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
     ----------
     idxPrc : int
         Process ID of the process calling this function (for CPU
-        multi-threading). In GPU version, this parameter is 0 (just one thread
-        on CPU).
+        multi-threading).
     dicCnfg : dict
         Dictionary containing config parameters.
     vecMdlXpos : np.array
@@ -57,7 +56,7 @@ def find_prf_cpu(idxPrc, vecMdlXpos, vecMdlYpos, vecMdlSd, aryFuncChnk,
         List containing the following objects:
         idxPrc : int
             Process ID of the process calling this function (for CPU
-            multi-threading). In GPU version, this parameter is 0.
+            multi-threading).
         vecBstXpos : np.array
             1D array with best fitting x-position for each voxel, with shape
             vecBstXpos[voxel].

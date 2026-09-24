@@ -37,7 +37,7 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
         List with results of pRF finding, containing:
         idxPrc : int
             Process ID of the process calling this function (for CPU
-            multi-threading). In GPU version, this parameter is 0.
+            multi-threading).
         vecBstXpos : np.array
             1D array with best fitting x-position for each voxel, with shape
             vecBstXpos[voxel].
@@ -55,8 +55,8 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
     -----
     Parent function for pRF finding. This function calls one of several
     possible child functions to perform the actual pRF finding. There are
-    options for pRF finding on CPU with cython or numpy, or on GPU. Also,
-    there is an hdf5 mode (in case of large amounts of data, pRF models are not
+    options for pRF finding on CPU with cython or numpy. Also, there is an
+    hdf5 mode (in case of large amounts of data, pRF models are not
     loaded into RAM but read from disk).
 
     """
@@ -66,8 +66,6 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
     cfg = cls_set_config(dicCnfg)
 
     # Conditional imports:
-    if cfg.strVersion == 'gpu':
-        from pyprf.analysis.find_prf_gpu import find_prf_gpu
     if ((cfg.strVersion == 'cython') or (cfg.strVersion == 'numpy')):
         from pyprf.analysis.find_prf_cpu import find_prf_cpu
         from pyprf.analysis.find_prf_cpu_hdf5 import find_prf_cpu_hdf5
@@ -79,13 +77,6 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
           + str(varNumVoxInc))
 
     print('---------Preparing parallel pRF model finding')
-
-    # For the GPU version, we need to set down the parallelisation to 1 now,
-    # because no separate CPU threads are to be created. We may still use CPU
-    # parallelisation for preprocessing, which is why the parallelisation
-    # factor is only reduced now, not earlier.
-    if cfg.strVersion == 'gpu':
-        cfg.varPar = 1
 
     # Vector with the moddeled x-positions of the pRFs:
     vecMdlXpos = np.linspace(cfg.varExtXmin,
@@ -189,48 +180,6 @@ def find_prf(dicCnfg, aryFunc, aryPrfTc=None, aryLgcMdlVar=None,
                                                    cfg.strVersion,
                                                    queOut)
                                              )
-
-            # Daemon (kills processes when exiting):
-            lstPrcs[idxPrc].Daemon = True
-
-    # GPU version (using tensorflow for pRF finding):
-    elif cfg.strVersion == 'gpu':
-
-        # The following features are currently not available in GPU mode:
-        # - Handling of multiple predictors (e.g. contrast levels).
-        # - Export of parameter estimates.
-        # - Hdf5 mode.
-
-        # Assert that hdf5 mode has not been requested.
-        strMsg = ('Hdf5 mode not implemented for GPU mode.')
-        # assert not(aryPrfTc is None), strMsg
-        assert not(cfg.lgcHdf5), strMsg
-
-        # Assert that there is only one contrast level.
-        strMsg = ('Handling of multiple predictors (e.g. contrast levels) not '
-                  + 'implemented for GPU mode (switch to numpy or cython '
-                  + 'mode.')
-        assert (aryPrfTc.shape[3] == 1), strMsg
-
-        # Reshape:
-        aryPrfTc = aryPrfTc[:, :, :, 0, :]
-
-        print('---------pRF finding on GPU')
-
-        # Create processes:
-        for idxPrc in range(cfg.varPar):
-
-            # Hdf5-mode (access pRF model time courses from disk in order
-            # to avoid out of memory).
-            lstPrcs[idxPrc] = mp.Process(target=find_prf_gpu,
-                                         args=(idxPrc,
-                                               vecMdlXpos,
-                                               vecMdlYpos,
-                                               vecMdlSd,
-                                               lstFunc[idxPrc],
-                                               aryPrfTc,
-                                               queOut)
-                                         )
 
             # Daemon (kills processes when exiting):
             lstPrcs[idxPrc].Daemon = True

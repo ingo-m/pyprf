@@ -104,7 +104,7 @@ def nii_to_hdf5(strPathIn):
         # Define & run extra thread with graph that places data on queue:
         objThrd = threading.Thread(target=feed_hdf5_tme,
                                    args=(dtsFunc, objQ, vecSplt))
-        objThrd.setDaemon(True)
+        objThrd.daemon = True
         objThrd.start()
 
         # Loop through chunks of volumes:
