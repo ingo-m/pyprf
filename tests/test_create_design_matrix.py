@@ -75,7 +75,7 @@ def test_crt_design(tmp_path, lgcFull):
     aryStim = aryDsg[aryDsg[:, 0] == 1.0, :]
     varNumHor = np.unique(aryStim[aryStim[:, 2] == 0.0, 1]).shape[0]
     assert aryStim.shape[0] == 4 * (3 * 14 + varNumHor)
-    assert varNumHor == (9 if lgcFull else 14)
+    assert varNumHor == (8 if lgcFull else 14)
     assert varNumVol == aryStim.shape[0] + 10 + 10 + 3
     assert set(np.unique(aryStim[:, 2])) == {0.0, 45.0, 90.0, 135.0}
 
@@ -87,22 +87,34 @@ def test_crt_design(tmp_path, lgcFull):
     assert vecTrgt[-1] <= (varNumVol - 10) * varTr
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    'Known bug: in full screen mode, horizontal bars are kept at positions 3 '
-    'to 11 (instead of 3 to 10), so the uppermost one is outside of the '
-    'screen.'))
-def test_full_screen_horizontal_positions(tmp_path):
+@pytest.mark.parametrize('varNumPosX, varNumPosY',
+                         [(14, 8), (16, 10), (13, 7), (12, 12), (14, 7)])
+def test_full_screen_horizontal_positions(tmp_path, varNumPosX, varNumPosY):
     """In full screen mode, horizontal bars are centred on the screen."""
     np.random.seed(0)
-    create_design_matrix.crt_design(get_param(str(tmp_path)))
-    aryDsg = np.load(str(tmp_path / 'Run_01.npz'))['aryDsg']
+    create_design_matrix.crt_design(get_param(
+        str(tmp_path), **{'Number of bar positions on x-axis': varNumPosX,
+                          'Number of bar positions on y-axis': varNumPosY}))
+    objNpz = np.load(str(tmp_path / 'Run_01.npz'))
+    aryDsg = objNpz['aryDsg']
     aryStim = aryDsg[aryDsg[:, 0] == 1.0, :]
 
-    # With 14 positions on the x-axis and 8 on the y-axis, the horizontal bars
-    # should be at the 8 central positions (3 to 10), symmetric around the
-    # centre of the screen (6.5):
+    # If one of the numbers of positions is even and the other one odd, a
+    # position is added on the y-axis:
+    varNumPosY = int(objNpz['varNumPosY'])
+    assert (varNumPosX - varNumPosY) % 2 == 0
+
+    # Horizontal bars are presented at the central positions (as many as there
+    # are positions on the y-axis), symmetric around the centre of the screen.
+    # For instance, with 14 positions on the x-axis and 8 on the y-axis, at
+    # positions 3 to 10 (centre of the screen: 6.5).
+    varMarg = (varNumPosX - varNumPosY) // 2
     vecPosHor = np.unique(aryStim[aryStim[:, 2] == 0.0, 1])
-    assert list(vecPosHor) == list(range(3, 11))
+    assert list(vecPosHor) == list(range(varMarg, varNumPosX - varMarg))
+
+    # Other orientations are presented at all positions:
+    vecPosVer = np.unique(aryStim[aryStim[:, 2] == 90.0, 1])
+    assert list(vecPosVer) == list(range(varNumPosX))
 
 
 def test_crt_design_two_orientations(tmp_path):

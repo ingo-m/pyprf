@@ -139,6 +139,7 @@ If the data do not fit into memory, you can switch on the hdf5 mode (`lgcHdf5 = 
 - `pyprf` 3 requires Python 3.11 or newer.
 - The tensorflow (GPU) version of the analysis has been removed. Please set `strVersion = 'cython'` in your config file (if you used `strVersion = 'gpu'`).
 - The analysis results are unchanged (this is checked by the tests).
+- Design matrices in full screen mode: previously, one of the horizontal bar positions was outside of the screen (i.e. no stimulus was visible on these volumes). This has been fixed, so new design matrices are slightly shorter (with the default settings, 223 instead of 227 volumes).
 
 ## Contributions
 

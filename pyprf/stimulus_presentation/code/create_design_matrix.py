@@ -256,9 +256,11 @@ def crt_design(dicParam, lgcOvwr=False):
             if (varTmpOri == 0.0):
 
                 # Check whether horizontal orientation is presented outside of
-                # the screen area:
+                # the screen area. Of the positions 0 to (varNumPosX - 1), the
+                # central varNumPosY positions are kept (i.e. positions varMarg
+                # to (varNumPosX - varMarg - 1)).
                 if ((varTmpPos < varMarg)
-                        or ((float(varNumPosX) - varMarg) < varTmpPos)):
+                        or ((float(varNumPosX) - varMarg) <= varTmpPos)):
 
                     # print((str(varTmpPos) + '   ' + str(varTmpOri)))
                     pass
