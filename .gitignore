@@ -73,3 +73,6 @@ target/
 # Stimulus presentation output (log files and logged frames)
 pyprf/stimulus_presentation/log/*
 !pyprf/stimulus_presentation/log/__init__.py
+
+# pytest
+.pytest_cache/
