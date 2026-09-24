@@ -36,7 +36,7 @@ pyprf = "pyprf.analysis.__main__:main"
 [project.urls]
 Homepage = "https://github.com/ingo-m/pyprf"
 Issues = "https://github.com/ingo-m/pyprf/issues"
-DOI = "https://doi.org/10.5281/zenodo.1475439"
+DOI = "https://doi.org/10.5281/zenodo.835161"
 
 [tool.setuptools]
 packages = ["pyprf", "pyprf.analysis"]
