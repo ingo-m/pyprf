@@ -104,6 +104,13 @@ def prf_stim(dicParam):
         else:
             lgcGrd = False
 
+    # Key that the scanner sends as trigger pulse (PsychoPy key name, e.g. '5',
+    # 't', or 'num_5' for the number pad):
+    strTrgrKey = str(dicParam['Scanner trigger key']).strip()
+
+    # Key that the participant has to press after a target event:
+    strTrgtKey = str(dicParam['Response key']).strip()
+
     # *************************************************************************
     # *** Retrieve design matrix
 
@@ -192,6 +199,8 @@ def prf_stim(dicParam):
     fleLog.write('Background colour [-1 to 1]: ' + str(varBckgrd) + '\n')
     fleLog.write('Target duration [s]: ' + str(varTrgtDur) + '\n')
     fleLog.write('Logging mode: ' + str(lgcLogMde) + '\n')
+    fleLog.write('Scanner trigger key: ' + strTrgrKey + '\n')
+    fleLog.write('Response key: ' + strTrgtKey + '\n')
 
     # Set console logging verbosity:
     logging.console.setLevel(logging.WARNING)
@@ -204,9 +213,6 @@ def prf_stim(dicParam):
 
     # Control the logging of participant responses:
     varSwtRspLog = 0
-
-    # The key that the participant has to press after a target event:
-    strTrgtKey = '1'
 
     # Counter for correct/incorrect responses:
     varCntHit = 0  # Counter for hits
@@ -610,15 +616,19 @@ def prf_stim(dicParam):
         objWin.flip()
 
         # Wait for scanner trigger pulse & set clock after receiving trigger
-        # pulse (scanner trigger pulse is received as button press ('5')):
-        strTrgr = ['0']
-        while strTrgr[0][0] != '5':
-            # Check for keypress:
-            lstTmp = event.getKeys(keyList=['5'], timeStamped=False)
-            # Whether the list has the correct length (if nothing has happened,
-        # lstTmp # will have length zero):
-            if len(lstTmp) == 1:
-                strTrgr = lstTmp[0][0]
+        # pulse (the scanner trigger pulse is received as a key press):
+        print('Waiting for scanner trigger (key: ' + strTrgrKey + ')')
+        lstTrgr = []
+        varTmeExit = objClck.getTime()
+        while strTrgrKey not in lstTrgr:
+            # Check for keypress (list of key names, empty if the trigger key
+            # has not been pressed):
+            lstTrgr = event.getKeys(keyList=[strTrgrKey], timeStamped=False)
+            # Check whether exit keys have been pressed. Only every 100 ms,
+            # because both exit keys have to be registered in the same check.
+            if (varTmeExit + 0.1) < objClck.getTime():
+                func_exit()
+                varTmeExit = objClck.getTime()
 
     # Trigger pulse received, reset clock:
     objClck.reset(newT=0.0)
@@ -1035,6 +1045,38 @@ def func_exit():
         return 0
 
 
+def func_msg(strTitle, strMsg, lgcGui=True):
+    """Show a message to the user (in a dialog window and in the console)."""
+    print(strTitle + ': ' + strMsg)
+    if lgcGui:
+        objDlg = gui.Dlg(title=strTitle)
+        objDlg.addText(strMsg)
+        # Hide note on required fields (PsychoPy Qt GUI; there are none):
+        if hasattr(objDlg, 'validate'):
+            objDlg.validate()
+        objDlg.show()
+
+
+def func_design_matrices(strPthDsg):
+    """
+    List the design matrices in a directory.
+
+    Returns a dictionary with labels for the GUI as keys (containing name, TR,
+    and number of volumes of the design matrix, e.g. 'Run_01 (TR = 2.079 s,
+    227 volumes)'), and names of the design matrices as values (e.g.
+    'Run_01').
+    """
+    dicDsg = {}
+    for strFle in sorted(os.listdir(strPthDsg)):
+        if strFle.endswith('.npz'):
+            objNpz = np.load(os.path.join(strPthDsg, strFle))
+            strLbl = (strFle[:-4]
+                      + ' (TR = ' + str(float(objNpz['varTr'])) + ' s, '
+                      + str(int(objNpz['varNumVol'])) + ' volumes)')
+            dicDsg[strLbl] = strFle[:-4]
+    return dicDsg
+
+
 # *****************************************************************************
 
 if __name__ == "__main__":
@@ -1045,42 +1087,77 @@ if __name__ == "__main__":
     # Create parser object:
     objParser = argparse.ArgumentParser()
 
-    # Add argument to namespace - open a GUI for user to specify design matrix
+    # Add argument to namespace - open a GUI for user to specify experiment
     # parameters?:
     objParser.add_argument('-gui',
                            # metavar='GUI',
                            choices=['True', 'False'],
                            default='True',
-                           help='Open a GUI to set parameters for design \
-                                 matrix?'
+                           help='Open a GUI to set experiment parameters? If \
+                                 not, default parameters are used.'
                            )
 
-    # Add argument to namespace - open a GUI for user to specify design matrix
-    # parameters?:
+    # Add argument to namespace - name of design matrix:
     objParser.add_argument('-filename',
                            # metavar='filename',
                            default=None,
-                           help='Optional. Output file name for design \
-                                 matrix. The  output file name can also be \
-                                 set in the GUI.'
+                           help='Optional. Name of the design matrix (e.g. \
+                                 Run_01). The design matrix can also be \
+                                 selected in the GUI.'
                            )
 
     # Namespace object containing arguments and values:
     objNspc = objParser.parse_args()
 
     # Get arguments from argument parser:
-    strGui = objNspc.gui
+    lgcGui = (objNspc.gui == 'True')
     strFleNme = objNspc.filename
+
+    # Path of parent directory ('~/pyprf/pyprf/stimulus_presentation/'):
+    strPth = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+    # Directory with design matrices:
+    strPthDsg = os.path.join(strPth, 'design_matrices')
+
+    # Available design matrices. Dictionary with labels shown in the GUI (e.g.
+    # 'Run_01 (TR = 2.079 s, 227 volumes)') as keys, and names of design
+    # matrices (e.g. 'Run_01') as values.
+    dicDsg = func_design_matrices(strPthDsg)
+
+    if len(dicDsg) == 0:
+        func_msg('No design matrix found',
+                 ('There is no design matrix in the folder:\n' + strPthDsg
+                  + '\n\nPlease create a design matrix first (with '
+                  + 'create_design_matrix.py).'),
+                 lgcGui)
+        core.quit()
+
+    # List of design matrices for the GUI (the first one is the default):
+    lstDsg = list(dicDsg.keys())
+
+    # If a design matrix name is provided, make it the default (can still be
+    # changed by user in the GUI).
+    if strFleNme is not None:
+        if strFleNme not in dicDsg.values():
+            func_msg('Design matrix not found',
+                     ('There is no design matrix called "' + strFleNme
+                      + '" in the folder:\n' + strPthDsg),
+                     lgcGui)
+            core.quit()
+        lstDsg.sort(key=lambda strLbl: dicDsg[strLbl] != strFleNme)
 
     # Default temporal ferquency = 4 Hz, as in Shapley, R. (1990). Visual
     # sensitivity and parallel retinocortical channels. Annual Review of
     # Psychology, 41, 635–658.
     # https://doi.org/10.1146/annurev.ps.41.020190.003223
 
-    # Dictionary with experiment parameters.
-    dicParam = {'Run (name of design matrix file)': 'Run_01',
-                'Target duration [s]': 0.3,
+    # Dictionary with experiment parameters (in the order in which they are
+    # shown in the GUI).
+    dicParam = {'Design matrix': lstDsg,
                 'Logging mode': [False, True],
+                'Scanner trigger key': '5',
+                'Response key': '1',
+                'Target duration [s]': 0.3,
                 'Temporal frequency [Hz]': 4.0,
                 'Spatial frequency [cyc per bar]': 1.5,
                 'Distance between observer and monitor [cm]': 99.0,
@@ -1090,64 +1167,60 @@ if __name__ == "__main__":
                 'Background colour [-1 to 1]': 0.0,
                 'Show fixation grid?': [True, False]}
 
-    if not(strFleNme is None):
-
-        # If an input file name is provided, put it into the dictionary (as
-        # default, can still be overwritten by user).
-        dicParam['Run (name of design matrix file)'] = strFleNme
-
-    if strGui == 'True':
+    if lgcGui:
 
         # Pop-up GUI to let the user select parameters:
         objGui = gui.DlgFromDict(dictionary=dicParam,
-                                 title='Experiment Parameters')
+                                 title='Experiment Parameters',
+                                 order=list(dicParam.keys()))
 
-    # Start experiment if user presses 'ok':
-    if objGui.OK is True:
-
-        # Get date string as default session name:
-        strDate = str(datetime.datetime.now())
-        lstDate = strDate[0:10].split('-')
-        lstTime = strDate[11:19].split(':')
-        strDate = (lstDate[0] + lstDate[1] + lstDate[2] + '_' + lstTime[0]
-                   + lstTime[1] + lstTime[2])
-
-        # Path of parent directory:
-        strPth = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
-        # Output path ('~/pyprf/pyprf/stimulus_presentation/design_matrices/'):
-        strPthOut = os.path.join(strPth,
-                                 'log',
-                                 (dicParam['Run (name of design matrix file)']
-                                  + '_'
-                                  + strDate
-                                  + '.txt')
-                                 )
-
-        # Add output path to dictionary.
-        dicParam['Output path (log files)'] = strPthOut
-
-        # Path of design matrix file (npz):
-        strPthNpz = os.path.join(strPth,
-                                 'design_matrices',
-                                 (dicParam['Run (name of design matrix file)']
-                                  + '.npz')
-                                 )
-
-        # Add path of design matrix (npz file) to dictionary.
-        dicParam['Path of design matrix (npz)'] = strPthNpz
-
-        # Add path for stimulus log (screenshots) for analysis to dictionary:
-        strPthFrm = os.path.join(strPth,
-                                 'log',
-                                 (dicParam['Run (name of design matrix file)']
-                                  + '_frames')
-                                 )
-        dicParam['Output path stimulus log (frames)'] = strPthFrm
-
-        prf_stim(dicParam)
+        # Close if user presses 'cancel':
+        if not objGui.OK:
+            core.quit()
 
     else:
 
-        # Close GUI if user presses 'cancel':
+        # Without GUI, use the first option of parameters with several
+        # options:
+        for strKey, varVal in dicParam.items():
+            if isinstance(varVal, list):
+                dicParam[strKey] = varVal[0]
+
+    # Check keys. The keys have to be different from each other, and from the
+    # exit keys ('e' and 'x').
+    strTrgrKey = str(dicParam['Scanner trigger key']).strip()
+    strTrgtKey = str(dicParam['Response key']).strip()
+    if ((strTrgrKey in ['', 'e', 'x']) or (strTrgtKey in ['', 'e', 'x'])
+            or (strTrgrKey == strTrgtKey)):
+        func_msg('Invalid key',
+                 ('Scanner trigger key ("' + strTrgrKey + '") and response '
+                  + 'key ("' + strTrgtKey + '") have to be different from '
+                  + 'each other, and cannot be "e" or "x" (these are used to '
+                  + 'abort the experiment).'),
+                 lgcGui)
         core.quit()
+
+    # Name of design matrix (e.g. 'Run_01'):
+    strRun = dicDsg[dicParam['Design matrix']]
+
+    # Get date string as default session name:
+    strDate = str(datetime.datetime.now())
+    lstDate = strDate[0:10].split('-')
+    lstTime = strDate[11:19].split(':')
+    strDate = (lstDate[0] + lstDate[1] + lstDate[2] + '_' + lstTime[0]
+               + lstTime[1] + lstTime[2])
+
+    # Output path for log file
+    # ('~/pyprf/pyprf/stimulus_presentation/log/'):
+    dicParam['Output path (log files)'] = os.path.join(
+        strPth, 'log', (strRun + '_' + strDate + '.txt'))
+
+    # Path of design matrix file (npz):
+    dicParam['Path of design matrix (npz)'] = os.path.join(
+        strPthDsg, (strRun + '.npz'))
+
+    # Path for stimulus log (screenshots) for analysis:
+    dicParam['Output path stimulus log (frames)'] = os.path.join(
+        strPth, 'log', (strRun + '_frames'))
+
+    prf_stim(dicParam)
